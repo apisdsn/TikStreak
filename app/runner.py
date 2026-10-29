@@ -17,6 +17,7 @@ from .store import contacts_store, cookies_store, get_settings, history_store, m
 MAX_HISTORY = 50
 MAX_LOG_LINES = 500
 PROOFS_DIR = os.path.join(DATA_DIR, "proofs")
+CATCHUP_SECONDS = 3 * 3600
 ALERT_COOLDOWN = 6 * 3600  # jeda minimal antar alert cookie dari cek otomatis
 
 
@@ -208,19 +209,31 @@ class Runner:
         except Exception:  # noqa: BLE001
             return None
 
+    @staticmethod
+    def _due(s):
+        """Waktu jadwal kirim hari ini (aware) menurut timezone pengaturan."""
+        hh, mm = map(int, s["schedule_time"].split(":"))
+        now = datetime.now(_tz(s))
+        return now, now.replace(hour=hh, minute=mm, second=0, microsecond=0)
+
     def scheduler_loop(self):
         while True:
             try:
                 s = get_settings()
                 if s["schedule_enabled"]:
-                    now = datetime.now(_tz(s))
-                    key = (now.date().isoformat(), s["schedule_time"])
-                    if now.strftime("%H:%M") == s["schedule_time"] and key != self._last_fire_key:
-                        self._last_fire_key = key
+                    now, due = self._due(s)
+                    key = due.strftime("%Y-%m-%d %H:%M")
+                    late = (now - due).total_seconds()
+                    meta = meta_store.read()
+                    # Jalan tepat waktu; bila terlewat (proses lain berjalan/restart) kejar hingga 3 jam
+                    if 0 <= late < CATCHUP_SECONDS and meta.get("last_schedule") != key:
                         try:
                             self.start("send", trigger="schedule")
+                            meta = meta_store.read()
+                            meta["last_schedule"] = key
+                            meta_store.write(meta)
                         except Busy:
-                            pass
+                            pass  # dicoba lagi 20 detik kemudian
                 self._keepalive(s)
             except Exception:  # noqa: BLE001
                 pass
@@ -232,6 +245,10 @@ class Runner:
             return
         if login_session.active:
             return
+        if s["schedule_enabled"]:  # jangan bentrok dengan jadwal kirim (10 menit sebelum s.d. 10 menit sesudah)
+            now, due = self._due(s)
+            if -600 <= (now - due).total_seconds() <= 600:
+                return
         meta = meta_store.read()
         if time.time() - meta.get("last_check", 0) < s["keepalive_hours"] * 3600:
             return
