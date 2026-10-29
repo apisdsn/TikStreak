@@ -15,7 +15,7 @@ DEFAULT_SETTINGS = {
     "telegram_chat_id": "",
     "discord_enabled": False,
     "discord_webhook": "",
-    "notify_screenshot": True,
+    "notify_screenshot": False,
     "keepalive_enabled": True,
     "keepalive_hours": 12,
     "page_load_wait": 5,

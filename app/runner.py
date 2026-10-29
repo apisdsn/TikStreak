@@ -153,7 +153,7 @@ class Runner:
         files = []
         for r in run["results"]:
             if r["ok"]:
-                lines.append(f"✅ {r['contact']} — {r.get('sent_at') or 'ok'}")
+                lines.append(f"✅ {r['contact']} — {r.get('sent_at') or 'ok'}{self._evidence(r.get('evidence'))}")
             else:
                 lines.append(f"❌ {r['contact']} — {r.get('error') or 'gagal'}")
             if r.get("proof") and settings.get("notify_screenshot"):
@@ -166,6 +166,22 @@ class Runner:
         if files:
             lines.append("Bukti: screenshot chat terlampir")
         notify(settings, f"{icon} Streak {run['status']}", lines, files)
+
+    @staticmethod
+    def _evidence(ev):
+        if not ev:
+            return ""
+        parts = []
+        if ev.get("chat"):
+            parts.append(f"chat {ev['chat']} ✓")
+        if ev.get("bubble"):
+            parts.append("bubble terverifikasi")
+        b, a = ev.get("streak_before"), ev.get("streak_after")
+        if b is not None and a is not None:
+            parts.append(f"🔥 {b} → {a}")
+        elif a is not None or b is not None:
+            parts.append(f"🔥 {a if a is not None else b}")
+        return " · " + " · ".join(parts) if parts else ""
 
     @staticmethod
     def _span(run):

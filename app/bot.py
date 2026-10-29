@@ -1,6 +1,7 @@
 """Otomasi pengiriman pesan streak TikTok lewat browser (DrissionPage)."""
 import base64
 import os
+import re
 import tempfile
 import time
 from datetime import datetime
@@ -28,6 +29,21 @@ INPUT_SELECTORS = [
     'css:div[contenteditable="true"]',
     'css:textarea[placeholder*="message"]',
 ]
+
+HEADER_SELECTORS = [
+    'css:[data-e2e="chat-nickname"]',
+    'css:[class*="ChatHeader"] [class*="Nickname"]',
+    'css:[class*="ChatHeader"] p',
+    'css:[class*="ChatHeader"] h1',
+    'css:[class*="ChatHeader"] h2',
+]
+
+STREAK_SELECTORS = [
+    'css:[data-e2e*="streak"]',
+    'css:[class*="Streak"]',
+]
+
+STREAK_RE = re.compile(r"(\d{1,4})\s*🔥|🔥\s*(\d{1,4})")
 
 SEND_BUTTON_SELECTORS = [
     'css:[data-e2e="message-send"]',
@@ -263,9 +279,48 @@ class StreakBot:
                 return True
         return False
 
+    def _chat_header(self):
+        """Nama penerima pada header chat yang sedang terbuka (None bila tidak terbaca)."""
+        for sel in HEADER_SELECTORS:
+            try:
+                for el in self.page.eles(sel, timeout=1):
+                    t = (el.text or "").strip()
+                    if t:
+                        return t
+            except Exception:  # noqa: BLE001
+                continue
+        return None
+
+    def _read_streak(self, item):
+        """Angka streak pada item daftar chat (best effort); None bila tidak terbaca."""
+        if not item:
+            return None
+        try:
+            for sel in STREAK_SELECTORS:
+                try:
+                    for el in item.eles(sel, timeout=0.5):
+                        m = re.search(r"\d{1,4}", el.text or "")
+                        if m:
+                            return int(m.group())
+                except Exception:  # noqa: BLE001
+                    continue
+            m = STREAK_RE.search(item.text or "")
+            if m:
+                return int(m.group(1) or m.group(2))
+        except Exception:  # noqa: BLE001
+            pass
+        return None
+
+    def _last_bubble(self):
+        try:
+            els = self.page.eles(f"xpath://*[normalize-space(text())={xpath_literal(self.message)}]", timeout=1)
+            return (els[-1].text or "").strip() if els else None
+        except Exception:  # noqa: BLE001
+            return None
+
     def _capture_proof(self, index):
         """Screenshot chat setelah pesan terverifikasi terkirim. Return nama file."""
-        if not self.proof_dir or self.test_mode:
+        if not self.proof_dir or self.test_mode or not self.s.get("notify_screenshot"):
             return None
         try:
             os.makedirs(self.proof_dir, exist_ok=True)
@@ -298,6 +353,7 @@ class StreakBot:
         return names
 
     def _send_to(self, name):
+        """Kirim ke satu kontak. Return dict bukti (chat, streak, bubble, count)."""
         el = self._find_contact(name)
         if not el:
             self.page.refresh()
@@ -306,14 +362,23 @@ class StreakBot:
         if not el:
             raise RuntimeError("Kontak tidak ditemukan di daftar pesan")
 
+        evidence = {"streak_before": self._read_streak(el)}
         if self.test_mode:
-            return
+            return evidence
 
         try:
             el.click()
         except Exception:  # noqa: BLE001
             self.page.run_js("arguments[0].click();", el)
         self._sleep(self.s["element_wait"])
+
+        # Pastikan chat yang terbuka memang milik penerima
+        header = self._chat_header()
+        if header is not None and name.strip().lower() not in header.lower():
+            raise RuntimeError(f"Chat yang terbuka milik '{header}', bukan '{name}'. Pesan tidak dikirim")
+        if header is None:
+            self.log("Header chat tidak terbaca, penerima tidak bisa diverifikasi", "warning")
+        evidence["chat"] = header
 
         box = self._find_input()
         if not box:
@@ -329,11 +394,17 @@ class StreakBot:
             raise RuntimeError("Teks tidak masuk ke kolom pesan")
 
         self._press_enter()
-        if self._wait_sent(before):
-            return
-        if self._click_send_button() and self._wait_sent(before):
-            return
-        raise RuntimeError("Pesan tidak terverifikasi terkirim (cek screenshot)")
+        sent = self._wait_sent(before)
+        if not sent and self._click_send_button():
+            sent = self._wait_sent(before)
+        if not sent:
+            raise RuntimeError("Pesan tidak terverifikasi terkirim (cek screenshot)")
+
+        evidence["bubble"] = self._last_bubble()
+        evidence["count"] = [before, self._count_text(self.message)]
+        self._sleep(3)  # beri waktu TikTok memperbarui streak
+        evidence["streak_after"] = self._read_streak(self._find_contact(name))
+        return evidence
 
     # -------------------------------------------------------------------- run
     def run(self, contacts):
@@ -351,11 +422,11 @@ class StreakBot:
 
             for name in contacts:
                 self._check_cancel()
-                ok, err = False, None
+                ok, err, evidence = False, None, None
                 for attempt in range(1, 4):
                     try:
                         self.log(f"{'[TEST] ' if self.test_mode else ''}Memproses {name} (percobaan {attempt}/3)")
-                        self._send_to(name)
+                        evidence = self._send_to(name)
                         ok = True
                         break
                     except Cancelled:
@@ -366,6 +437,8 @@ class StreakBot:
                         self._sleep(2)
                 if ok:
                     self.log(f"{name}: {'ditemukan' if self.test_mode else 'terkirim'}")
+                    sb = (evidence or {}).get("streak_before")
+                    self.log(f"{name}: angka streak {'terbaca ' + str(sb) if sb is not None else 'tidak terbaca (selector perlu disesuaikan)'}", "info")
                 else:
                     shown = ", ".join(self._visible_nicknames()) or "-"
                     self.log(f"Nickname terlihat di halaman: {shown}", "info")
@@ -373,6 +446,7 @@ class StreakBot:
                     "contact": name, "ok": ok, "error": None if ok else err,
                     "sent_at": datetime.now().strftime("%H:%M:%S") if ok and not self.test_mode else None,
                     "proof": self._capture_proof(len(results)) if ok else None,
+                    "evidence": evidence if ok else None,
                 })
                 self._sleep(1)
         finally:
