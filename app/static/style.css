@@ -88,3 +88,5 @@ th { color: var(--muted); font-weight: 600; font-size: 13px; }
 .remote img:focus { box-shadow: inset 0 0 0 2px var(--accent); }
 #remoteText { margin-top: 10px; }
 .shot { width: 100%; margin-top: 12px; border: 1px solid var(--line); border-radius: 8px; }
+.time24 { display: flex; align-items: center; gap: 8px; }
+select { flex: 1; padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--text); font: inherit; }

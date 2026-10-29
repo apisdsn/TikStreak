@@ -358,11 +358,17 @@
   });
 
   // --------------------------------------------------------------- settings
+  const pad = (n) => String(n).padStart(2, "0");
+  for (let i = 0; i < 24; i++) $("setScheduleHour").append(new Option(pad(i), pad(i)));
+  for (let i = 0; i < 60; i++) $("setScheduleMin").append(new Option(pad(i), pad(i)));
+
   async function loadSettings() {
     const s = await api("/settings");
     $("setMessage").value = s.message;
     $("setScheduleEnabled").checked = s.schedule_enabled;
-    $("setScheduleTime").value = s.schedule_time;
+    const [hh, mm] = s.schedule_time.split(":");
+    $("setScheduleHour").value = hh;
+    $("setScheduleMin").value = mm;
     $("setTimezone").value = s.timezone;
     $("setKeepalive").checked = s.keepalive_enabled;
     $("setKeepaliveHours").value = s.keepalive_hours;
@@ -385,7 +391,7 @@
         body: {
           message: $("setMessage").value,
           schedule_enabled: $("setScheduleEnabled").checked,
-          schedule_time: $("setScheduleTime").value,
+          schedule_time: `${$("setScheduleHour").value}:${$("setScheduleMin").value}`,
           timezone: $("setTimezone").value.trim(),
           keepalive_enabled: $("setKeepalive").checked,
           keepalive_hours: +$("setKeepaliveHours").value,

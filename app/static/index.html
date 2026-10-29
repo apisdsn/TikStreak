@@ -133,7 +133,8 @@
           <h2>Jadwal harian</h2>
           <label class="check"><input id="setScheduleEnabled" type="checkbox"> Aktifkan pengiriman otomatis</label>
           <div class="grid two">
-            <div><label for="setScheduleTime">Jam (HH:MM)</label><input id="setScheduleTime" type="time" required></div>
+            <div><label for="setScheduleHour">Jam (format 24 jam)</label>
+              <div class="time24"><select id="setScheduleHour" aria-label="Jam"></select><span>:</span><select id="setScheduleMin" aria-label="Menit"></select></div></div>
             <div><label for="setTimezone">Timezone</label><input id="setTimezone" type="text" placeholder="Asia/Jakarta"></div>
           </div>
 
