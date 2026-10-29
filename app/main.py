@@ -21,6 +21,7 @@ from .store import (
     cookies_store,
     get_settings,
     history_store,
+    meta_store,
     settings_store,
 )
 
@@ -52,6 +53,8 @@ class SettingsIn(BaseModel):
     telegram_chat_id: Optional[str] = None
     discord_enabled: Optional[bool] = None
     discord_webhook: Optional[str] = None
+    keepalive_enabled: Optional[bool] = None
+    keepalive_hours: Optional[int] = None
     page_load_wait: Optional[int] = None
     element_wait: Optional[int] = None
     send_delay: Optional[int] = None
@@ -106,7 +109,7 @@ def status():
         "last_run": run_view(hist[0]) if hist else None,
         "next_run": runner.next_run_at(),
         "contacts": len(contacts_store.read()),
-        "cookies": summary(cookies_store.read()),
+        "cookies": cookie_view(),
         "schedule_enabled": get_settings()["schedule_enabled"],
     }
 
@@ -128,6 +131,8 @@ def write_settings(body: SettingsIn):
             raise HTTPException(400, "Timezone tidak dikenal")
     if "message" in data and not data["message"].strip():
         raise HTTPException(400, "Pesan tidak boleh kosong")
+    if "keepalive_hours" in data and not 1 <= data["keepalive_hours"] <= 72:
+        raise HTTPException(400, "keepalive_hours harus 1-72")
     for k in ("page_load_wait", "element_wait", "send_delay"):
         if k in data and not 0 <= data[k] <= 60:
             raise HTTPException(400, f"{k} harus 0-60 detik")
@@ -191,9 +196,21 @@ def delete_contact(name: str = Query(...)):
     return {"contacts": new}
 
 
+def cookie_view():
+    meta = meta_store.read()
+    return {**summary(cookies_store.read()), **{k: meta.get(k) for k in ("last_ok", "last_saved", "invalid")}}
+
+
+def reset_cookie_meta():
+    meta = meta_store.read()
+    for k in ("invalid", "last_alert", "last_check"):
+        meta.pop(k, None)
+    meta_store.write(meta)
+
+
 @app.get("/api/cookies", dependencies=[Depends(auth)])
 def cookie_status():
-    return summary(cookies_store.read())
+    return cookie_view()
 
 
 @app.put("/api/cookies", dependencies=[Depends(auth)])
@@ -203,13 +220,14 @@ def set_cookies(body: CookiesIn):
     except ValueError as e:
         raise HTTPException(400, str(e))
     cookies_store.write(cookies)
-    return summary(cookies)
+    reset_cookie_meta()
+    return cookie_view()
 
 
 @app.delete("/api/cookies", dependencies=[Depends(auth)])
 def clear_cookies():
     cookies_store.delete()
-    return summary([])
+    return cookie_view()
 
 
 class LoginInput(BaseModel):
@@ -260,7 +278,8 @@ def login_input(body: LoginInput):
 def login_save():
     n = _login_call(login_session.save)
     login_session.stop()
-    return {"saved": n, **summary(cookies_store.read())}
+    reset_cookie_meta()
+    return {"saved": n, **cookie_view()}
 
 
 @app.post("/api/login/stop", dependencies=[Depends(auth)])
@@ -271,8 +290,8 @@ def login_stop():
 
 @app.post("/api/run", dependencies=[Depends(auth)])
 def run(body: RunIn):
-    if body.mode not in ("send", "test"):
-        raise HTTPException(400, "mode harus send atau test")
+    if body.mode not in ("send", "test", "check"):
+        raise HTTPException(400, "mode harus send, test, atau check")
     if login_session.active:
         raise HTTPException(409, "Tutup sesi login di tab Cookie dulu")
     try:

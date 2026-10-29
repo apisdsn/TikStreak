@@ -104,7 +104,8 @@
       const [st, cur] = await Promise.all([api("/status"), api("/run/current?since=" + logCursor)]);
       setText("stState", st.running ? "Berjalan…" : "Siap");
       setText("stContacts", st.contacts);
-      setText("stCookies", !st.cookies.present ? "Belum diatur" : st.cookies.has_session ? `${st.cookies.count} (sessionid ✓)` : `${st.cookies.count} (tanpa sessionid)`);
+      renderCookieState(st.cookies);
+      setText("stCookies", st.cookies.invalid ? "⚠️ Tidak valid" : !st.cookies.present ? "Belum diatur" : st.cookies.has_session ? `${st.cookies.count} (sessionid ✓)` : `${st.cookies.count} (tanpa sessionid)`);
       setText("stNext", st.next_run ? st.next_run : st.schedule_enabled ? "-" : "Nonaktif");
       $("btnSend").disabled = $("btnTest").disabled = st.running;
       $("btnStop").classList.toggle("hidden", !st.running);
@@ -173,8 +174,8 @@
     runs.forEach((r) => {
       const tr = el("tr", {}, [
         el("td", { textContent: fmtTime(r.started_at) }),
-        el("td", { textContent: r.mode === "test" ? "Uji" : "Kirim" }),
-        el("td", { textContent: r.trigger === "schedule" ? "Jadwal" : "Manual" }),
+        el("td", { textContent: { test: "Uji", check: "Cek cookie" }[r.mode] || "Kirim" }),
+        el("td", { textContent: { schedule: "Jadwal", keepalive: "Otomatis" }[r.trigger] || "Manual" }),
         el("td", { textContent: `${r.sent}/${r.total}` }),
         el("td", {}, [badge(r.status)]),
       ]);
@@ -229,8 +230,19 @@
 
   // ---------------------------------------------------------------- cookies
   function renderCookieState(s) {
-    setText("cookieState", !s.present ? "Status: belum ada cookie." : `Status: ${s.count} cookie tersimpan${s.has_session ? " (sessionid ada)" : " — peringatan: sessionid tidak ditemukan"}.`);
+    let t = !s.present ? "Status: belum ada cookie." : `Status: ${s.count} cookie tersimpan${s.has_session ? " (sessionid ada)" : " — peringatan: sessionid tidak ditemukan"}.`;
+    if (s.invalid) t += ` ⚠️ Tidak valid: ${s.invalid}`;
+    else if (s.last_ok) t += ` Terakhir terverifikasi: ${fmtTime(s.last_ok)}.`;
+    if (s.last_saved) t += ` Terakhir diperbarui: ${fmtTime(s.last_saved)}.`;
+    setText("cookieState", t);
   }
+  $("btnCheckCookies").addEventListener("click", async () => {
+    $("cookieErr").textContent = "";
+    try {
+      await api("/run", { method: "POST", body: { mode: "check" } });
+      toast("Mengecek cookie… lihat log di Dashboard");
+    } catch (e) { $("cookieErr").textContent = e.message; }
+  });
   async function loadCookies() { renderCookieState(await api("/cookies")); }
   $("btnSaveCookies").addEventListener("click", async () => {
     $("cookieErr").textContent = "";
@@ -352,6 +364,8 @@
     $("setScheduleEnabled").checked = s.schedule_enabled;
     $("setScheduleTime").value = s.schedule_time;
     $("setTimezone").value = s.timezone;
+    $("setKeepalive").checked = s.keepalive_enabled;
+    $("setKeepaliveHours").value = s.keepalive_hours;
     $("setPageWait").value = s.page_load_wait;
     $("setElementWait").value = s.element_wait;
     $("setSendDelay").value = s.send_delay;
@@ -373,6 +387,8 @@
           schedule_enabled: $("setScheduleEnabled").checked,
           schedule_time: $("setScheduleTime").value,
           timezone: $("setTimezone").value.trim(),
+          keepalive_enabled: $("setKeepalive").checked,
+          keepalive_hours: +$("setKeepaliveHours").value,
           page_load_wait: +$("setPageWait").value,
           element_wait: +$("setElementWait").value,
           send_delay: +$("setSendDelay").value,

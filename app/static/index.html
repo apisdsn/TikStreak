@@ -93,6 +93,8 @@
         <div class="card">
           <h2>Cookie TikTok</h2>
           <p id="cookieState" class="muted"></p>
+          <div class="row"><button id="btnCheckCookies" class="btn small">Cek cookie sekarang</button></div>
+          <p class="muted small-text">Cek otomatis berkala juga memperbarui cookie yang tersimpan agar sesi tetap aktif (atur di Pengaturan).</p>
         </div>
         <div class="card">
           <h2>Opsi 1: Login langsung di panel</h2>
@@ -133,6 +135,12 @@
           <div class="grid two">
             <div><label for="setScheduleTime">Jam (HH:MM)</label><input id="setScheduleTime" type="time" required></div>
             <div><label for="setTimezone">Timezone</label><input id="setTimezone" type="text" placeholder="Asia/Jakarta"></div>
+          </div>
+
+          <h2>Cookie</h2>
+          <label class="check"><input id="setKeepalive" type="checkbox"> Cek &amp; perbarui cookie otomatis (jaga sesi tetap aktif)</label>
+          <div class="grid two">
+            <div><label for="setKeepaliveHours">Interval cek (jam, 1-72)</label><input id="setKeepaliveHours" type="number" min="1" max="72"></div>
           </div>
 
           <h2>Waktu tunggu (detik)</h2>

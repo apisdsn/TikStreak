@@ -8,6 +8,7 @@ from DrissionPage import ChromiumOptions, ChromiumPage
 from DrissionPage.common import Keys
 
 from . import config
+from .cookies import from_browser
 from .store import cookies_store
 
 SHOT_PATH = os.path.join(config.DATA_DIR, "last_run.jpg")
@@ -46,6 +47,10 @@ class Cancelled(Exception):
     pass
 
 
+class CookieInvalid(RuntimeError):
+    """Cookie belum diatur, kedaluwarsa, atau ditolak TikTok."""
+
+
 def xpath_literal(s):
     """Quote string aman untuk XPath."""
     if '"' not in s:
@@ -57,13 +62,16 @@ def xpath_literal(s):
 
 
 class StreakBot:
-    def __init__(self, settings, log, cancel_event, test_mode=False, message=None):
+    def __init__(self, settings, log, cancel_event, test_mode=False, message=None, check_only=False):
         self.s = settings
         self.log = log
         self.cancel = cancel_event
         self.test_mode = test_mode
         self.message = message or settings["message"]
+        self.check_only = check_only
         self.page = None
+        self.logged_in = False
+        self.cookies_saved = False
 
     # ------------------------------------------------------------------ utils
     def _check_cancel(self):
@@ -103,7 +111,7 @@ class StreakBot:
     def _load_cookies(self):
         cookies = cookies_store.read()
         if not cookies:
-            raise RuntimeError("Cookie TikTok belum diatur")
+            raise CookieInvalid("Cookie TikTok belum diatur")
         self.page.get(config.TIKTOK_URL)
         self._sleep(2)
         for c in cookies:
@@ -118,11 +126,33 @@ class StreakBot:
         self._sleep(self.s["page_load_wait"])
         url = self.page.url or ""
         if "login" in url:
-            raise RuntimeError("Belum login, cookie kedaluwarsa atau tidak valid")
+            raise CookieInvalid("Cookie kedaluwarsa atau tidak valid (diarahkan ke halaman login)")
         if "messages" not in url:
             raise RuntimeError(f"URL tidak terduga: {url}")
+        names = {c.get("name") for c in self.page.cookies(all_domains=True)}
+        if "sessionid" not in names:
+            raise CookieInvalid("Cookie sessionid ditolak TikTok (sesi sudah tidak berlaku)")
+        try:
+            login_btn = self.page.ele('css:[data-e2e="top-login-button"]', timeout=1)
+        except Exception:  # noqa: BLE001
+            login_btn = None
+        if login_btn:
+            raise CookieInvalid("TikTok menampilkan tombol Log in (sesi tidak berlaku)")
+        self.logged_in = True
         self.log("Login terverifikasi")
+        self._save_cookies()
         self._dismiss_popups()
+
+    def _save_cookies(self):
+        """Simpan cookie terbaru dari browser (TikTok memperbarui sesi saat dipakai)."""
+        try:
+            fresh = from_browser(self.page.cookies(all_domains=True, all_info=True))
+            if any(c["name"] == "sessionid" for c in fresh):
+                cookies_store.write(fresh)
+                self.cookies_saved = True
+                self.log(f"Cookie diperbarui ({len(fresh)})")
+        except Exception as e:  # noqa: BLE001
+            self.log(f"Gagal menyimpan cookie terbaru: {e}", "warning")
 
     def _dismiss_popups(self):
         self._sleep(2)
@@ -294,11 +324,13 @@ class StreakBot:
         """Return dict hasil: {status, sent, total, results}."""
         results = []
         try:
-            if not contacts:
+            if not contacts and not self.check_only:
                 raise RuntimeError("Daftar kontak kosong")
             self._create_browser()
             self._load_cookies()
             self._verify_login()
+            if self.check_only:
+                return {"status": "success", "sent": 0, "total": 0, "results": []}
             self._sleep(self.s["element_wait"] + 2)
 
             for name in contacts:
@@ -326,6 +358,8 @@ class StreakBot:
         finally:
             if self.page:
                 self._snapshot()
+                if self.logged_in and not self.check_only:
+                    self._save_cookies()
                 try:
                     self.page.quit()
                 except Exception:  # noqa: BLE001

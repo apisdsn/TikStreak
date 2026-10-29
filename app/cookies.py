@@ -48,3 +48,17 @@ def summary(cookies):
         "count": len(cookies),
         "has_session": "sessionid" in names,
     }
+
+
+def from_browser(raw):
+    """Ambil cookie TikTok dari hasil page.cookies(all_info=True)."""
+    out = []
+    for c in raw:
+        if "tiktok" not in (c.get("domain") or ""):
+            continue
+        out.append({
+            "name": c["name"], "value": str(c.get("value", "")),
+            "domain": c.get("domain", ".tiktok.com"), "path": c.get("path", "/"),
+            "secure": bool(c.get("secure", False)), "httpOnly": bool(c.get("httpOnly", False)),
+        })
+    return out

@@ -15,6 +15,8 @@ DEFAULT_SETTINGS = {
     "telegram_chat_id": "",
     "discord_enabled": False,
     "discord_webhook": "",
+    "keepalive_enabled": True,
+    "keepalive_hours": 12,
     "page_load_wait": 5,
     "element_wait": 3,
     "send_delay": 2,
@@ -58,6 +60,7 @@ settings_store = JsonStore("settings.json", DEFAULT_SETTINGS)
 contacts_store = JsonStore("contacts.json", [])
 cookies_store = JsonStore("cookies.json", [])
 history_store = JsonStore("history.json", [])
+meta_store = JsonStore("meta.json", {})
 
 
 def get_settings():

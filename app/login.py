@@ -12,6 +12,7 @@ import time
 from DrissionPage import ChromiumOptions, ChromiumPage
 
 from . import config
+from .cookies import from_browser
 from .store import cookies_store
 
 IDLE_TIMEOUT = 600  # detik
@@ -131,15 +132,7 @@ class LoginSession:
         with self._lock:
             self._need()
             raw = self.page.cookies(all_domains=True, all_info=True)
-            cookies = []
-            for c in raw:
-                if "tiktok" not in (c.get("domain") or ""):
-                    continue
-                cookies.append({
-                    "name": c["name"], "value": str(c.get("value", "")),
-                    "domain": c.get("domain", ".tiktok.com"), "path": c.get("path", "/"),
-                    "secure": bool(c.get("secure", False)), "httpOnly": bool(c.get("httpOnly", False)),
-                })
+            cookies = from_browser(raw)
             if not any(c["name"] == "sessionid" for c in cookies):
                 raise RuntimeError("Belum login: cookie sessionid belum ada")
             cookies_store.write(cookies)

@@ -6,12 +6,14 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from . import config
-from .bot import Cancelled, StreakBot
+from .bot import Cancelled, CookieInvalid, StreakBot
+from .login import login_session
 from .notify import notify
-from .store import contacts_store, get_settings, history_store
+from .store import contacts_store, cookies_store, get_settings, history_store, meta_store
 
 MAX_HISTORY = 50
 MAX_LOG_LINES = 500
+ALERT_COOLDOWN = 6 * 3600  # jeda minimal antar alert cookie dari cek otomatis
 
 
 class Busy(Exception):
@@ -68,24 +70,44 @@ class Runner:
     def _execute(self, run, message):
         settings = get_settings()
         log = self._log_fn(run)
-        test = run["mode"] == "test"
-        log("Mode uji (tidak mengirim pesan)" if test else "Mulai mengirim streak")
+        mode = run["mode"]
+        log({"test": "Mode uji (tidak mengirim pesan)", "check": "Cek & perbarui cookie"}.get(mode, "Mulai mengirim streak"))
+        bot = None
         try:
             contacts = contacts_store.read()
-            bot = StreakBot(settings, log, self._cancel, test_mode=test, message=message)
+            bot = StreakBot(settings, log, self._cancel, test_mode=(mode == "test"),
+                            message=message, check_only=(mode == "check"))
             res = bot.run(contacts)
             run.update(res)
-            log(f"Selesai: {res['sent']}/{res['total']}")
+            log("Cookie valid" if mode == "check" else f"Selesai: {res['sent']}/{res['total']}")
         except Cancelled:
             run["status"] = "cancelled"
             log("Dihentikan oleh pengguna", "warning")
+        except CookieInvalid as e:
+            run["status"] = "failed"
+            run["error"] = str(e)
+            run["cookie_invalid"] = True
+            log(f"Gagal: {e}", "error")
         except Exception as e:  # noqa: BLE001
             run["status"] = "failed"
             run["error"] = str(e)
             log(f"Gagal: {e}", "error")
+        self._update_meta(run, bot)
         run["finished_at"] = datetime.now().isoformat(timespec="seconds")
         self._save_history(run)
         self._notify(settings, run)
+
+    def _update_meta(self, run, bot):
+        meta = meta_store.read()
+        now = datetime.now().isoformat(timespec="seconds")
+        if bot and bot.logged_in:
+            meta["last_ok"] = now
+            meta.pop("invalid", None)
+        if bot and bot.cookies_saved:
+            meta["last_saved"] = now
+        if run.get("cookie_invalid"):
+            meta["invalid"] = run["error"]
+        meta_store.write(meta)
 
     def _save_history(self, run):
         hist = history_store.read()
@@ -94,6 +116,21 @@ class Runner:
 
     def _notify(self, settings, run):
         if run["mode"] == "test" or run["status"] == "cancelled":
+            return
+        if run.get("cookie_invalid"):
+            meta = meta_store.read()
+            if run["mode"] == "check" and time.time() - meta.get("last_alert", 0) < ALERT_COOLDOWN:
+                return
+            meta["last_alert"] = time.time()
+            meta_store.write(meta)
+            notify(settings, "🔐 Cookie TikTok tidak valid", [
+                run["error"],
+                "Buka panel → tab Cookie → login ulang.",
+            ])
+            return
+        if run["mode"] == "check":
+            if run["status"] == "failed":
+                notify(settings, "⚠️ Cek cookie gagal", [run.get("error") or "Kesalahan tidak diketahui"])
             return
         icon = {"success": "✅", "partial": "⚠️", "failed": "❌"}.get(run["status"], "ℹ️")
         lines = [f"{run['sent']}/{run['total']} terkirim"]
@@ -132,9 +169,27 @@ class Runner:
                             self.start("send", trigger="schedule")
                         except Busy:
                             pass
+                self._keepalive(s)
             except Exception:  # noqa: BLE001
                 pass
             time.sleep(20)
+
+    def _keepalive(self, s):
+        """Cek berkala agar sesi tetap aktif dan cookie terbaru tersimpan."""
+        if not s["keepalive_enabled"] or not cookies_store.read():
+            return
+        if login_session.active:
+            return
+        meta = meta_store.read()
+        if time.time() - meta.get("last_check", 0) < s["keepalive_hours"] * 3600:
+            return
+        try:
+            self.start("check", trigger="keepalive")
+        except Busy:
+            return
+        meta = meta_store.read()
+        meta["last_check"] = time.time()
+        meta_store.write(meta)
 
 
 runner = Runner()
