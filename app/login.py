@@ -108,8 +108,8 @@ class LoginSession:
                 if key in KEYS:
                     code, name = KEYS[key]
                     extra = {"text": "\r"} if key == "Enter" else {}
-                    run("Input.dispatchKeyEvent", type="rawKeyDown", key=name, code=name,
-                        windowsVirtualKeyCode=code, **extra)
+                    run("Input.dispatchKeyEvent", type="keyDown" if extra else "rawKeyDown",
+                        key=name, code=name, windowsVirtualKeyCode=code, **extra)
                     run("Input.dispatchKeyEvent", type="keyUp", key=name, code=name,
                         windowsVirtualKeyCode=code)
                 elif len(key) == 1:

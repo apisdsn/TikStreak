@@ -1,4 +1,5 @@
 """Otomasi pengiriman pesan streak TikTok lewat browser (DrissionPage)."""
+import base64
 import os
 import tempfile
 import time
@@ -9,6 +10,8 @@ from DrissionPage.common import Keys
 from . import config
 from .store import cookies_store
 
+SHOT_PATH = os.path.join(config.DATA_DIR, "last_run.jpg")
+
 NICKNAME_SELECTORS = [
     'css:p[class*="PInfoNickname"]',
     'css:p[class*="Nickname"]',
@@ -17,10 +20,18 @@ NICKNAME_SELECTORS = [
 ]
 
 INPUT_SELECTORS = [
+    'css:div[data-e2e="message-input-area"] div[contenteditable="true"]',
+    'css:div[data-e2e="message-input"] div[contenteditable="true"]',
     'css:div[data-e2e="message-input"]',
     'css:div[contenteditable="true"]',
     'css:textarea[placeholder*="message"]',
-    'css:input[placeholder*="message"]',
+]
+
+SEND_BUTTON_SELECTORS = [
+    'css:[data-e2e="message-send"]',
+    'css:button[data-e2e="send-button"]',
+    'css:[class*="SendButton"]',
+    'css:svg[class*="Send"]',
 ]
 
 DISMISS_SELECTORS = [
@@ -160,12 +171,73 @@ class StreakBot:
     def _find_input(self):
         for sel in INPUT_SELECTORS:
             try:
-                el = self.page.ele(sel, timeout=2)
-                if el:
-                    return el
+                els = self.page.eles(sel, timeout=2)
+                if els:
+                    return els[-1]  # kotak chat berada paling bawah
             except Exception:  # noqa: BLE001
                 continue
         return None
+
+    def _input_text(self):
+        box = self._find_input()
+        return (box.text or "").strip() if box else ""
+
+    def _count_text(self, text):
+        try:
+            return self.page.run_js(
+                "return document.body.innerText.split(arguments[0]).length - 1;", text
+            )
+        except Exception:  # noqa: BLE001
+            return 0
+
+    def _clear_input(self):
+        run = self.page.run_cdp
+        run("Input.dispatchKeyEvent", type="keyDown", key="a", code="KeyA",
+            windowsVirtualKeyCode=65, modifiers=2, commands=["selectAll"])
+        run("Input.dispatchKeyEvent", type="keyUp", key="a", code="KeyA", windowsVirtualKeyCode=65)
+        run("Input.dispatchKeyEvent", type="keyDown", key="Backspace", code="Backspace",
+            windowsVirtualKeyCode=8)
+        run("Input.dispatchKeyEvent", type="keyUp", key="Backspace", code="Backspace",
+            windowsVirtualKeyCode=8)
+        self._sleep(0.3)
+
+    def _press_enter(self):
+        run = self.page.run_cdp
+        run("Input.dispatchKeyEvent", type="keyDown", key="Enter", code="Enter",
+            windowsVirtualKeyCode=13, text="\r")
+        run("Input.dispatchKeyEvent", type="keyUp", key="Enter", code="Enter",
+            windowsVirtualKeyCode=13)
+
+    def _click_send_button(self):
+        for sel in SEND_BUTTON_SELECTORS:
+            try:
+                btn = self.page.ele(sel, timeout=1)
+                if btn:
+                    try:
+                        btn.click()
+                    except Exception:  # noqa: BLE001
+                        self.page.run_js("arguments[0].click();", btn)
+                    return True
+            except Exception:  # noqa: BLE001
+                continue
+        return False
+
+    def _wait_sent(self, before, timeout=6):
+        """Terkirim bila kotak input kosong dan teks muncul sebagai bubble baru."""
+        end = time.time() + timeout
+        while time.time() < end:
+            self._sleep(0.5)
+            if not self._input_text() and self._count_text(self.message) > before:
+                return True
+        return False
+
+    def _snapshot(self):
+        try:
+            r = self.page.run_cdp("Page.captureScreenshot", format="jpeg", quality=70)
+            with open(SHOT_PATH, "wb") as f:
+                f.write(base64.b64decode(r["data"]))
+        except Exception:  # noqa: BLE001
+            pass
 
     def _visible_nicknames(self):
         names = []
@@ -200,20 +272,22 @@ class StreakBot:
         box = self._find_input()
         if not box:
             raise RuntimeError("Kolom pesan tidak ditemukan")
+        before = self._count_text(self.message)
         box.click()
         self._sleep(0.5)
-        box.input(self.message)
-        self._sleep(0.5)
+        if self._input_text():
+            self._clear_input()
+        self.page.run_cdp("Input.insertText", text=self.message)
+        self._sleep(0.7)
+        if self._input_text() == "":
+            raise RuntimeError("Teks tidak masuk ke kolom pesan")
 
-        btn = self.page.ele(
-            'css:button[data-e2e="send-button"], button[class*="send"], button[class*="Send"]',
-            timeout=1,
-        )
-        if btn:
-            btn.click()
-        else:
-            box.input(Keys.ENTER)
-        self._sleep(self.s["send_delay"])
+        self._press_enter()
+        if self._wait_sent(before):
+            return
+        if self._click_send_button() and self._wait_sent(before):
+            return
+        raise RuntimeError("Pesan tidak terverifikasi terkirim (cek screenshot)")
 
     # -------------------------------------------------------------------- run
     def run(self, contacts):
@@ -251,6 +325,7 @@ class StreakBot:
                 self._sleep(1)
         finally:
             if self.page:
+                self._snapshot()
                 try:
                     self.page.quit()
                 except Exception:  # noqa: BLE001

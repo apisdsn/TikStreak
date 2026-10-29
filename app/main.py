@@ -297,6 +297,14 @@ def current(since: int = 0):
     return {"run": run_view(cur), "logs": logs[since:], "next": len(logs)}
 
 
+@app.get("/api/run/screenshot", dependencies=[Depends(auth)])
+def run_screenshot():
+    from .bot import SHOT_PATH
+    if not os.path.exists(SHOT_PATH):
+        raise HTTPException(404, "Belum ada screenshot")
+    return FileResponse(SHOT_PATH, media_type="image/jpeg", headers={"Cache-Control": "no-store"})
+
+
 @app.get("/api/history", dependencies=[Depends(auth)])
 def history():
     return {"runs": [{**run_view(r), "logs": r.get("logs", [])} for r in history_store.read()]}

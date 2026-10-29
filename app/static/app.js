@@ -151,6 +151,17 @@
   $("btnTest").addEventListener("click", () => startRun("test"));
   $("btnStop").addEventListener("click", () => api("/run/stop", { method: "POST" }).then(() => toast("Menghentikan…")));
 
+  $("btnShot").addEventListener("click", async () => {
+    const img = $("shotView");
+    try {
+      const res = await fetch("/api/run/screenshot?t=" + Date.now(), { headers: { "X-API-Key": apiKey } });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).detail || res.status);
+      if (img.src.startsWith("blob:")) URL.revokeObjectURL(img.src);
+      img.src = URL.createObjectURL(await res.blob());
+      img.classList.remove("hidden");
+    } catch (e) { toast(e.message); }
+  });
+
   async function loadHistory() {
     const { runs } = await api("/history");
     const body = $("historyBody");
