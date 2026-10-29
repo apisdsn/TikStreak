@@ -1,4 +1,6 @@
 """Menjalankan bot di thread, menyimpan log live + riwayat, dan scheduler harian."""
+import os
+import shutil
 import threading
 import time
 import uuid
@@ -6,6 +8,7 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from . import config
+from .config import DATA_DIR
 from .bot import Cancelled, CookieInvalid, StreakBot
 from .login import login_session
 from .notify import notify
@@ -13,6 +16,7 @@ from .store import contacts_store, cookies_store, get_settings, history_store, m
 
 MAX_HISTORY = 50
 MAX_LOG_LINES = 500
+PROOFS_DIR = os.path.join(DATA_DIR, "proofs")
 ALERT_COOLDOWN = 6 * 3600  # jeda minimal antar alert cookie dari cek otomatis
 
 
@@ -48,6 +52,7 @@ class Runner:
                 "finished_at": None,
                 "sent": 0,
                 "total": 0,
+                "message": message,
                 "results": [],
                 "logs": [],
             }
@@ -76,7 +81,8 @@ class Runner:
         try:
             contacts = contacts_store.read()
             bot = StreakBot(settings, log, self._cancel, test_mode=(mode == "test"),
-                            message=message, check_only=(mode == "check"))
+                            message=message, check_only=(mode == "check"),
+                            proof_dir=os.path.join(PROOFS_DIR, run["id"]))
             res = bot.run(contacts)
             run.update(res)
             log("Cookie valid" if mode == "check" else f"Selesai: {res['sent']}/{res['total']}")
@@ -112,7 +118,13 @@ class Runner:
     def _save_history(self, run):
         hist = history_store.read()
         hist.insert(0, {k: v for k, v in run.items()})
-        history_store.write(hist[:MAX_HISTORY])
+        hist = hist[:MAX_HISTORY]
+        history_store.write(hist)
+        keep = {h["id"] for h in hist}
+        if os.path.isdir(PROOFS_DIR):
+            for d in os.listdir(PROOFS_DIR):
+                if d not in keep:
+                    shutil.rmtree(os.path.join(PROOFS_DIR, d), ignore_errors=True)
 
     def _notify(self, settings, run):
         if run["mode"] == "test" or run["status"] == "cancelled":
@@ -133,13 +145,37 @@ class Runner:
                 notify(settings, "⚠️ Cek cookie gagal", [run.get("error") or "Kesalahan tidak diketahui"])
             return
         icon = {"success": "✅", "partial": "⚠️", "failed": "❌"}.get(run["status"], "ℹ️")
-        lines = [f"{run['sent']}/{run['total']} terkirim"]
+        lines = [f"{run['sent']}/{run['total']} terkirim · {self._span(run)}"]
+        if run["mode"] == "send":
+            lines.append(f"Pesan: \"{run.get('message') or settings['message']}\"")
         if run.get("error"):
             lines.append(run["error"])
-        failed = [r["contact"] for r in run["results"] if not r["ok"]]
-        if failed:
-            lines.append("Gagal: " + ", ".join(failed))
-        notify(settings, f"{icon} Streak {run['status']}", lines)
+        files = []
+        for r in run["results"]:
+            if r["ok"]:
+                lines.append(f"✅ {r['contact']} — {r.get('sent_at') or 'ok'}")
+            else:
+                lines.append(f"❌ {r['contact']} — {r.get('error') or 'gagal'}")
+            if r.get("proof") and settings.get("notify_screenshot"):
+                path = os.path.join(PROOFS_DIR, run["id"], r["proof"])
+                try:
+                    with open(path, "rb") as f:
+                        files.append((f"{r['contact']} {r.get('sent_at') or ''}".strip(), f.read()))
+                except OSError:
+                    pass
+        if files:
+            lines.append("Bukti: screenshot chat terlampir")
+        notify(settings, f"{icon} Streak {run['status']}", lines, files)
+
+    @staticmethod
+    def _span(run):
+        try:
+            a = datetime.fromisoformat(run["started_at"])
+            b = datetime.fromisoformat(run["finished_at"])
+            sec = int((b - a).total_seconds())
+            return f"{a.strftime('%H:%M:%S')} ({sec // 60}m {sec % 60}s)"
+        except Exception:  # noqa: BLE001
+            return run.get("started_at", "")
 
     # --------------------------------------------------------------- scheduler
     def next_run_at(self):

@@ -56,6 +56,7 @@
           <h2>Log <span id="runBadge" class="badge"></span></h2>
           <pre id="logBox" class="log">Belum ada proses.</pre>
           <div class="row"><button id="btnShot" class="btn small">Lihat screenshot browser terakhir</button></div>
+          <div id="proofBox" class="proofs"></div>
           <img id="shotView" class="shot hidden" alt="Screenshot browser terakhir">
         </div>
 
@@ -150,6 +151,10 @@
             <div><label for="setElementWait">Elemen</label><input id="setElementWait" type="number" min="0" max="60"></div>
             <div><label for="setSendDelay">Jeda kirim</label><input id="setSendDelay" type="number" min="0" max="60"></div>
           </div>
+
+          <h2>Bukti kirim</h2>
+          <label class="check"><input id="setNotifyShot" type="checkbox"> Lampirkan screenshot chat di notifikasi</label>
+          <p class="muted small-text">Screenshot berisi tampilan chat dengan penerima dan ikut terkirim ke Discord/Telegram Anda. Matikan jika channel notifikasi dibaca orang lain.</p>
 
           <h2>Notifikasi Discord (opsional)</h2>
           <label class="check"><input id="setDcEnabled" type="checkbox"> Aktifkan notifikasi</label>

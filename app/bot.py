@@ -3,6 +3,7 @@ import base64
 import os
 import tempfile
 import time
+from datetime import datetime
 
 from DrissionPage import ChromiumOptions, ChromiumPage
 from DrissionPage.common import Keys
@@ -62,13 +63,14 @@ def xpath_literal(s):
 
 
 class StreakBot:
-    def __init__(self, settings, log, cancel_event, test_mode=False, message=None, check_only=False):
+    def __init__(self, settings, log, cancel_event, test_mode=False, message=None, check_only=False, proof_dir=None):
         self.s = settings
         self.log = log
         self.cancel = cancel_event
         self.test_mode = test_mode
         self.message = message or settings["message"]
         self.check_only = check_only
+        self.proof_dir = proof_dir
         self.page = None
         self.logged_in = False
         self.cookies_saved = False
@@ -261,6 +263,20 @@ class StreakBot:
                 return True
         return False
 
+    def _capture_proof(self, index):
+        """Screenshot chat setelah pesan terverifikasi terkirim. Return nama file."""
+        if not self.proof_dir or self.test_mode:
+            return None
+        try:
+            os.makedirs(self.proof_dir, exist_ok=True)
+            r = self.page.run_cdp("Page.captureScreenshot", format="jpeg", quality=60)
+            name = f"{index}.jpg"
+            with open(os.path.join(self.proof_dir, name), "wb") as f:
+                f.write(base64.b64decode(r["data"]))
+            return name
+        except Exception:  # noqa: BLE001
+            return None
+
     def _snapshot(self):
         try:
             r = self.page.run_cdp("Page.captureScreenshot", format="jpeg", quality=70)
@@ -353,7 +369,11 @@ class StreakBot:
                 else:
                     shown = ", ".join(self._visible_nicknames()) or "-"
                     self.log(f"Nickname terlihat di halaman: {shown}", "info")
-                results.append({"contact": name, "ok": ok, "error": None if ok else err})
+                results.append({
+                    "contact": name, "ok": ok, "error": None if ok else err,
+                    "sent_at": datetime.now().strftime("%H:%M:%S") if ok and not self.test_mode else None,
+                    "proof": self._capture_proof(len(results)) if ok else None,
+                })
                 self._sleep(1)
         finally:
             if self.page:

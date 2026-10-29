@@ -163,6 +163,22 @@
     } catch (e) { toast(e.message); }
   });
 
+  async function showProofs(run) {
+    const box = $("proofBox");
+    box.replaceChildren();
+    for (const r of run.results || []) {
+      if (!r.proof) continue;
+      try {
+        const res = await fetch(`/api/proof/${run.id}/${r.proof}`, { headers: { "X-API-Key": apiKey } });
+        if (!res.ok) continue;
+        const url = URL.createObjectURL(await res.blob());
+        const img = el("img", { src: url, alt: "Bukti " + r.contact });
+        img.addEventListener("click", () => window.open(url, "_blank"));
+        box.append(el("figure", {}, [img, el("figcaption", { textContent: `${r.contact} — ${r.sent_at || ""}` })]));
+      } catch (e) { /* abaikan */ }
+    }
+  }
+
   async function loadHistory() {
     const { runs } = await api("/history");
     const body = $("historyBody");
@@ -186,6 +202,7 @@
         box.replaceChildren();
         (r.logs || []).forEach((l) => box.append(el("div", { className: l.level, textContent: `[${l.t}] ${l.msg}` })));
         pinned = true;
+        showProofs(r);
         window.scrollTo({ top: 0, behavior: "smooth" });
       });
       body.append(tr);
@@ -370,6 +387,7 @@
     $("setScheduleHour").value = hh;
     $("setScheduleMin").value = mm;
     $("setTimezone").value = s.timezone;
+    $("setNotifyShot").checked = s.notify_screenshot;
     $("setKeepalive").checked = s.keepalive_enabled;
     $("setKeepaliveHours").value = s.keepalive_hours;
     $("setPageWait").value = s.page_load_wait;
@@ -393,6 +411,7 @@
           schedule_enabled: $("setScheduleEnabled").checked,
           schedule_time: `${$("setScheduleHour").value}:${$("setScheduleMin").value}`,
           timezone: $("setTimezone").value.trim(),
+          notify_screenshot: $("setNotifyShot").checked,
           keepalive_enabled: $("setKeepalive").checked,
           keepalive_hours: +$("setKeepaliveHours").value,
           page_load_wait: +$("setPageWait").value,

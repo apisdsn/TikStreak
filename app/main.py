@@ -53,6 +53,7 @@ class SettingsIn(BaseModel):
     telegram_chat_id: Optional[str] = None
     discord_enabled: Optional[bool] = None
     discord_webhook: Optional[str] = None
+    notify_screenshot: Optional[bool] = None
     keepalive_enabled: Optional[bool] = None
     keepalive_hours: Optional[int] = None
     page_load_wait: Optional[int] = None
@@ -322,6 +323,17 @@ def run_screenshot():
     if not os.path.exists(SHOT_PATH):
         raise HTTPException(404, "Belum ada screenshot")
     return FileResponse(SHOT_PATH, media_type="image/jpeg", headers={"Cache-Control": "no-store"})
+
+
+@app.get("/api/proof/{run_id}/{name}", dependencies=[Depends(auth)])
+def proof(run_id: str, name: str):
+    from .runner import PROOFS_DIR
+    if not re.fullmatch(r"[0-9a-f]{8}", run_id) or not re.fullmatch(r"\d+\.jpg", name):
+        raise HTTPException(404, "Tidak ditemukan")
+    path = os.path.join(PROOFS_DIR, run_id, name)
+    if not os.path.exists(path):
+        raise HTTPException(404, "Bukti sudah dihapus")
+    return FileResponse(path, media_type="image/jpeg")
 
 
 @app.get("/api/history", dependencies=[Depends(auth)])
