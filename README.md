@@ -21,6 +21,16 @@ docker compose up -d --build
 
 Buka `http://localhost:8000`, masuk dengan `API_KEY`.
 
+### Akses privat di VPS (tanpa ekspose ke internet)
+
+Secara default port hanya di-bind ke `127.0.0.1` di VPS (`BIND_ADDRESS` di `.env`), jadi tidak bisa diakses dari luar. Untuk membuka panel dari laptop, pakai SSH tunnel:
+
+```bash
+ssh -L 8000:127.0.0.1:8000 user@ip-vps
+```
+
+Lalu buka `http://localhost:8000` di laptop selama tunnel aktif. Alternatif: VPN pribadi seperti Tailscale atau WireGuard.
+
 ## Langkah pertama di UI
 
 1. **Cookie**: di tab *Cookie* klik *Mulai login*, login ke TikTok pada tampilan browser di panel (klik/ketik langsung, captcha juga bisa), lalu *Simpan sesi login*. Alternatif: tempel cookie manual (JSON dari Cookie-Editor atau string header `Cookie`).
