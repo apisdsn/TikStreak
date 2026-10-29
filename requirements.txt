@@ -1,0 +1,4 @@
+fastapi>=0.110
+uvicorn[standard]>=0.27
+DrissionPage>=4.0
+requests>=2.31

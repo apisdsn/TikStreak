@@ -1,0 +1,16 @@
+services:
+  streak-panel:
+    build: .
+    container_name: streak-panel
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8000}:8000"
+    environment:
+      API_KEY: ${API_KEY:?Isi API_KEY di file .env}
+      TZ: ${TZ:-Asia/Jakarta}
+    volumes:
+      - streak-data:/data
+    shm_size: "1gb"
+
+volumes:
+  streak-data:
