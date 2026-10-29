@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Streak Panel</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div id="login" class="login hidden">
+    <form id="loginForm" class="card login-card">
+      <h1>🔥 Streak Panel</h1>
+      <p class="muted">Masukkan access key (API_KEY di file .env).</p>
+      <input id="keyInput" type="password" placeholder="Access key" autocomplete="current-password" required>
+      <button class="btn primary" type="submit">Masuk</button>
+      <p id="loginErr" class="error"></p>
+    </form>
+  </div>
+
+  <div id="app" class="hidden">
+    <header>
+      <div class="brand">🔥 Streak Panel</div>
+      <nav id="tabs">
+        <button data-tab="dashboard" class="active">Dashboard</button>
+        <button data-tab="contacts">Kontak</button>
+        <button data-tab="cookies">Cookie</button>
+        <button data-tab="settings">Pengaturan</button>
+      </nav>
+      <button id="logout" class="btn ghost small">Keluar</button>
+    </header>
+
+    <main>
+      <!-- Dashboard -->
+      <section id="tab-dashboard">
+        <div class="grid stats">
+          <div class="card stat"><span class="label">Status</span><strong id="stState">-</strong></div>
+          <div class="card stat"><span class="label">Kontak</span><strong id="stContacts">-</strong></div>
+          <div class="card stat"><span class="label">Cookie</span><strong id="stCookies">-</strong></div>
+          <div class="card stat"><span class="label">Jadwal berikutnya</span><strong id="stNext">-</strong></div>
+        </div>
+
+        <div class="card">
+          <h2>Jalankan</h2>
+          <label for="runMessage">Pesan (kosongkan untuk memakai pesan default)</label>
+          <input id="runMessage" type="text" placeholder="Pesan default dari Pengaturan">
+          <div class="row">
+            <button id="btnSend" class="btn primary">Kirim streak sekarang</button>
+            <button id="btnTest" class="btn">Uji (tanpa kirim)</button>
+            <button id="btnStop" class="btn danger hidden">Hentikan</button>
+          </div>
+          <p id="runErr" class="error"></p>
+        </div>
+
+        <div class="card">
+          <h2>Log <span id="runBadge" class="badge"></span></h2>
+          <pre id="logBox" class="log">Belum ada proses.</pre>
+        </div>
+
+        <div class="card">
+          <div class="row between">
+            <h2>Riwayat</h2>
+            <button id="clearHistory" class="btn ghost small">Hapus riwayat</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Waktu</th><th>Mode</th><th>Pemicu</th><th>Hasil</th><th>Status</th></tr></thead>
+              <tbody id="historyBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Contacts -->
+      <section id="tab-contacts" class="hidden">
+        <div class="card">
+          <h2>Tambah kontak</h2>
+          <p class="muted">Nickname persis seperti yang tampil di daftar pesan TikTok. Pisahkan dengan baris baru atau koma.</p>
+          <textarea id="contactsInput" rows="3" placeholder="nickname1&#10;nickname2"></textarea>
+          <div class="row"><button id="btnAddContacts" class="btn primary">Tambah</button></div>
+          <p id="contactsErr" class="error"></p>
+        </div>
+        <div class="card">
+          <h2>Daftar kontak <span id="contactsCount" class="badge"></span></h2>
+          <ul id="contactsList" class="list"></ul>
+        </div>
+      </section>
+
+      <!-- Cookies -->
+      <section id="tab-cookies" class="hidden">
+        <div class="card">
+          <h2>Cookie TikTok</h2>
+          <p id="cookieState" class="muted"></p>
+        </div>
+        <div class="card">
+          <h2>Opsi 1: Login langsung di panel</h2>
+          <p class="muted">Panel membuka browser TikTok di server. Klik dan ketik pada tampilan di bawah (termasuk captcha/OTP), lalu simpan.</p>
+          <div class="row">
+            <button id="btnLoginStart" class="btn primary">Mulai login</button>
+            <button id="btnLoginSave" class="btn hidden">Simpan sesi login</button>
+            <button id="btnLoginStop" class="btn danger hidden">Batal</button>
+          </div>
+          <p id="loginState" class="muted"></p>
+          <div id="remoteWrap" class="remote hidden">
+            <img id="remoteView" alt="Browser remote" tabindex="0" draggable="false">
+          </div>
+          <input id="remoteText" type="text" class="hidden" placeholder="Ketik/tempel teks di sini lalu Enter untuk dikirim ke browser (opsional)">
+        </div>
+        <div class="card">
+          <h2>Opsi 2: Tempel cookie manual</h2>
+          <p class="muted">Login ke tiktok.com di browser, lalu ekspor cookie (mis. ekstensi Cookie-Editor, format JSON) atau salin header <code>Cookie</code>. Tempel di bawah.</p>
+          <textarea id="cookieInput" rows="8" placeholder='[{"name":"sessionid","value":"...","domain":".tiktok.com"}]  atau  sessionid=...; sid_tt=...'></textarea>
+          <div class="row">
+            <button id="btnSaveCookies" class="btn primary">Simpan cookie</button>
+            <button id="btnClearCookies" class="btn danger">Hapus cookie</button>
+          </div>
+          <p id="cookieErr" class="error"></p>
+          <p class="muted small-text">Cookie disimpan di volume Docker dan tidak pernah ditampilkan kembali.</p>
+        </div>
+      </section>
+
+      <!-- Settings -->
+      <section id="tab-settings" class="hidden">
+        <form id="settingsForm" class="card">
+          <h2>Pesan</h2>
+          <label for="setMessage">Pesan default</label>
+          <input id="setMessage" type="text" required>
+
+          <h2>Jadwal harian</h2>
+          <label class="check"><input id="setScheduleEnabled" type="checkbox"> Aktifkan pengiriman otomatis</label>
+          <div class="grid two">
+            <div><label for="setScheduleTime">Jam (HH:MM)</label><input id="setScheduleTime" type="time" required></div>
+            <div><label for="setTimezone">Timezone</label><input id="setTimezone" type="text" placeholder="Asia/Jakarta"></div>
+          </div>
+
+          <h2>Waktu tunggu (detik)</h2>
+          <div class="grid three">
+            <div><label for="setPageWait">Muat halaman</label><input id="setPageWait" type="number" min="0" max="60"></div>
+            <div><label for="setElementWait">Elemen</label><input id="setElementWait" type="number" min="0" max="60"></div>
+            <div><label for="setSendDelay">Jeda kirim</label><input id="setSendDelay" type="number" min="0" max="60"></div>
+          </div>
+
+          <h2>Notifikasi Discord (opsional)</h2>
+          <label class="check"><input id="setDcEnabled" type="checkbox"> Aktifkan notifikasi</label>
+          <label for="setDcWebhook">Webhook URL <span id="dcWebhookState" class="muted"></span></label>
+          <input id="setDcWebhook" type="password" placeholder="https://discord.com/api/webhooks/..." autocomplete="off">
+          <div class="row"><button id="btnDcTest" class="btn" type="button">Tes Discord</button></div>
+
+          <h2>Notifikasi Telegram (opsional)</h2>
+          <label class="check"><input id="setTgEnabled" type="checkbox"> Aktifkan notifikasi</label>
+          <div class="grid two">
+            <div><label for="setTgToken">Bot token <span id="tgTokenState" class="muted"></span></label><input id="setTgToken" type="password" placeholder="Kosongkan untuk tidak mengubah" autocomplete="off"></div>
+            <div><label for="setTgChat">Chat ID</label><input id="setTgChat" type="text"></div>
+          </div>
+          <div class="row">
+            <button class="btn primary" type="submit">Simpan</button>
+            <button id="btnTgTest" class="btn" type="button">Tes Telegram</button>
+          </div>
+          <p id="settingsMsg" class="muted"></p>
+        </form>
+      </section>
+    </main>
+  </div>
+  <div id="toast" class="toast hidden"></div>
+  <script src="/static/app.js"></script>
+</body>
+</html>
