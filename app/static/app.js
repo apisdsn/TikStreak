@@ -6,8 +6,12 @@
   let lastRunId = null;
   let pinned = false; // true saat melihat log dari riwayat
   let pollTimer = null;
+  const ACCT_KEY = "streak_panel_account";
+  let accounts = [];
+  let currentId = "";
+  let accountsSig = "";
 
-  try { apiKey = localStorage.getItem(KEY) || ""; } catch (e) { /* storage tidak tersedia */ }
+  try { apiKey = localStorage.getItem(KEY) || ""; currentId = localStorage.getItem(ACCT_KEY) || ""; } catch (e) { /* storage tidak tersedia */ }
 
   // ---------------------------------------------------------------- helpers
   async function api(path, opts = {}) {
@@ -21,6 +25,10 @@
     if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
     return data;
   }
+
+  // Panggilan API untuk akun yang sedang dipilih
+  const apiA = (path, opts) => api(path + (path.includes("?") ? "&" : "?") + "account=" + encodeURIComponent(currentId), opts);
+  const curAccount = () => accounts.find((a) => a.id === currentId) || accounts[0];
 
   function toast(msg) {
     const t = $("toast");
@@ -61,10 +69,12 @@
   }
 
   async function enter() {
-    await api("/status");
+    const st = await api("/status");
+    syncAccounts(st.accounts);
     $("login").classList.add("hidden");
     $("app").classList.remove("hidden");
-    await Promise.all([loadSettings(), loadContacts(), loadCookies(), loadHistory()]);
+    await Promise.all([loadSettings(), loadContacts(), loadHistory()]);
+    renderSchedules(curAccount().schedules);
     await refresh();
     clearInterval(pollTimer);
     pollTimer = setInterval(refresh, 2000);
@@ -99,14 +109,49 @@
   });
 
   // -------------------------------------------------------------- dashboard
+  // Sinkronkan daftar akun dari server; return true bila akun terpilih berubah
+  function syncAccounts(list) {
+    accounts = list;
+    let changed = false;
+    if (!accounts.find((a) => a.id === currentId)) {
+      currentId = accounts[0].id;
+      changed = true;
+      try { localStorage.setItem(ACCT_KEY, currentId); } catch (e) { /* abaikan */ }
+    }
+    const sig = JSON.stringify(accounts.map((a) => [a.id, a.name, a.cookies.invalid ? 1 : 0]));
+    const sel = $("accountSelect");
+    if (sel.dataset.sig !== sig) {
+      sel.dataset.sig = sig;
+      sel.replaceChildren(...accounts.map((a) => new Option((a.cookies.invalid ? "⚠️ " : "") + a.name, a.id)));
+    }
+    sel.value = currentId;
+    sel.classList.toggle("hidden", accounts.length < 2);
+    document.querySelectorAll(".acct-name").forEach((n) => { n.textContent = accounts.length > 1 ? curAccount().name : ""; });
+    renderAccountList();
+    return changed;
+  }
+
+  async function switchAccount(id) {
+    currentId = id;
+    try { localStorage.setItem(ACCT_KEY, id); } catch (e) { /* abaikan */ }
+    if (loginTimer) { await api("/login/stop", { method: "POST" }).catch(() => {}); endLogin(""); }
+    syncAccounts(accounts);
+    await Promise.all([loadContacts(), loadCookies()]);
+    renderSchedules(curAccount().schedules);
+    refresh();
+  }
+  $("accountSelect").addEventListener("change", (e) => switchAccount(e.target.value));
+
   async function refresh() {
     try {
       const [st, cur] = await Promise.all([api("/status"), api("/run/current?since=" + logCursor)]);
-      setText("stState", st.running ? "Berjalan…" : "Siap");
-      setText("stContacts", st.contacts);
-      renderCookieState(st.cookies);
-      setText("stCookies", st.cookies.invalid ? "⚠️ Tidak valid" : !st.cookies.present ? "Belum diatur" : st.cookies.has_session ? `${st.cookies.count} (sessionid ✓)` : `${st.cookies.count} (tanpa sessionid)`);
-      setText("stNext", st.next_run ? st.next_run : st.schedule_enabled ? "-" : "Nonaktif");
+      if (syncAccounts(st.accounts)) { await switchAccount(currentId); return; }
+      const a = curAccount();
+      setText("stState", st.running ? `Berjalan${st.current && st.current.account ? ": " + st.current.account.name : "…"}` : "Siap");
+      setText("stContacts", a.contacts);
+      renderCookieState(a.cookies);
+      setText("stCookies", a.cookies.invalid ? "⚠️ Tidak valid" : !a.cookies.present ? "Belum diatur" : a.cookies.has_session ? `${a.cookies.count} (sessionid ✓)` : `${a.cookies.count} (tanpa sessionid)`);
+      setText("stNext", a.next_run ? a.next_run : a.schedules.some((x) => x.enabled) ? "-" : "Nonaktif");
       $("btnSend").disabled = $("btnTest").disabled = st.running;
       $("btnStop").classList.toggle("hidden", !st.running);
 
@@ -142,12 +187,12 @@
   async function startRun(mode) {
     $("runErr").textContent = "";
     try {
-      await api("/run", { method: "POST", body: { mode, message: $("runMessage").value.trim() || null } });
+      await api("/run", { method: "POST", body: { mode, account: currentId, message: $("runMessage").value.trim() || null } });
       await refresh();
     } catch (e) { $("runErr").textContent = e.message; }
   }
   $("btnSend").addEventListener("click", () => {
-    if (confirm("Kirim pesan streak ke semua kontak sekarang?")) startRun("send");
+    if (confirm(`Kirim pesan streak ke semua kontak${accounts.length > 1 ? " akun " + curAccount().name : ""} sekarang?`)) startRun("send");
   });
   $("btnTest").addEventListener("click", () => startRun("test"));
   $("btnStop").addEventListener("click", () => api("/run/stop", { method: "POST" }).then(() => toast("Menghentikan…")));
@@ -184,12 +229,13 @@
     const body = $("historyBody");
     body.replaceChildren();
     if (!runs.length) {
-      body.append(el("tr", {}, [el("td", { colSpan: 5, className: "muted", textContent: "Belum ada riwayat." })]));
+      body.append(el("tr", {}, [el("td", { colSpan: 6, className: "muted", textContent: "Belum ada riwayat." })]));
       return;
     }
     runs.forEach((r) => {
       const tr = el("tr", {}, [
         el("td", { textContent: fmtTime(r.started_at) }),
+        el("td", { textContent: (r.account && r.account.name) || "-" }),
         el("td", { textContent: { test: "Uji", check: "Cek cookie" }[r.mode] || "Kirim" }),
         el("td", { textContent: { schedule: "Jadwal", keepalive: "Otomatis" }[r.trigger] || "Manual" }),
         el("td", { textContent: `${r.sent}/${r.total}` }),
@@ -216,7 +262,7 @@
 
   // --------------------------------------------------------------- contacts
   async function loadContacts() {
-    const { contacts } = await api("/contacts");
+    const { contacts } = await apiA("/contacts");
     renderContacts(contacts);
   }
   function renderContacts(contacts) {
@@ -228,7 +274,7 @@
       const btn = el("button", { className: "btn danger small", textContent: "Hapus" });
       btn.addEventListener("click", async () => {
         try {
-          const r = await api("/contacts?name=" + encodeURIComponent(c), { method: "DELETE" });
+          const r = await apiA("/contacts?name=" + encodeURIComponent(c), { method: "DELETE" });
           renderContacts(r.contacts);
         } catch (e) { toast(e.message); }
       });
@@ -238,7 +284,7 @@
   $("btnAddContacts").addEventListener("click", async () => {
     $("contactsErr").textContent = "";
     try {
-      const r = await api("/contacts", { method: "POST", body: { names: $("contactsInput").value } });
+      const r = await apiA("/contacts", { method: "POST", body: { names: $("contactsInput").value } });
       $("contactsInput").value = "";
       renderContacts(r.contacts);
       toast(`${r.added.length} kontak ditambahkan`);
@@ -256,22 +302,22 @@
   $("btnCheckCookies").addEventListener("click", async () => {
     $("cookieErr").textContent = "";
     try {
-      await api("/run", { method: "POST", body: { mode: "check" } });
+      await api("/run", { method: "POST", body: { mode: "check", account: currentId } });
       toast("Mengecek cookie… lihat log di Dashboard");
     } catch (e) { $("cookieErr").textContent = e.message; }
   });
-  async function loadCookies() { renderCookieState(await api("/cookies")); }
+  async function loadCookies() { renderCookieState(await apiA("/cookies")); }
   $("btnSaveCookies").addEventListener("click", async () => {
     $("cookieErr").textContent = "";
     try {
-      renderCookieState(await api("/cookies", { method: "PUT", body: { raw: $("cookieInput").value } }));
+      renderCookieState(await apiA("/cookies", { method: "PUT", body: { raw: $("cookieInput").value } }));
       $("cookieInput").value = "";
       toast("Cookie disimpan");
     } catch (e) { $("cookieErr").textContent = e.message; }
   });
   $("btnClearCookies").addEventListener("click", async () => {
     if (!confirm("Hapus cookie tersimpan?")) return;
-    renderCookieState(await api("/cookies", { method: "DELETE" }));
+    renderCookieState(await apiA("/cookies", { method: "DELETE" }));
   });
 
   // ----------------------------------------------------------- remote login
@@ -321,7 +367,7 @@
     $("cookieErr").textContent = "";
     setText("loginState", "Membuka browser…");
     try {
-      await api("/login/start", { method: "POST" });
+      await apiA("/login/start", { method: "POST" });
       setLoginUi(true);
       clearInterval(loginTimer);
       let n = 0;
@@ -340,6 +386,7 @@
     try {
       const r = await api("/login/save", { method: "POST" });
       renderCookieState(r);
+      refresh();
       endLogin(`Berhasil: ${r.saved} cookie tersimpan.`);
       toast("Login tersimpan");
     } catch (e) { $("cookieErr").textContent = e.message; }
@@ -414,10 +461,68 @@
     addScheduleRow();
   });
 
+  // ----------------------------------------------------------------- akun
+  function cookieBrief(c) {
+    return c.invalid ? "⚠️ cookie tidak valid" : !c.present ? "cookie belum diatur" : c.last_ok ? `cookie OK (${fmtTime(c.last_ok)})` : "cookie tersimpan";
+  }
+
+  function renderAccountList() {
+    const sig = JSON.stringify([currentId, accounts]);
+    if (renderAccountList.sig === sig) return;
+    renderAccountList.sig = sig;
+    const ul = $("accountList");
+    ul.replaceChildren();
+    accounts.forEach((a) => {
+      const pick = el("button", { className: "btn small", textContent: a.id === currentId ? "Dipilih" : "Pilih", disabled: a.id === currentId });
+      const ren = el("button", { className: "btn small", textContent: "Ubah nama" });
+      const del = el("button", { className: "btn danger small", textContent: "Hapus", disabled: accounts.length < 2 });
+      pick.addEventListener("click", () => switchAccount(a.id));
+      ren.addEventListener("click", async () => {
+        const name = prompt("Nama akun:", a.name);
+        if (!name || name.trim() === a.name) return;
+        try { await api("/accounts/" + a.id, { method: "PUT", body: { name } }); refresh(); }
+        catch (e) { toast(e.message); }
+      });
+      del.addEventListener("click", async () => {
+        if (!confirm(`Hapus akun "${a.name}" beserta cookie, kontak, dan jadwalnya?`)) return;
+        try { await api("/accounts/" + a.id, { method: "DELETE" }); await refresh(); }
+        catch (e) { toast(e.message); }
+      });
+      const info = el("div", {}, [
+        el("span", { className: "name", textContent: a.name }),
+        el("div", { className: "meta", textContent: `${a.contacts} kontak · ${cookieBrief(a.cookies)} · jadwal berikutnya: ${a.next_run || "-"}` }),
+      ]);
+      const li = el("li", { className: a.id === currentId ? "current" : "" }, [info, el("div", { className: "actions" }, [pick, ren, del])]);
+      ul.append(li);
+    });
+  }
+
+  $("btnAddAccount").addEventListener("click", async () => {
+    $("accountErr").textContent = "";
+    try {
+      const acc = await api("/accounts", { method: "POST", body: { name: $("newAccountName").value } });
+      $("newAccountName").value = "";
+      const st = await api("/status");
+      syncAccounts(st.accounts);
+      await switchAccount(acc.id);
+      toast(`Akun "${acc.name}" dibuat. Atur cookie di tab Cookie.`);
+    } catch (e) { $("accountErr").textContent = e.message; }
+  });
+
+  $("btnSaveSchedules").addEventListener("click", async () => {
+    try {
+      const schedules = [...$("scheduleList").querySelectorAll(".sched")].map((r) => r.read());
+      const acc = await api("/accounts/" + currentId, { method: "PUT", body: { schedules } });
+      renderSchedules(acc.schedules);
+      setText("scheduleMsg", "");
+      toast("Jadwal disimpan");
+      refresh();
+    } catch (e) { setText("scheduleMsg", e.message); }
+  });
+
   async function loadSettings() {
     const s = await api("/settings");
     $("setMessage").value = s.message;
-    renderSchedules(s.schedules);
     $("setTimezone").value = s.timezone;
     $("setNotifyShot").checked = s.notify_screenshot;
     $("setKeepalive").checked = s.keepalive_enabled;
@@ -440,7 +545,6 @@
         method: "PUT",
         body: {
           message: $("setMessage").value,
-          schedules: [...$("scheduleList").querySelectorAll(".sched")].map((r) => r.read()),
           timezone: $("setTimezone").value.trim(),
           notify_screenshot: $("setNotifyShot").checked,
           keepalive_enabled: $("setKeepalive").checked,

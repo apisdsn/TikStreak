@@ -99,3 +99,9 @@ select { flex: 1; padding: 9px 11px; border: 1px solid var(--line); border-radiu
 .sched .time24 { width: 150px; }
 .sched.off { opacity: .6; }
 @media (max-width: 600px) { .sched { grid-template-columns: auto 1fr auto; } .sched input[type=text] { grid-column: 1 / -1; order: 5; } }
+.acct-select { max-width: 180px; padding: 6px 10px; flex: 0 0 auto; }
+.acct-name:empty { display: none; }
+.list li .meta { color: var(--muted); font-size: 13px; }
+.list li .actions { display: flex; gap: 6px; flex-shrink: 0; }
+.list li.current span.name { font-weight: 700; }
+.list li > div:first-child { min-width: 0; }

@@ -11,7 +11,6 @@ from DrissionPage.common import Keys
 
 from . import config
 from .cookies import from_browser
-from .store import cookies_store
 
 SHOT_PATH = os.path.join(config.DATA_DIR, "last_run.jpg")
 
@@ -86,8 +85,9 @@ def xpath_literal(s):
 
 
 class StreakBot:
-    def __init__(self, settings, log, cancel_event, test_mode=False, message=None, check_only=False, proof_dir=None):
+    def __init__(self, settings, log, cancel_event, cookies_store, test_mode=False, message=None, check_only=False, proof_dir=None):
         self.s = settings
+        self.cookies_store = cookies_store
         self.log = log
         self.cancel = cancel_event
         self.test_mode = test_mode
@@ -134,7 +134,7 @@ class StreakBot:
         self.log("Browser siap")
 
     def _load_cookies(self):
-        cookies = cookies_store.read()
+        cookies = self.cookies_store.read()
         if not cookies:
             raise CookieInvalid("Cookie TikTok belum diatur")
         self.page.get(config.TIKTOK_URL)
@@ -173,7 +173,7 @@ class StreakBot:
         try:
             fresh = from_browser(self.page.cookies(all_domains=True, all_info=True))
             if any(c["name"] == "sessionid" for c in fresh):
-                cookies_store.write(fresh)
+                self.cookies_store.write(fresh)
                 self.cookies_saved = True
                 self.log(f"Cookie diperbarui ({len(fresh)})")
         except Exception as e:  # noqa: BLE001

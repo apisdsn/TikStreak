@@ -4,6 +4,7 @@ Panel web untuk mengotomatiskan pengiriman pesan streak TikTok. Berjalan di satu
 
 ## Fitur
 
+- Banyak akun TikTok: tiap akun punya cookie, kontak, dan jadwal sendiri; proses berjalan bergantian
 - UI web: dashboard, log live, riwayat, kelola kontak, cookie, dan pengaturan
 - Kirim sekarang atau mode uji (cek kontak tanpa mengirim)
 - Beberapa jadwal kirim per hari (mis. pagi dan malam), tiap jadwal bisa punya pesan sendiri, dengan timezone
@@ -33,10 +34,11 @@ Lalu buka `http://localhost:8000` di laptop selama tunnel aktif. Alternatif: VPN
 
 ## Langkah pertama di UI
 
-1. **Cookie**: di tab *Cookie* klik *Mulai login*, login ke TikTok pada tampilan browser di panel (klik/ketik langsung, captcha juga bisa), lalu *Simpan sesi login*. Alternatif: tempel cookie manual (JSON dari Cookie-Editor atau string header `Cookie`).
-2. **Kontak**: tambahkan nickname persis seperti di daftar pesan TikTok.
-3. **Dashboard**: jalankan *Uji* dulu untuk memastikan login dan kontak terbaca, lalu *Kirim streak sekarang*.
-4. **Pengaturan**: atur pesan default, jadwal kirim, dan Discord/Telegram.
+1. **Akun** (opsional): tab *Akun* untuk menambah akun lain. Akun pertama bernama "Utama". Pilih akun aktif di pojok kanan atas; tab Kontak, Cookie, dan Dashboard mengikuti akun yang dipilih.
+2. **Cookie**: di tab *Cookie* klik *Mulai login*, login ke TikTok pada tampilan browser di panel (klik/ketik langsung, captcha juga bisa), lalu *Simpan sesi login*. Alternatif: tempel cookie manual (JSON dari Cookie-Editor atau string header `Cookie`).
+3. **Kontak**: tambahkan nickname persis seperti di daftar pesan TikTok.
+4. **Dashboard**: jalankan *Uji* dulu untuk memastikan login dan kontak terbaca, lalu *Kirim streak sekarang*.
+5. **Pengaturan**: atur pesan default, zona waktu, dan Discord/Telegram.
 
 ## API
 
@@ -48,8 +50,9 @@ Semua endpoint `/api/*` (kecuali `/api/health`) memakai header `X-API-Key`.
 | POST | `/api/run` | `{"mode":"send"\|"test","message":"..."}` |
 | POST | `/api/run/stop` | Hentikan proses |
 | GET | `/api/run/current` | Log proses aktif |
-| GET / POST / DELETE | `/api/contacts` | Kelola kontak |
-| PUT / DELETE | `/api/cookies` | Atur cookie |
+| GET / POST / PUT / DELETE | `/api/accounts` | Kelola akun dan jadwalnya |
+| GET / POST / DELETE | `/api/contacts?account=ID` | Kelola kontak akun |
+| PUT / DELETE | `/api/cookies?account=ID` | Atur cookie akun |
 | POST | `/api/login/start`, `/api/login/save`, `/api/login/stop` | Login remote |
 | GET / PUT | `/api/settings` | Pengaturan |
 | GET / DELETE | `/api/history` | Riwayat |

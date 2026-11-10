@@ -12,7 +12,7 @@ from .config import DATA_DIR
 from .bot import Cancelled, CookieInvalid, StreakBot
 from .login import login_session
 from .notify import notify
-from .store import contacts_store, cookies_store, get_settings, history_store, meta_store
+from .store import get_account, get_settings, history_store, list_accounts, stores
 
 MAX_HISTORY = 50
 MAX_LOG_LINES = 500
@@ -37,15 +37,18 @@ class Runner:
         self._lock = threading.Lock()
         self.current = None
         self._cancel = threading.Event()
-        self._last_fire_key = None
 
     # ------------------------------------------------------------- run control
-    def start(self, mode="send", message=None, trigger="manual", label=None):
+    def start(self, account_id, mode="send", message=None, trigger="manual", label=None):
+        acc = get_account(account_id)
+        if not acc:
+            raise KeyError(account_id)
         with self._lock:
             if self.current and self.current["status"] == "running":
                 raise Busy()
             run = {
                 "id": uuid.uuid4().hex[:8],
+                "account": {"id": acc["id"], "name": acc["name"]},
                 "mode": mode,
                 "trigger": trigger,
                 "label": label,
@@ -80,9 +83,10 @@ class Runner:
         mode = run["mode"]
         log({"test": "Mode uji (tidak mengirim pesan)", "check": "Cek & perbarui cookie"}.get(mode, "Mulai mengirim streak"))
         bot = None
+        st = stores(run["account"]["id"])
         try:
-            contacts = contacts_store.read()
-            bot = StreakBot(settings, log, self._cancel, test_mode=(mode == "test"),
+            contacts = st.contacts.read()
+            bot = StreakBot(settings, log, self._cancel, st.cookies, test_mode=(mode == "test"),
                             message=message, check_only=(mode == "check"),
                             proof_dir=os.path.join(PROOFS_DIR, run["id"]))
             res = bot.run(contacts)
@@ -106,6 +110,7 @@ class Runner:
         self._notify(settings, run)
 
     def _update_meta(self, run, bot):
+        meta_store = stores(run["account"]["id"]).meta
         meta = meta_store.read()
         now = datetime.now().isoformat(timespec="seconds")
         if bot and bot.logged_in:
@@ -131,20 +136,22 @@ class Runner:
     def _notify(self, settings, run):
         if run["mode"] == "test" or run["status"] == "cancelled":
             return
+        who = f"[{run['account']['name']}] " if len(list_accounts()) > 1 else ""
         if run.get("cookie_invalid"):
+            meta_store = stores(run["account"]["id"]).meta
             meta = meta_store.read()
             if run["mode"] == "check" and time.time() - meta.get("last_alert", 0) < ALERT_COOLDOWN:
                 return
             meta["last_alert"] = time.time()
             meta_store.write(meta)
-            notify(settings, "🔐 Cookie TikTok tidak valid", [
+            notify(settings, f"🔐 {who}Cookie TikTok tidak valid", [
                 run["error"],
                 "Buka panel → tab Cookie → login ulang.",
             ])
             return
         if run["mode"] == "check":
             if run["status"] == "failed":
-                notify(settings, "⚠️ Cek cookie gagal", [run.get("error") or "Kesalahan tidak diketahui"])
+                notify(settings, f"⚠️ {who}Cek cookie gagal", [run.get("error") or "Kesalahan tidak diketahui"])
             return
         icon = {"success": "✅", "partial": "⚠️", "failed": "❌"}.get(run["status"], "ℹ️")
         lines = [f"{run['sent']}/{run['total']} terkirim · {self._span(run)}"]
@@ -169,7 +176,7 @@ class Runner:
                     pass
         if files:
             lines.append("Bukti: screenshot chat terlampir")
-        notify(settings, f"{icon} Streak {run['status']}", lines, files)
+        notify(settings, f"{icon} {who}Streak {run['status']}", lines, files)
 
     @staticmethod
     def _evidence(ev):
@@ -202,38 +209,46 @@ class Runner:
         now = datetime.now(_tz(s))
         return now, now.replace(hour=hh, minute=mm, second=0, microsecond=0)
 
-    def next_run_at(self):
+    def next_run_at(self, account_id=None):
         s = get_settings()
         best = None
-        for sched in s["schedules"]:
-            if not sched["enabled"]:
+        for acc in list_accounts():
+            if account_id and acc["id"] != account_id:
                 continue
-            try:
-                now, nxt = self._slot(sched, s)
-                if nxt <= now:
-                    nxt += timedelta(days=1)
-            except Exception:  # noqa: BLE001
-                continue
-            if best is None or nxt < best:
-                best = nxt
+            for sched in acc["schedules"]:
+                if not sched["enabled"]:
+                    continue
+                try:
+                    now, nxt = self._slot(sched, s)
+                    if nxt <= now:
+                        nxt += timedelta(days=1)
+                except Exception:  # noqa: BLE001
+                    continue
+                if best is None or nxt < best:
+                    best = nxt
         return best.strftime("%Y-%m-%d %H:%M") + " " + str(best.tzinfo) if best else None
 
     def scheduler_loop(self):
         while True:
             try:
                 s = get_settings()
-                for sched in s["schedules"]:
-                    if sched["enabled"]:
-                        self._fire_if_due(sched, s)
-                self._keepalive(s)
+                accounts = list_accounts()
+                for acc in accounts:
+                    for sched in acc["schedules"]:
+                        if sched["enabled"]:
+                            self._fire_if_due(acc, sched, s)
+                for acc in accounts:
+                    if self._keepalive(acc, accounts, s):
+                        break  # satu proses pada satu waktu; akun lain di putaran berikutnya
             except Exception:  # noqa: BLE001
                 pass
             time.sleep(20)
 
-    def _fire_if_due(self, sched, s):
+    def _fire_if_due(self, acc, sched, s):
         now, due = self._slot(sched, s)
         key = due.strftime("%Y-%m-%d %H:%M")
         late = (now - due).total_seconds()
+        meta_store = stores(acc["id"]).meta
         meta = meta_store.read()
         fired = meta.get("fired", {})
         if sched["id"] == "s1" and "s1" not in fired and meta.get("last_schedule"):
@@ -241,7 +256,8 @@ class Runner:
         # Jalan tepat waktu; bila terlewat (proses lain berjalan/restart) kejar hingga 3 jam
         if 0 <= late < CATCHUP_SECONDS and fired.get(sched["id"]) != key:
             try:
-                self.start("send", message=sched.get("message") or None, trigger="schedule", label=sched["time"])
+                self.start(acc["id"], "send", message=sched.get("message") or None,
+                           trigger="schedule", label=sched["time"])
             except Busy:
                 return  # dicoba lagi 20 detik kemudian
             meta = meta_store.read()
@@ -250,27 +266,30 @@ class Runner:
             meta["fired"] = fired
             meta_store.write(meta)
 
-    def _keepalive(self, s):
-        """Cek berkala agar sesi tetap aktif dan cookie terbaru tersimpan."""
-        if not s["keepalive_enabled"] or not cookies_store.read():
-            return
+    def _keepalive(self, acc, accounts, s):
+        """Cek berkala agar sesi tetap aktif dan cookie terbaru tersimpan. True bila proses dimulai."""
+        st = stores(acc["id"])
+        if not s["keepalive_enabled"] or not st.cookies.read():
+            return False
         if login_session.active:
-            return
-        for sched in s["schedules"]:  # jangan bentrok dengan jadwal kirim (10 menit sebelum s.d. sesudah)
-            if sched["enabled"]:
-                now, due = self._slot(sched, s)
-                if -600 <= (now - due).total_seconds() <= 600:
-                    return
-        meta = meta_store.read()
+            return False
+        for other in accounts:  # jangan bentrok dengan jadwal kirim akun mana pun (10 menit sebelum s.d. sesudah)
+            for sched in other["schedules"]:
+                if sched["enabled"]:
+                    now, due = self._slot(sched, s)
+                    if -600 <= (now - due).total_seconds() <= 600:
+                        return False
+        meta = st.meta.read()
         if time.time() - meta.get("last_check", 0) < s["keepalive_hours"] * 3600:
-            return
+            return False
         try:
-            self.start("check", trigger="keepalive")
+            self.start(acc["id"], "check", trigger="keepalive")
         except Busy:
-            return
-        meta = meta_store.read()
+            return False
+        meta = st.meta.read()
         meta["last_check"] = time.time()
-        meta_store.write(meta)
+        st.meta.write(meta)
+        return True
 
 
 runner = Runner()

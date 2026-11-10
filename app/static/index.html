@@ -25,8 +25,10 @@
         <button data-tab="dashboard" class="active">Dashboard</button>
         <button data-tab="contacts">Kontak</button>
         <button data-tab="cookies">Cookie</button>
+        <button data-tab="accounts">Akun</button>
         <button data-tab="settings">Pengaturan</button>
       </nav>
+      <select id="accountSelect" class="acct-select" aria-label="Akun aktif" title="Akun aktif"></select>
       <button id="logout" class="btn ghost small">Keluar</button>
     </header>
 
@@ -41,7 +43,7 @@
         </div>
 
         <div class="card">
-          <h2>Jalankan</h2>
+          <h2>Jalankan <span class="badge acct-name"></span></h2>
           <label for="runMessage">Pesan (kosongkan untuk memakai pesan default)</label>
           <input id="runMessage" type="text" placeholder="Pesan default dari Pengaturan">
           <div class="row">
@@ -67,7 +69,7 @@
           </div>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>Waktu</th><th>Mode</th><th>Pemicu</th><th>Hasil</th><th>Status</th></tr></thead>
+              <thead><tr><th>Waktu</th><th>Akun</th><th>Mode</th><th>Pemicu</th><th>Hasil</th><th>Status</th></tr></thead>
               <tbody id="historyBody"></tbody>
             </table>
           </div>
@@ -77,14 +79,14 @@
       <!-- Contacts -->
       <section id="tab-contacts" class="hidden">
         <div class="card">
-          <h2>Tambah kontak</h2>
+          <h2>Tambah kontak <span class="badge acct-name"></span></h2>
           <p class="muted">Nickname persis seperti yang tampil di daftar pesan TikTok. Pisahkan dengan baris baru atau koma.</p>
           <textarea id="contactsInput" rows="3" placeholder="nickname1&#10;nickname2"></textarea>
           <div class="row"><button id="btnAddContacts" class="btn primary">Tambah</button></div>
           <p id="contactsErr" class="error"></p>
         </div>
         <div class="card">
-          <h2>Daftar kontak <span id="contactsCount" class="badge"></span></h2>
+          <h2>Daftar kontak <span class="badge acct-name"></span> <span id="contactsCount" class="badge"></span></h2>
           <ul id="contactsList" class="list"></ul>
         </div>
       </section>
@@ -92,7 +94,7 @@
       <!-- Cookies -->
       <section id="tab-cookies" class="hidden">
         <div class="card">
-          <h2>Cookie TikTok</h2>
+          <h2>Cookie TikTok <span class="badge acct-name"></span></h2>
           <p id="cookieState" class="muted"></p>
           <div class="row"><button id="btnCheckCookies" class="btn small">Cek cookie sekarang</button></div>
           <p class="muted small-text">Cek otomatis berkala juga memperbarui cookie yang tersimpan agar sesi tetap aktif (atur di Pengaturan).</p>
@@ -124,6 +126,30 @@
         </div>
       </section>
 
+      <!-- Accounts -->
+      <section id="tab-accounts" class="hidden">
+        <div class="card">
+          <h2>Akun TikTok</h2>
+          <p class="muted">Tiap akun punya cookie, kontak, dan jadwal sendiri. Proses berjalan bergantian, satu akun pada satu waktu.</p>
+          <ul id="accountList" class="list"></ul>
+          <div class="row">
+            <input id="newAccountName" type="text" maxlength="40" placeholder="Nama akun baru, mis. Akun B" style="max-width:320px">
+            <button id="btnAddAccount" class="btn primary">Tambah akun</button>
+          </div>
+          <p id="accountErr" class="error"></p>
+        </div>
+        <div class="card">
+          <h2>Jadwal kirim <span class="badge acct-name"></span></h2>
+          <p class="muted small-text">Tambahkan satu atau lebih jadwal (mis. pagi dan malam). Tiap jadwal bisa punya pesan sendiri; kosongkan untuk memakai pesan default. Zona waktu diatur di Pengaturan.</p>
+          <div id="scheduleList" class="schedules"></div>
+          <div class="row">
+            <button id="btnAddSchedule" class="btn small" type="button">+ Tambah jadwal</button>
+            <button id="btnSaveSchedules" class="btn primary" type="button">Simpan jadwal</button>
+          </div>
+          <p id="scheduleMsg" class="muted"></p>
+        </div>
+      </section>
+
       <!-- Settings -->
       <section id="tab-settings" class="hidden">
         <form id="settingsForm" class="card">
@@ -131,11 +157,8 @@
           <label for="setMessage">Pesan default</label>
           <input id="setMessage" type="text" required>
 
-          <h2>Jadwal kirim</h2>
-          <p class="muted small-text">Tambahkan satu atau lebih jadwal (mis. pagi dan malam). Tiap jadwal bisa punya pesan sendiri; kosongkan untuk memakai pesan default.</p>
-          <div id="scheduleList" class="schedules"></div>
-          <div class="row"><button id="btnAddSchedule" class="btn small" type="button">+ Tambah jadwal</button></div>
-          <label for="setTimezone">Timezone semua jadwal</label>
+          <h2>Zona waktu</h2>
+          <label for="setTimezone">Timezone untuk semua jadwal</label>
           <input id="setTimezone" type="text" placeholder="Asia/Jakarta">
 
           <h2>Cookie</h2>

@@ -13,7 +13,7 @@ from DrissionPage import ChromiumOptions, ChromiumPage
 
 from . import config
 from .cookies import from_browser
-from .store import cookies_store
+from .store import stores
 
 IDLE_TIMEOUT = 600  # detik
 KEYS = {
@@ -27,6 +27,7 @@ KEYS = {
 class LoginSession:
     def __init__(self):
         self.page = None
+        self.account_id = None
         self.last_used = 0
         self._lock = threading.RLock()
         threading.Thread(target=self._reaper, daemon=True).start()
@@ -35,11 +36,14 @@ class LoginSession:
     def active(self):
         return self.page is not None
 
-    def start(self):
+    def start(self, account_id):
         with self._lock:
             if self.page:
+                if self.account_id != account_id:
+                    raise RuntimeError("Sesi login untuk akun lain masih terbuka. Batalkan dulu.")
                 self.last_used = time.time()
                 return
+            self.account_id = account_id
             if not os.path.exists(config.BROWSER_PATH):
                 raise RuntimeError(f"Browser tidak ditemukan di {config.BROWSER_PATH}")
             self.last_used = time.time()
@@ -69,6 +73,7 @@ class LoginSession:
                 except Exception:  # noqa: BLE001
                     pass
                 self.page = None
+                self.account_id = None
 
     def _reaper(self):
         while True:
@@ -125,7 +130,7 @@ class LoginSession:
                 names = {c["name"] for c in self.page.cookies(all_domains=True)}
             except Exception:  # noqa: BLE001
                 url, names = "", set()
-            return {"active": True, "url": url, "logged_in": "sessionid" in names}
+            return {"active": True, "account": self.account_id, "url": url, "logged_in": "sessionid" in names}
 
     def save(self):
         """Simpan cookie TikTok dari browser. Return jumlah cookie."""
@@ -135,7 +140,7 @@ class LoginSession:
             cookies = from_browser(raw)
             if not any(c["name"] == "sessionid" for c in cookies):
                 raise RuntimeError("Belum login: cookie sessionid belum ada")
-            cookies_store.write(cookies)
+            stores(self.account_id).cookies.write(cookies)
             return len(cookies)
 
 
