@@ -38,12 +38,32 @@ HEADER_SELECTORS = [
     'css:[class*="ChatHeader"] h2',
 ]
 
-STREAK_SELECTORS = [
-    'css:[data-e2e*="streak"]',
-    'css:[class*="Streak"]',
-]
+NICKNAME_CSS = 'p[class*="PInfoNickname"], p[class*="Nickname"], span[class*="Nickname"], div[class*="Nickname"]'
 
-STREAK_RE = re.compile(r"(\d{1,4})\s*🔥|🔥\s*(\d{1,4})")
+# Dijalankan pada elemen nickname (this). Mengembalikan kartu satu kontak + angka streak.
+CARD_JS = """
+const sel = arguments[0];
+const names = (root) => new Set([...root.querySelectorAll(sel)].map(e => (e.innerText || '').trim()).filter(Boolean));
+let card = this, p = this.parentElement;
+while (p && p !== document.body && names(p).size <= 1) { card = p; p = p.parentElement; }
+const digits = (t) => { const m = (t || '').match(/\\d{1,4}/); return m ? parseInt(m[0], 10) : null; };
+let streak = null;
+for (const e of card.querySelectorAll('*')) {
+  const marker = [e.className && e.className.toString(), e.getAttribute('data-e2e'), e.getAttribute('aria-label'),
+                  e.getAttribute('alt'), e.getAttribute('title')].join(' ').toLowerCase();
+  if (!/streak|flame|🔥/.test(marker)) continue;
+  for (const c of [e, e.nextElementSibling, e.previousElementSibling]) {
+    const v = c ? digits(c.innerText) : null;
+    if (v !== null) { streak = v; break; }
+  }
+  if (streak !== null) break;
+}
+if (streak === null) {
+  const m = (card.innerText || '').match(/(\\d{1,4})\\s*🔥|🔥\\s*(\\d{1,4})/);
+  if (m) streak = parseInt(m[1] || m[2], 10);
+}
+return { text: (card.innerText || '').trim().slice(0, 300), html: card.outerHTML, streak: streak };
+"""
 
 SEND_BUTTON_SELECTORS = [
     'css:[data-e2e="message-send"]',
@@ -291,25 +311,31 @@ class StreakBot:
                 continue
         return None
 
-    def _read_streak(self, item):
-        """Angka streak pada item daftar chat (best effort); None bila tidak terbaca."""
-        if not item:
-            return None
-        try:
-            for sel in STREAK_SELECTORS:
-                try:
-                    for el in item.eles(sel, timeout=0.5):
-                        m = re.search(r"\d{1,4}", el.text or "")
-                        if m:
-                            return int(m.group())
-                except Exception:  # noqa: BLE001
-                    continue
-            m = STREAK_RE.search(item.text or "")
-            if m:
-                return int(m.group(1) or m.group(2))
-        except Exception:  # noqa: BLE001
-            pass
+    def _contact_card(self, name):
+        """Info kartu milik satu kontak: {text, html, streak}. None bila kontak tidak ditemukan.
+
+        Kartu = ancestor terbesar dari elemen nickname yang hanya memuat nickname kontak ini,
+        sehingga angka streak tidak tertukar dengan kontak lain di daftar.
+        """
+        target = name.strip().lower()
+        for sel in NICKNAME_SELECTORS:
+            try:
+                for el in self.page.eles(sel):
+                    if (el.text or "").strip().lower() != target:
+                        continue
+                    return el.run_js(CARD_JS, NICKNAME_CSS)
+            except Exception:  # noqa: BLE001
+                continue
         return None
+
+    def _read_streak(self, name, log_html=False):
+        """Angka streak untuk kontak (best effort); None bila tidak terbaca."""
+        card = self._contact_card(name)
+        if not card:
+            return None
+        if log_html and card.get("streak") is None:
+            self.log(f"Streak {name} tidak terbaca. HTML kartu: {card.get('html', '')[:1200]}", "info")
+        return card.get("streak")
 
     def _last_bubble(self):
         try:
@@ -362,7 +388,7 @@ class StreakBot:
         if not el:
             raise RuntimeError("Kontak tidak ditemukan di daftar pesan")
 
-        evidence = {"streak_before": self._read_streak(el)}
+        evidence = {"streak_before": self._read_streak(name, log_html=True)}
         if self.test_mode:
             return evidence
 
@@ -403,7 +429,7 @@ class StreakBot:
         evidence["bubble"] = self._last_bubble()
         evidence["count"] = [before, self._count_text(self.message)]
         self._sleep(3)  # beri waktu TikTok memperbarui streak
-        evidence["streak_after"] = self._read_streak(self._find_contact(name))
+        evidence["streak_after"] = self._read_streak(name)
         return evidence
 
     # -------------------------------------------------------------------- run
