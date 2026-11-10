@@ -180,11 +180,8 @@ class Runner:
             parts.append(f"chat {ev['chat']} ✓")
         if ev.get("bubble"):
             parts.append("bubble terverifikasi")
-        b, a = ev.get("streak_before"), ev.get("streak_after")
-        if b is not None and a is not None:
-            parts.append(f"🔥 {b} → {a}")
-        elif a is not None or b is not None:
-            parts.append(f"🔥 {a if a is not None else b}")
+        if ev.get("list_time"):
+            parts.append(f"daftar chat {ev['list_time']}")
         return " · " + " · ".join(parts) if parts else ""
 
     @staticmethod
