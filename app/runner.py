@@ -39,7 +39,7 @@ class Runner:
         self._cancel = threading.Event()
 
     # ------------------------------------------------------------- run control
-    def start(self, account_id, mode="send", message=None, trigger="manual", label=None):
+    def start(self, account_id, mode="send", message=None, trigger="manual", label=None, contacts=None):
         acc = get_account(account_id)
         if not acc:
             raise KeyError(account_id)
@@ -58,6 +58,7 @@ class Runner:
                 "sent": 0,
                 "total": 0,
                 "message": message,
+                "only": contacts,
                 "results": [],
                 "logs": [],
             }
@@ -86,6 +87,11 @@ class Runner:
         st = stores(run["account"]["id"])
         try:
             contacts = st.contacts.read()
+            if run.get("only") is not None:  # jadwal dengan kontak tertentu
+                wanted = {c.lower() for c in run["only"]}
+                contacts = [c for c in contacts if c.lower() in wanted]
+                if not contacts:
+                    raise RuntimeError("Tidak ada kontak terpilih untuk jadwal ini (mungkin sudah dihapus)")
             bot = StreakBot(settings, log, self._cancel, st.cookies, test_mode=(mode == "test"),
                             message=message, check_only=(mode == "check"),
                             proof_dir=os.path.join(PROOFS_DIR, run["id"]))
@@ -257,7 +263,7 @@ class Runner:
         if 0 <= late < CATCHUP_SECONDS and fired.get(sched["id"]) != key:
             try:
                 self.start(acc["id"], "send", message=sched.get("message") or None,
-                           trigger="schedule", label=sched["time"])
+                           trigger="schedule", label=sched["time"], contacts=sched.get("contacts"))
             except Busy:
                 return  # dicoba lagi 20 detik kemudian
             meta = meta_store.read()

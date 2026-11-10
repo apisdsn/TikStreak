@@ -105,3 +105,7 @@ select { flex: 1; padding: 9px 11px; border: 1px solid var(--line); border-radiu
 .list li .actions { display: flex; gap: 6px; flex-shrink: 0; }
 .list li.current span.name { font-weight: 700; }
 .list li > div:first-child { min-width: 0; }
+.sched-contacts { grid-column: 1 / -1; border-top: 1px dashed var(--line); padding-top: 8px; }
+.sched-contacts label.check { margin: 0; font-size: 14px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; margin: 0; padding: 4px 10px; border: 1px solid var(--line); border-radius: 99px; color: var(--text); font-size: 13px; cursor: pointer; }

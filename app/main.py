@@ -63,6 +63,7 @@ class ScheduleIn(BaseModel):
     enabled: bool = True
     time: str
     message: str = ""
+    contacts: Optional[List[str]] = None  # None = semua kontak akun
 
 
 class SettingsIn(BaseModel):
@@ -211,7 +212,13 @@ def clean_schedules(items):
             raise HTTPException(400, "Pesan jadwal maksimal 500 karakter")
         sid = x["id"] if x.get("id") and x["id"] not in seen else uuid.uuid4().hex[:6]
         seen.add(sid)
-        clean.append({"id": sid, "enabled": bool(x["enabled"]), "time": x["time"], "message": x["message"].strip()})
+        contacts = x.get("contacts")
+        if contacts is not None:
+            contacts = list(dict.fromkeys(c.strip() for c in contacts if c.strip()))[:200]
+            if not contacts:
+                raise HTTPException(400, f"Jadwal {x['time']}: pilih minimal satu kontak atau pilih semua kontak")
+        clean.append({"id": sid, "enabled": bool(x["enabled"]), "time": x["time"],
+                      "message": x["message"].strip(), "contacts": contacts})
     return clean
 
 
@@ -295,6 +302,11 @@ def delete_contact(name: str = Query(...), acc=Depends(acct)):
     if len(new) == len(current):
         raise HTTPException(404, "Kontak tidak ditemukan")
     contacts_store.write(new)
+    # Lepaskan kontak yang dihapus dari jadwal yang memilih kontak tertentu
+    for sched in acc["schedules"]:
+        if sched.get("contacts") is not None:
+            sched["contacts"] = [c for c in sched["contacts"] if c.lower() != name.lower()]
+    save_account(acc)
     return {"contacts": new}
 
 

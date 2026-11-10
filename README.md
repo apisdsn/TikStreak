@@ -7,7 +7,7 @@ Panel web untuk mengotomatiskan pengiriman pesan streak TikTok. Berjalan di satu
 - Banyak akun TikTok: tiap akun punya cookie, kontak, dan jadwal sendiri; proses berjalan bergantian
 - UI web: dashboard, log live, riwayat, kelola kontak, cookie, dan pengaturan
 - Kirim sekarang atau mode uji (cek kontak tanpa mengirim)
-- Beberapa jadwal kirim per hari (mis. pagi dan malam), tiap jadwal bisa punya pesan sendiri, dengan timezone
+- Beberapa jadwal kirim per hari (mis. pagi dan malam), tiap jadwal bisa punya pesan dan penerima sendiri, dengan timezone
 - Login TikTok langsung di panel (browser remote) atau tempel cookie manual
 - Notifikasi Discord (webhook) dan Telegram, opsional
 - Semua data (cookie, kontak, pengaturan, riwayat) tersimpan di volume Docker `/data`

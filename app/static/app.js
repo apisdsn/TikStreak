@@ -10,6 +10,7 @@
   let accounts = [];
   let currentId = "";
   let accountsSig = "";
+  let contactList = []; // kontak akun terpilih (untuk pilihan penerima per jadwal)
 
   try { apiKey = localStorage.getItem(KEY) || ""; currentId = localStorage.getItem(ACCT_KEY) || ""; } catch (e) { /* storage tidak tersedia */ }
 
@@ -266,6 +267,8 @@
     renderContacts(contacts);
   }
   function renderContacts(contacts) {
+    contactList = contacts;
+    document.querySelectorAll(".sched").forEach((r) => r.setContacts && r.setContacts());
     setText("contactsCount", contacts.length);
     const ul = $("contactsList");
     ul.replaceChildren();
@@ -436,15 +439,45 @@
     const hour = options(24, hh), min = options(60, mm);
     const msg = el("input", { type: "text", value: sc.message, placeholder: "Pesan default", maxLength: 500 });
     const del = el("button", { className: "btn danger small", type: "button", textContent: "Hapus" });
+
+    // Penerima: semua kontak akun, atau hanya kontak yang dicentang
+    const allBox = el("input", { type: "checkbox", checked: sc.contacts == null });
+    const chips = el("div", { className: "chips" });
+    const selected = new Set((sc.contacts || []).map((c) => c.toLowerCase()));
+    const buildChips = () => {
+      chips.replaceChildren();
+      contactList.forEach((c) => {
+        const key = c.toLowerCase();
+        const cb = el("input", { type: "checkbox", checked: selected.has(key) });
+        cb.addEventListener("change", () => (cb.checked ? selected.add(key) : selected.delete(key)));
+        chips.append(el("label", { className: "chip" }, [cb, el("span", { textContent: c })]));
+      });
+      if (!contactList.length) chips.append(el("span", { className: "muted", textContent: "Belum ada kontak di akun ini." }));
+      chips.classList.toggle("hidden", allBox.checked);
+    };
+    allBox.addEventListener("change", buildChips);
+    buildChips();
+    const recipients = el("div", { className: "sched-contacts" }, [
+      el("label", { className: "check" }, [allBox, " Kirim ke semua kontak"]),
+      chips,
+    ]);
+
     const row = el("div", { className: "sched" + (sc.enabled ? "" : " off") }, [
       enabled,
       el("div", { className: "time24" }, [hour, el("span", { textContent: ":" }), min]),
-      msg, del,
+      msg, del, recipients,
     ]);
+    row.setContacts = buildChips;
     row.dataset.id = sc.id || "";
     enabled.addEventListener("change", () => row.classList.toggle("off", !enabled.checked));
     del.addEventListener("click", () => row.remove());
-    row.read = () => ({ id: row.dataset.id || null, enabled: enabled.checked, time: `${hour.value}:${min.value}`, message: msg.value.trim() });
+    row.read = () => ({
+      id: row.dataset.id || null,
+      enabled: enabled.checked,
+      time: `${hour.value}:${min.value}`,
+      message: msg.value.trim(),
+      contacts: allBox.checked ? null : contactList.filter((c) => selected.has(c.toLowerCase())),
+    });
     $("scheduleList").append(row);
   }
 
