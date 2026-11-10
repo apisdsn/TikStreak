@@ -1,8 +1,9 @@
 import os
 import re
 import secrets
+import uuid
 import threading
-from typing import Optional
+from typing import List, Optional
 from zoneinfo import ZoneInfo
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Query
@@ -43,10 +44,16 @@ def _startup():
 
 
 # ---------------------------------------------------------------- schemas
+class ScheduleIn(BaseModel):
+    id: Optional[str] = None
+    enabled: bool = True
+    time: str
+    message: str = ""
+
+
 class SettingsIn(BaseModel):
     message: Optional[str] = None
-    schedule_enabled: Optional[bool] = None
-    schedule_time: Optional[str] = None
+    schedules: Optional[List[ScheduleIn]] = None
     timezone: Optional[str] = None
     telegram_enabled: Optional[bool] = None
     telegram_token: Optional[str] = None
@@ -111,7 +118,7 @@ def status():
         "next_run": runner.next_run_at(),
         "contacts": len(contacts_store.read()),
         "cookies": cookie_view(),
-        "schedule_enabled": get_settings()["schedule_enabled"],
+        "schedule_enabled": any(x["enabled"] for x in get_settings()["schedules"]),
     }
 
 
@@ -123,8 +130,19 @@ def read_settings():
 @app.put("/api/settings", dependencies=[Depends(auth)])
 def write_settings(body: SettingsIn):
     data = {k: v for k, v in body.model_dump().items() if v is not None}
-    if "schedule_time" in data and not re.fullmatch(r"([01]\d|2[0-3]):[0-5]\d", data["schedule_time"]):
-        raise HTTPException(400, "Format jam harus HH:MM")
+    if "schedules" in data:
+        if len(data["schedules"]) > 8:
+            raise HTTPException(400, "Maksimal 8 jadwal")
+        clean, seen = [], set()
+        for x in data["schedules"]:
+            if not re.fullmatch(r"([01]\d|2[0-3]):[0-5]\d", x["time"]):
+                raise HTTPException(400, "Format jam harus HH:MM")
+            if len(x["message"]) > 500:
+                raise HTTPException(400, "Pesan jadwal maksimal 500 karakter")
+            sid = x.get("id") if x.get("id") and x["id"] not in seen else uuid.uuid4().hex[:6]
+            seen.add(sid)
+            clean.append({"id": sid, "enabled": bool(x["enabled"]), "time": x["time"], "message": x["message"].strip()})
+        data["schedules"] = clean
     if data.get("timezone"):
         try:
             ZoneInfo(data["timezone"])

@@ -7,8 +7,7 @@ from .config import DATA_DIR
 
 DEFAULT_SETTINGS = {
     "message": "🔥 Streak 🔥",
-    "schedule_enabled": False,
-    "schedule_time": "00:00",
+    "schedules": [{"id": "s1", "enabled": False, "time": "23:00", "message": ""}],
     "timezone": "",
     "telegram_enabled": False,
     "telegram_token": "",
@@ -66,4 +65,14 @@ meta_store = JsonStore("meta.json", {})
 
 def get_settings():
     data = settings_store.read()
+    # Migrasi dari format lama (satu jadwal) ke daftar jadwal
+    if "schedules" not in data and "schedule_time" in data:
+        data["schedules"] = [{
+            "id": "s1",
+            "enabled": bool(data.get("schedule_enabled", False)),
+            "time": data["schedule_time"],
+            "message": "",
+        }]
+    for legacy in ("schedule_enabled", "schedule_time"):
+        data.pop(legacy, None)
     return {**DEFAULT_SETTINGS, **data}

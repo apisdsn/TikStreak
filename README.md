@@ -6,7 +6,7 @@ Panel web untuk mengotomatiskan pengiriman pesan streak TikTok. Berjalan di satu
 
 - UI web: dashboard, log live, riwayat, kelola kontak, cookie, dan pengaturan
 - Kirim sekarang atau mode uji (cek kontak tanpa mengirim)
-- Jadwal harian dengan timezone
+- Beberapa jadwal kirim per hari (mis. pagi dan malam), tiap jadwal bisa punya pesan sendiri, dengan timezone
 - Login TikTok langsung di panel (browser remote) atau tempel cookie manual
 - Notifikasi Discord (webhook) dan Telegram, opsional
 - Semua data (cookie, kontak, pengaturan, riwayat) tersimpan di volume Docker `/data`
@@ -36,7 +36,7 @@ Lalu buka `http://localhost:8000` di laptop selama tunnel aktif. Alternatif: VPN
 1. **Cookie**: di tab *Cookie* klik *Mulai login*, login ke TikTok pada tampilan browser di panel (klik/ketik langsung, captcha juga bisa), lalu *Simpan sesi login*. Alternatif: tempel cookie manual (JSON dari Cookie-Editor atau string header `Cookie`).
 2. **Kontak**: tambahkan nickname persis seperti di daftar pesan TikTok.
 3. **Dashboard**: jalankan *Uji* dulu untuk memastikan login dan kontak terbaca, lalu *Kirim streak sekarang*.
-4. **Pengaturan**: atur pesan default, jadwal harian, dan Discord/Telegram.
+4. **Pengaturan**: atur pesan default, jadwal kirim, dan Discord/Telegram.
 
 ## API
 

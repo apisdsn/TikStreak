@@ -40,7 +40,7 @@ class Runner:
         self._last_fire_key = None
 
     # ------------------------------------------------------------- run control
-    def start(self, mode="send", message=None, trigger="manual"):
+    def start(self, mode="send", message=None, trigger="manual", label=None):
         with self._lock:
             if self.current and self.current["status"] == "running":
                 raise Busy()
@@ -48,6 +48,7 @@ class Runner:
                 "id": uuid.uuid4().hex[:8],
                 "mode": mode,
                 "trigger": trigger,
+                "label": label,
                 "status": "running",
                 "started_at": datetime.now().isoformat(timespec="seconds"),
                 "finished_at": None,
@@ -147,6 +148,8 @@ class Runner:
             return
         icon = {"success": "✅", "partial": "⚠️", "failed": "❌"}.get(run["status"], "ℹ️")
         lines = [f"{run['sent']}/{run['total']} terkirim · {self._span(run)}"]
+        if run.get("label"):
+            lines.insert(0, f"Jadwal {run['label']}")
         if run["mode"] == "send":
             lines.append(f"Pesan: \"{run.get('message') or settings['message']}\"")
         if run.get("error"):
@@ -195,49 +198,60 @@ class Runner:
             return run.get("started_at", "")
 
     # --------------------------------------------------------------- scheduler
-    def next_run_at(self):
-        s = get_settings()
-        if not s["schedule_enabled"]:
-            return None
-        try:
-            hh, mm = map(int, s["schedule_time"].split(":"))
-            now = datetime.now(_tz(s))
-            nxt = now.replace(hour=hh, minute=mm, second=0, microsecond=0)
-            if nxt <= now:
-                nxt += timedelta(days=1)
-            return nxt.strftime("%Y-%m-%d %H:%M") + " " + str(nxt.tzinfo)
-        except Exception:  # noqa: BLE001
-            return None
-
     @staticmethod
-    def _due(s):
-        """Waktu jadwal kirim hari ini (aware) menurut timezone pengaturan."""
-        hh, mm = map(int, s["schedule_time"].split(":"))
+    def _slot(sched, s):
+        """Waktu sekarang dan waktu jadwal hari ini (aware) menurut timezone pengaturan."""
+        hh, mm = map(int, sched["time"].split(":"))
         now = datetime.now(_tz(s))
         return now, now.replace(hour=hh, minute=mm, second=0, microsecond=0)
+
+    def next_run_at(self):
+        s = get_settings()
+        best = None
+        for sched in s["schedules"]:
+            if not sched["enabled"]:
+                continue
+            try:
+                now, nxt = self._slot(sched, s)
+                if nxt <= now:
+                    nxt += timedelta(days=1)
+            except Exception:  # noqa: BLE001
+                continue
+            if best is None or nxt < best:
+                best = nxt
+        return best.strftime("%Y-%m-%d %H:%M") + " " + str(best.tzinfo) if best else None
 
     def scheduler_loop(self):
         while True:
             try:
                 s = get_settings()
-                if s["schedule_enabled"]:
-                    now, due = self._due(s)
-                    key = due.strftime("%Y-%m-%d %H:%M")
-                    late = (now - due).total_seconds()
-                    meta = meta_store.read()
-                    # Jalan tepat waktu; bila terlewat (proses lain berjalan/restart) kejar hingga 3 jam
-                    if 0 <= late < CATCHUP_SECONDS and meta.get("last_schedule") != key:
-                        try:
-                            self.start("send", trigger="schedule")
-                            meta = meta_store.read()
-                            meta["last_schedule"] = key
-                            meta_store.write(meta)
-                        except Busy:
-                            pass  # dicoba lagi 20 detik kemudian
+                for sched in s["schedules"]:
+                    if sched["enabled"]:
+                        self._fire_if_due(sched, s)
                 self._keepalive(s)
             except Exception:  # noqa: BLE001
                 pass
             time.sleep(20)
+
+    def _fire_if_due(self, sched, s):
+        now, due = self._slot(sched, s)
+        key = due.strftime("%Y-%m-%d %H:%M")
+        late = (now - due).total_seconds()
+        meta = meta_store.read()
+        fired = meta.get("fired", {})
+        if sched["id"] == "s1" and "s1" not in fired and meta.get("last_schedule"):
+            fired["s1"] = meta["last_schedule"]  # catatan dari format lama
+        # Jalan tepat waktu; bila terlewat (proses lain berjalan/restart) kejar hingga 3 jam
+        if 0 <= late < CATCHUP_SECONDS and fired.get(sched["id"]) != key:
+            try:
+                self.start("send", message=sched.get("message") or None, trigger="schedule", label=sched["time"])
+            except Busy:
+                return  # dicoba lagi 20 detik kemudian
+            meta = meta_store.read()
+            fired = meta.get("fired", {})
+            fired[sched["id"]] = key
+            meta["fired"] = fired
+            meta_store.write(meta)
 
     def _keepalive(self, s):
         """Cek berkala agar sesi tetap aktif dan cookie terbaru tersimpan."""
@@ -245,10 +259,11 @@ class Runner:
             return
         if login_session.active:
             return
-        if s["schedule_enabled"]:  # jangan bentrok dengan jadwal kirim (10 menit sebelum s.d. 10 menit sesudah)
-            now, due = self._due(s)
-            if -600 <= (now - due).total_seconds() <= 600:
-                return
+        for sched in s["schedules"]:  # jangan bentrok dengan jadwal kirim (10 menit sebelum s.d. sesudah)
+            if sched["enabled"]:
+                now, due = self._slot(sched, s)
+                if -600 <= (now - due).total_seconds() <= 600:
+                    return
         meta = meta_store.read()
         if time.time() - meta.get("last_check", 0) < s["keepalive_hours"] * 3600:
             return

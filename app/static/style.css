@@ -94,3 +94,8 @@ select { flex: 1; padding: 9px 11px; border: 1px solid var(--line); border-radiu
 .proofs figure { margin: 0; }
 .proofs img { width: 100%; border: 1px solid var(--line); border-radius: 8px; cursor: zoom-in; }
 .proofs figcaption { font-size: 13px; color: var(--muted); margin-top: 4px; }
+.schedules { display: grid; gap: 10px; margin-top: 8px; }
+.sched { display: grid; grid-template-columns: auto auto 1fr auto; gap: 10px; align-items: center; padding: 10px; border: 1px solid var(--line); border-radius: 8px; }
+.sched .time24 { width: 150px; }
+.sched.off { opacity: .6; }
+@media (max-width: 600px) { .sched { grid-template-columns: auto 1fr auto; } .sched input[type=text] { grid-column: 1 / -1; order: 5; } }

@@ -376,16 +376,48 @@
 
   // --------------------------------------------------------------- settings
   const pad = (n) => String(n).padStart(2, "0");
-  for (let i = 0; i < 24; i++) $("setScheduleHour").append(new Option(pad(i), pad(i)));
-  for (let i = 0; i < 60; i++) $("setScheduleMin").append(new Option(pad(i), pad(i)));
+  const options = (n, val) => {
+    const sel = el("select");
+    for (let i = 0; i < n; i++) sel.append(new Option(pad(i), pad(i)));
+    sel.value = val;
+    return sel;
+  };
+
+  function addScheduleRow(sc = { id: "", enabled: true, time: "07:00", message: "" }) {
+    const [hh, mm] = sc.time.split(":");
+    const enabled = el("input", { type: "checkbox", checked: sc.enabled, title: "Aktif" });
+    const hour = options(24, hh), min = options(60, mm);
+    const msg = el("input", { type: "text", value: sc.message, placeholder: "Pesan default", maxLength: 500 });
+    const del = el("button", { className: "btn danger small", type: "button", textContent: "Hapus" });
+    const row = el("div", { className: "sched" + (sc.enabled ? "" : " off") }, [
+      enabled,
+      el("div", { className: "time24" }, [hour, el("span", { textContent: ":" }), min]),
+      msg, del,
+    ]);
+    row.dataset.id = sc.id || "";
+    enabled.addEventListener("change", () => row.classList.toggle("off", !enabled.checked));
+    del.addEventListener("click", () => row.remove());
+    row.read = () => ({ id: row.dataset.id || null, enabled: enabled.checked, time: `${hour.value}:${min.value}`, message: msg.value.trim() });
+    $("scheduleList").append(row);
+  }
+
+  function renderSchedules(list) {
+    $("scheduleList").replaceChildren();
+    if (!list.length) $("scheduleList").append(el("p", { className: "muted", textContent: "Belum ada jadwal." }));
+    list.forEach(addScheduleRow);
+  }
+
+  $("btnAddSchedule").addEventListener("click", () => {
+    const box = $("scheduleList");
+    if (box.querySelector("p")) box.replaceChildren();
+    if (box.children.length >= 8) return toast("Maksimal 8 jadwal");
+    addScheduleRow();
+  });
 
   async function loadSettings() {
     const s = await api("/settings");
     $("setMessage").value = s.message;
-    $("setScheduleEnabled").checked = s.schedule_enabled;
-    const [hh, mm] = s.schedule_time.split(":");
-    $("setScheduleHour").value = hh;
-    $("setScheduleMin").value = mm;
+    renderSchedules(s.schedules);
     $("setTimezone").value = s.timezone;
     $("setNotifyShot").checked = s.notify_screenshot;
     $("setKeepalive").checked = s.keepalive_enabled;
@@ -408,8 +440,7 @@
         method: "PUT",
         body: {
           message: $("setMessage").value,
-          schedule_enabled: $("setScheduleEnabled").checked,
-          schedule_time: `${$("setScheduleHour").value}:${$("setScheduleMin").value}`,
+          schedules: [...$("scheduleList").querySelectorAll(".sched")].map((r) => r.read()),
           timezone: $("setTimezone").value.trim(),
           notify_screenshot: $("setNotifyShot").checked,
           keepalive_enabled: $("setKeepalive").checked,
