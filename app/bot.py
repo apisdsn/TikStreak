@@ -14,12 +14,42 @@ from .cookies import from_browser
 
 SHOT_PATH = os.path.join(config.DATA_DIR, "last_run.jpg")
 
-NICKNAME_SELECTORS = [
+# Selector lama (cadangan bila atribut data-e2e daftar chat berubah)
+LEGACY_NICKNAME_SELECTORS = [
     'css:p[class*="PInfoNickname"]',
     'css:p[class*="Nickname"]',
     'css:span[class*="Nickname"]',
-    'css:div[class*="Nickname"]',
 ]
+
+# Daftar chat memakai virtual scroll: hanya item yang terlihat ada di DOM.
+SCAN_JS = """
+return [...document.querySelectorAll('[data-e2e="dm-new-conversation-item"]')].map(e => {
+  const n = e.querySelector('[data-e2e="dm-new-conversation-nickname"]');
+  const t = e.querySelector('[class*="SpanInfoTime"]');
+  return { id: e.getAttribute('data-conv-id'), nick: n ? n.innerText.trim() : '', time: t ? t.innerText.trim() : '' };
+});
+"""
+
+SCROLL_JS = """
+const it = document.querySelector('[data-e2e="dm-new-conversation-item"]');
+if (!it) return null;
+let s = it.parentElement;
+while (s && s !== document.body) {
+  const o = getComputedStyle(s).overflowY;
+  if ((o === 'auto' || o === 'scroll') && s.scrollHeight > s.clientHeight) break;
+  s = s.parentElement;
+}
+if (!s || s === document.body) return null;
+if (arguments[0] === 'top') { s.scrollTop = 0; return { top: true }; }
+const before = s.scrollTop;
+s.scrollTop += Math.max(200, s.clientHeight * 0.8);
+return { moved: s.scrollTop !== before, atEnd: s.scrollTop + s.clientHeight >= s.scrollHeight - 2 };
+"""
+
+MSG_COUNT_JS = """
+const box = document.querySelector('[data-e2e="dm-new-message-list"]') || document.body;
+return box.innerText.split(arguments[0]).length - 1;
+"""
 
 INPUT_SELECTORS = [
     'css:div[data-e2e="message-input-area"] div[contenteditable="true"]',
@@ -30,26 +60,15 @@ INPUT_SELECTORS = [
 ]
 
 HEADER_SELECTORS = [
+    'css:p[data-e2e="dm-new-chat-nickname"]',
     'css:[data-e2e="chat-nickname"]',
     'css:[class*="ChatHeader"] [class*="Nickname"]',
     'css:[class*="ChatHeader"] p',
-    'css:[class*="ChatHeader"] h1',
-    'css:[class*="ChatHeader"] h2',
 ]
+HEADER_UID_SELECTOR = 'css:p[data-e2e="chat-uniqueid"]'
+MESSAGE_TEXT_SELECTOR = 'css:[data-e2e="dm-new-message-text"]'
 
-NICKNAME_CSS = 'p[class*="PInfoNickname"], p[class*="Nickname"], span[class*="Nickname"], div[class*="Nickname"]'
-
-# Dijalankan pada elemen nickname (this). Mengembalikan teks kartu milik satu kontak:
-# ancestor terbesar yang hanya memuat nickname kontak ini.
-CARD_JS = """
-const sel = arguments[0];
-const names = (root) => new Set([...root.querySelectorAll(sel)].map(e => (e.innerText || '').trim()).filter(Boolean));
-let card = this, p = this.parentElement;
-while (p && p !== document.body && names(p).size <= 1) { card = p; p = p.parentElement; }
-return (card.innerText || '').trim().slice(0, 300);
-"""
-
-TIME_RE = re.compile(r"(?<![\d:])([01]?\d|2[0-3]):([0-5]\d)(?![\d:])")
+TIME_RE = re.compile(r"\s*([01]?\d|2[0-3]):([0-5]\d)\s*")
 
 SEND_BUTTON_SELECTORS = [
     'css:[data-e2e="message-send"]',
@@ -85,7 +104,7 @@ def xpath_literal(s):
 
 
 class StreakBot:
-    def __init__(self, settings, log, cancel_event, cookies_store, test_mode=False, message=None, check_only=False, proof_dir=None):
+    def __init__(self, settings, log, cancel_event, cookies_store, test_mode=False, message=None, check_only=False, proof_dir=None, convs_store=None):
         self.s = settings
         self.cookies_store = cookies_store
         self.log = log
@@ -94,6 +113,7 @@ class StreakBot:
         self.message = message or settings["message"]
         self.check_only = check_only
         self.proof_dir = proof_dir
+        self.convs = convs_store
         self.page = None
         self.logged_in = False
         self.cookies_saved = False
@@ -200,9 +220,9 @@ class StreakBot:
         self.log("Popup terdeteksi tetapi tombol tutup tidak ditemukan", "warning")
 
     # ---------------------------------------------------------------- contact
-    def _find_contact(self, name):
+    def _find_contact_legacy(self, name):
         target = name.strip().lower()
-        for sel in NICKNAME_SELECTORS:
+        for sel in LEGACY_NICKNAME_SELECTORS:
             try:
                 for el in self.page.eles(sel):
                     if (el.text or "").strip().lower() != target:
@@ -218,10 +238,67 @@ class StreakBot:
                     return el
             except Exception:  # noqa: BLE001
                 continue
+        return None
+
+    def _scroll_list(self, where):
         try:
-            return self.page.ele(f"xpath://*[text()={xpath_literal(name)}]", timeout=1)
+            return self.page.run_js(SCROLL_JS, where)
         except Exception:  # noqa: BLE001
             return None
+
+    def _scan(self):
+        try:
+            return self.page.run_js(SCAN_JS) or []
+        except Exception:  # noqa: BLE001
+            return []
+
+    def _locate(self, name, conv_id=None):
+        """Cari kartu kontak di daftar chat (menggulir daftar virtual).
+
+        Prioritas: ID percakapan yang pernah tersimpan (tahan terhadap perubahan nama),
+        lalu nama persis. Return dict {el, nick, id, time} atau None.
+        """
+        target = name.strip().lower()
+        phases = (["id"] if conv_id else []) + ["name"]
+        for phase in phases:
+            self._scroll_list("top")
+            self._sleep(0.3)
+            for step in range(80):
+                self._check_cancel()
+                items = self._scan()
+                if not items and step == 0 and phase == phases[0]:
+                    el = self._find_contact_legacy(name)
+                    return {"el": el, "nick": name, "id": None, "time": None} if el else None
+                if phase == "id":
+                    hit = next((i for i in items if i["id"] == conv_id), None)
+                else:
+                    hit = next((i for i in items if i["nick"].strip().lower() == target), None)
+                if hit:
+                    el = self.page.ele(f'css:div[data-conv-id="{hit["id"]}"]', timeout=2)
+                    if el:
+                        return {"el": el, **hit}
+                r = self._scroll_list("down")
+                if not r or r.get("atEnd") or not r.get("moved"):
+                    # satu pemindaian terakhir di dasar daftar
+                    items = self._scan()
+                    hit = next((i for i in items if (i["id"] == conv_id if phase == "id" else i["nick"].strip().lower() == target)), None)
+                    if hit:
+                        el = self.page.ele(f'css:div[data-conv-id="{hit["id"]}"]', timeout=2)
+                        if el:
+                            return {"el": el, **hit}
+                    break
+                self._sleep(0.3)
+        return None
+
+    def _remember(self, name, conv_id):
+        """Simpan ID percakapan untuk kontak ini agar tetap dikenali bila namanya berubah."""
+        if not self.convs or not conv_id:
+            return
+        key = name.strip().lower()
+        data = self.convs.read()
+        if data.get(key) != conv_id:
+            data[key] = conv_id
+            self.convs.write(data)
 
     def _find_input(self):
         for sel in INPUT_SELECTORS:
@@ -239,9 +316,7 @@ class StreakBot:
 
     def _count_text(self, text):
         try:
-            return self.page.run_js(
-                "return document.body.innerText.split(arguments[0]).length - 1;", text
-            )
+            return self.page.run_js(MSG_COUNT_JS, text)
         except Exception:  # noqa: BLE001
             return 0
 
@@ -287,33 +362,39 @@ class StreakBot:
         return False
 
     def _chat_header(self):
-        """Nama penerima pada header chat yang sedang terbuka (None bila tidak terbaca)."""
+        """(nama, @username) pada header chat yang terbuka; elemen yang tak terbaca bernilai None."""
+        nick = uid = None
         for sel in HEADER_SELECTORS:
             try:
                 for el in self.page.eles(sel, timeout=1):
                     t = (el.text or "").strip()
                     if t:
-                        return t
+                        nick = t
+                        break
             except Exception:  # noqa: BLE001
                 continue
-        return None
+            if nick:
+                break
+        try:
+            el = self.page.ele(HEADER_UID_SELECTOR, timeout=0.5)
+            uid = (el.text or "").strip() if el else None
+        except Exception:  # noqa: BLE001
+            uid = None
+        return nick, uid or None
 
-    def _list_time(self, name):
+    def _list_time(self, name, conv_id=None):
         """Jam pesan terakhir pada kartu kontak di daftar chat (HH:MM) atau None."""
-        target = name.strip().lower()
-        for sel in NICKNAME_SELECTORS:
-            try:
-                for el in self.page.eles(sel):
-                    if (el.text or "").strip().lower() != target:
-                        continue
-                    m = TIME_RE.search(el.run_js(CARD_JS, NICKNAME_CSS) or "")
-                    return f"{int(m.group(1)):02d}:{m.group(2)}" if m else None
-            except Exception:  # noqa: BLE001
-                continue
-        return None
+        found = self._locate(name, conv_id)
+        if not found or not found.get("time"):
+            return None
+        m = TIME_RE.fullmatch(found["time"])
+        return f"{int(m.group(1)):02d}:{m.group(2)}" if m else None
 
     def _last_bubble(self):
         try:
+            els = self.page.eles(MESSAGE_TEXT_SELECTOR, timeout=1)
+            if els:
+                return (els[-1].text or "").strip()
             els = self.page.eles(f"xpath://*[normalize-space(text())={xpath_literal(self.message)}]", timeout=1)
             return (els[-1].text or "").strip() if els else None
         except Exception:  # noqa: BLE001
@@ -342,28 +423,33 @@ class StreakBot:
             pass
 
     def _visible_nicknames(self):
-        names = []
-        for sel in NICKNAME_SELECTORS:
+        names = [i["nick"] for i in self._scan() if i["nick"]]
+        if names:
+            return names[:15]
+        for sel in LEGACY_NICKNAME_SELECTORS:
             try:
-                for el in self.page.eles(sel)[:15]:
-                    t = (el.text or "").strip()
-                    if t and t not in names:
-                        names.append(t)
+                names += [(el.text or "").strip() for el in self.page.eles(sel)[:15]]
             except Exception:  # noqa: BLE001
                 continue
-        return names
+        return [n for n in dict.fromkeys(names) if n][:15]
 
     def _send_to(self, name):
-        """Kirim ke satu kontak. Return dict bukti (chat, bubble, count, list_time)."""
-        el = self._find_contact(name)
-        if not el:
+        """Kirim ke satu kontak. Return dict bukti (chat, bubble, count, list_time, renamed_to)."""
+        conv_id = self.convs.read().get(name.strip().lower()) if self.convs else None
+        found = self._locate(name, conv_id)
+        if not found:
             self.page.refresh()
             self._sleep(self.s["page_load_wait"])
-            el = self._find_contact(name)
-        if not el:
+            found = self._locate(name, conv_id)
+        if not found:
             raise RuntimeError("Kontak tidak ditemukan di daftar pesan")
 
+        el, nick, cid = found["el"], found["nick"], found.get("id")
         evidence = {}
+        if nick.strip().lower() != name.strip().lower():
+            evidence["renamed_to"] = nick
+            self.log(f"{name}: nama berubah menjadi '{nick}' (dikenali lewat ID percakapan)", "warning")
+        self._remember(name, cid)
         if self.test_mode:
             return evidence
 
@@ -374,12 +460,14 @@ class StreakBot:
         self._sleep(self.s["element_wait"])
 
         # Pastikan chat yang terbuka memang milik penerima
-        header = self._chat_header()
-        if header is not None and name.strip().lower() not in header.lower():
-            raise RuntimeError(f"Chat yang terbuka milik '{header}', bukan '{name}'. Pesan tidak dikirim")
+        header, uid = self._chat_header()
+        if header is not None and nick.strip().lower() not in header.lower():
+            raise RuntimeError(f"Chat yang terbuka milik '{header}', bukan '{nick}'. Pesan tidak dikirim")
         if header is None:
             self.log("Header chat tidak terbaca, penerima tidak bisa diverifikasi", "warning")
         evidence["chat"] = header
+        if uid:
+            evidence["uid"] = uid
 
         box = self._find_input()
         if not box:
@@ -404,7 +492,7 @@ class StreakBot:
         evidence["bubble"] = self._last_bubble()
         evidence["count"] = [before, self._count_text(self.message)]
         self._sleep(2)  # beri waktu daftar chat memperbarui pratinjau
-        evidence["list_time"] = self._list_time(name)
+        evidence["list_time"] = self._list_time(nick, cid)
         return evidence
 
     # -------------------------------------------------------------------- run

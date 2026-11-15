@@ -12,7 +12,7 @@ from .config import DATA_DIR
 from .bot import Cancelled, CookieInvalid, StreakBot
 from .login import login_session
 from .notify import notify
-from .store import get_account, get_settings, history_store, list_accounts, stores
+from .store import get_account, get_settings, history_store, list_accounts, rename_contact, stores
 
 MAX_HISTORY = 50
 MAX_LOG_LINES = 500
@@ -94,9 +94,14 @@ class Runner:
                     raise RuntimeError("Tidak ada kontak terpilih untuk jadwal ini (mungkin sudah dihapus)")
             bot = StreakBot(settings, log, self._cancel, st.cookies, test_mode=(mode == "test"),
                             message=message, check_only=(mode == "check"),
-                            proof_dir=os.path.join(PROOFS_DIR, run["id"]))
+                            proof_dir=os.path.join(PROOFS_DIR, run["id"]), convs_store=st.convs)
             res = bot.run(contacts)
             run.update(res)
+            for r in res["results"]:  # kontak yang berganti nama dikenali lewat ID percakapan
+                new = (r.get("evidence") or {}).get("renamed_to")
+                if new:
+                    rename_contact(run["account"]["id"], r["contact"], new)
+                    log(f"Kontak diperbarui otomatis: {r['contact']} → {new}")
             log("Cookie valid" if mode == "check" else f"Selesai: {res['sent']}/{res['total']}")
         except Cancelled:
             run["status"] = "cancelled"
@@ -189,6 +194,8 @@ class Runner:
         if not ev:
             return ""
         parts = []
+        if ev.get("renamed_to"):
+            parts.append(f"nama baru {ev['renamed_to']}, diperbarui otomatis")
         if ev.get("chat"):
             parts.append(f"chat {ev['chat']} ✓")
         if ev.get("bubble"):

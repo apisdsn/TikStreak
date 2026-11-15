@@ -281,7 +281,19 @@
           renderContacts(r.contacts);
         } catch (e) { toast(e.message); }
       });
-      ul.append(el("li", {}, [el("span", { textContent: c }), btn]));
+      const ren = el("button", { className: "btn small", textContent: "Ubah nama" });
+      ren.addEventListener("click", async () => {
+        const name = prompt("Nama baru untuk kontak ini (persis seperti di daftar pesan TikTok):", c);
+        if (!name || name.trim() === c) return;
+        try {
+          const r = await apiA("/contacts/rename", { method: "PUT", body: { old: c, new: name } });
+          renderContacts(r.contacts);
+          const st = await api("/status");
+          syncAccounts(st.accounts);
+          renderSchedules(curAccount().schedules);
+        } catch (e) { toast(e.message); }
+      });
+      ul.append(el("li", {}, [el("span", { textContent: c }), el("div", { className: "actions" }, [ren, btn])]));
     });
   }
   $("btnAddContacts").addEventListener("click", async () => {

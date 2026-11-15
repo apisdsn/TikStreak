@@ -79,6 +79,7 @@ class AccountStores:
         self.cookies = JsonStore(f"{base}/cookies.json", [])
         self.contacts = JsonStore(f"{base}/contacts.json", [])
         self.meta = JsonStore(f"{base}/meta.json", {})
+        self.convs = JsonStore(f"{base}/convs.json", {})  # nama kontak (huruf kecil) -> ID percakapan
 
 
 _stores = {}
@@ -125,6 +126,32 @@ def delete_account(aid):
     shutil.rmtree(os.path.join(DATA_DIR, "accounts", aid), ignore_errors=True)
     with _stores_lock:
         _stores.pop(aid, None)
+
+
+def _dedupe_ci(items):
+    seen, out = set(), []
+    for c in items:
+        if c.lower() not in seen:
+            seen.add(c.lower())
+            out.append(c)
+    return out
+
+
+def rename_contact(aid, old, new):
+    """Ganti nama kontak di daftar, di jadwal yang memilihnya, dan di pemetaan ID percakapan."""
+    st = stores(aid)
+    lo, ln = old.strip().lower(), new.strip().lower()
+    st.contacts.write(_dedupe_ci([new if c.lower() == lo else c for c in st.contacts.read()]))
+    acc = get_account(aid)
+    if acc:
+        for sched in acc["schedules"]:
+            if sched.get("contacts") is not None:
+                sched["contacts"] = _dedupe_ci([new if c.lower() == lo else c for c in sched["contacts"]])
+        save_account(acc)
+    convs = st.convs.read()
+    if lo in convs and lo != ln:
+        convs[ln] = convs.pop(lo)
+        st.convs.write(convs)
 
 
 def migrate_legacy():

@@ -24,6 +24,7 @@ from .store import (
     get_settings,
     history_store,
     list_accounts,
+    rename_contact,
     save_account,
     settings_store,
     stores,
@@ -89,6 +90,11 @@ class AccountIn(BaseModel):
 
 class ContactsIn(BaseModel):
     names: str
+
+
+class RenameIn(BaseModel):
+    old: str
+    new: str
 
 
 class CookiesIn(BaseModel):
@@ -292,6 +298,20 @@ def add_contacts(body: ContactsIn, acc=Depends(acct)):
         raise HTTPException(400, "Tidak ada kontak baru (kosong atau sudah ada)")
     contacts_store.write(current)
     return {"contacts": current, "added": added}
+
+
+@app.put("/api/contacts/rename", dependencies=[Depends(auth)])
+def rename_contact_api(body: RenameIn, acc=Depends(acct)):
+    old, new = body.old.strip(), body.new.strip()
+    current = stores(acc["id"]).contacts.read()
+    if old.lower() not in {c.lower() for c in current}:
+        raise HTTPException(404, "Kontak tidak ditemukan")
+    if not new or len(new) > 100:
+        raise HTTPException(400, "Nama baru 1-100 karakter")
+    if new.lower() != old.lower() and new.lower() in {c.lower() for c in current}:
+        raise HTTPException(409, "Nama baru sudah ada di daftar kontak")
+    rename_contact(acc["id"], old, new)
+    return {"contacts": stores(acc["id"]).contacts.read()}
 
 
 @app.delete("/api/contacts", dependencies=[Depends(auth)])
