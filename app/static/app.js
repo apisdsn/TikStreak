@@ -72,6 +72,8 @@
       proofAlt: "Bukti {name}", evChat: "Chat Terverifikasi", evBubble: "Bubble Terverifikasi", evList: "Daftar Chat {time}",
       evRenamed: "Nama Baru {name}, Diperbarui Otomatis",
       rtNow: "Baru Saja", dash: "-",
+      noRuns: "Belum Ada Proses", lbClose: "Tutup", lbDownload: "Unduh", lbPrev: "Sebelumnya", lbNext: "Berikutnya",
+      lbLatestShot: "Tangkapan Layar Terakhir", reloadScreenshot: "Muat Ulang Tangkapan Layar", fullScreen: "Layar Penuh", lbZoomIn: "Klik untuk Ukuran Asli", lbZoomOut: "Klik untuk Muat Layar", lbViewer: "Penampil Gambar",
     },
     en: {
       brand: "Streak Panel", loginHint: "Enter Your Access Key to Open the Panel", accessKey: "Access Key", signIn: "Log In",
@@ -135,6 +137,8 @@
       proofAlt: "Proof {name}", evChat: "Chat Verified", evBubble: "Bubble Verified", evList: "Chat List {time}",
       evRenamed: "New Name {name}, Updated Automatically",
       rtNow: "Just Now", dash: "-",
+      noRuns: "No Runs Yet", lbClose: "Close", lbDownload: "Download", lbPrev: "Previous", lbNext: "Next",
+      lbLatestShot: "Latest Screenshot", reloadScreenshot: "Reload Screenshot", fullScreen: "Full Screen", lbZoomIn: "Click for Actual Size", lbZoomOut: "Click to Fit Screen", lbViewer: "Image Viewer",
     },
   };
   const CONNECTORS = {
@@ -690,6 +694,7 @@
           logCursor = 0;
           pinned = false;
           $("logBox").textContent = "";
+          idleLogKey = null;
           return refresh();
         }
         if (!pinned) {
@@ -698,9 +703,29 @@
         }
         logCursor = cur.next;
         if (!s.running && wasRunning) await loadHistory();
-      }
+      } else renderIdleLog();
       wasRunning = s.running;
     } catch (e) { /* 401 ditangani di api() */ }
+  }
+
+  // Tanpa proses berjalan: tampilkan log proses terakhir dari riwayat (atau keterangan kosong)
+  let idleLogKey = null;
+  function renderIdleLog() {
+    if (pinned || lastRunId) return;
+    const last = history[0];
+    const key = last ? last.id : "none:" + lang;
+    if (key === idleLogKey) return;
+    idleLogKey = key;
+    const box = $("logBox");
+    box.replaceChildren();
+    if (last) {
+      (last.logs || []).forEach((l) => box.append(logLine(l)));
+      setRunBadge(last.status);
+      box.scrollTop = box.scrollHeight;
+    } else {
+      box.append(el("div", { className: "log-empty", textContent: t("noRuns") }));
+      setRunBadge("");
+    }
   }
 
   function setRunBadge(status) {
@@ -732,29 +757,148 @@
   $("btnTest").addEventListener("click", () => startRun("test"));
   $("btnStop").addEventListener("click", () => api("/run/stop", { method: "POST" }).then(() => toast(t("toastStopping"))).catch((e) => toast(e.message)));
 
+  // ------------------------------------------------------------- lightbox
+  const lb = { items: [], index: 0, trigger: null, open: false };
+  function buildLightbox() {
+    const caption = el("span", { className: "lb-caption" });
+    const dl = el("a", { className: "lb-btn", id: "lbDownload" });
+    const close = el("button", { className: "lb-btn lb-close", type: "button", id: "lbClose" }, [icon("i-x")]);
+    const prev = el("button", { className: "lb-nav prev", type: "button", id: "lbPrev" }, [icon("i-chev")]);
+    const next = el("button", { className: "lb-nav next", type: "button", id: "lbNext" }, [icon("i-chev")]);
+    const img = el("img", { id: "lbImg", draggable: false, alt: "" });
+    const stage = el("div", { className: "lb-stage" }, [img]);
+    const root = el("div", { id: "lightbox", className: "lightbox hidden", role: "dialog", "aria-modal": "true" }, [
+      el("div", { className: "lb-bar" }, [caption, dl, close]), prev, next, stage]);
+    document.body.append(root);
+    root.addEventListener("click", (e) => { if (e.target === root || e.target === stage) closeLightbox(); });
+    close.addEventListener("click", closeLightbox);
+    prev.addEventListener("click", () => stepLightbox(-1));
+    next.addEventListener("click", () => stepLightbox(1));
+    img.addEventListener("click", () => { stage.classList.toggle("zoom"); updateZoomHint(); });
+    return root;
+  }
+  const lightboxEl = buildLightbox();
+
+  function updateZoomHint() {
+    const zoomed = lightboxEl.querySelector(".lb-stage").classList.contains("zoom");
+    $("lbImg").title = t(zoomed ? "lbZoomOut" : "lbZoomIn");
+  }
+  function showLightboxItem() {
+    const it = lb.items[lb.index];
+    const n = lb.items.length;
+    const cap = n > 1 ? `${it.caption} (${lb.index + 1}/${n})` : it.caption;
+    lightboxEl.querySelector(".lb-caption").textContent = cap;
+    lightboxEl.setAttribute("aria-label", cap);
+    $("lbImg").src = it.url;
+    $("lbImg").alt = it.caption;
+    lightboxEl.querySelector(".lb-stage").classList.remove("zoom");
+    lightboxEl.querySelector(".lb-stage").scrollTo(0, 0);
+    updateZoomHint();
+    const dl = $("lbDownload");
+    dl.href = it.url;
+    dl.download = it.filename;
+    dl.textContent = t("lbDownload");
+    $("lbClose").setAttribute("aria-label", t("lbClose"));
+    $("lbClose").title = t("lbClose");
+    $("lbPrev").setAttribute("aria-label", t("lbPrev"));
+    $("lbNext").setAttribute("aria-label", t("lbNext"));
+    $("lbPrev").classList.toggle("hidden", n < 2);
+    $("lbNext").classList.toggle("hidden", n < 2);
+  }
+  function stepLightbox(d) {
+    const n = lb.items.length;
+    if (n < 2) return;
+    lb.index = (lb.index + d + n) % n;
+    showLightboxItem();
+  }
+  // items: [{url, caption, filename, revoke}]; trigger: elemen yang mendapat fokus kembali
+  function openLightbox(items, index, trigger) {
+    lb.items = items;
+    lb.index = index || 0;
+    lb.trigger = trigger || document.activeElement;
+    lb.open = true;
+    showLightboxItem();
+    lightboxEl.classList.remove("hidden");
+    document.body.style.overflow = "hidden";
+    $("lbClose").focus();
+  }
+  function closeLightbox() {
+    if (!lb.open) return;
+    lb.open = false;
+    lightboxEl.classList.add("hidden");
+    document.body.style.overflow = "";
+    $("lbImg").removeAttribute("src");
+    lb.items.forEach((it) => { if (it.revoke) URL.revokeObjectURL(it.url); });
+    lb.items = [];
+    if (lb.trigger && lb.trigger.focus) lb.trigger.focus();
+  }
+  document.addEventListener("keydown", (e) => {
+    if (!lb.open) return;
+    if (e.key === "Escape") { e.preventDefault(); closeLightbox(); }
+    else if (e.key === "ArrowLeft") stepLightbox(-1);
+    else if (e.key === "ArrowRight") stepLightbox(1);
+    else if (e.key === "Tab") {
+      const f = [...lightboxEl.querySelectorAll("a[href], button")].filter((x) => !x.classList.contains("hidden"));
+      const first = f[0], last = f[f.length - 1];
+      if (!lightboxEl.contains(document.activeElement)) { e.preventDefault(); first.focus(); }
+      else if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+  });
+
+  // Pratinjau inline tangkapan layar terakhir; klik gambar atau tombol Layar Penuh membuka lightbox
+  let shotUrl = null;
+  function renderShotButtons() {
+    $("btnShot").textContent = t(shotUrl ? "reloadScreenshot" : "viewScreenshot");
+    $("btnShotFull").classList.toggle("hidden", !shotUrl);
+  }
+  function openShot(trigger) {
+    if (!shotUrl) return;
+    openLightbox([{ url: shotUrl, caption: t("lbLatestShot"), filename: "streak-screenshot.jpg" }], 0, trigger);
+  }
   $("btnShot").addEventListener("click", async () => {
-    const img = $("shotView");
     try {
       const res = await fetch("/api/run/screenshot?t=" + Date.now(), { headers: { "X-API-Key": apiKey } });
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).detail || res.status);
-      if (img.src.startsWith("blob:")) URL.revokeObjectURL(img.src);
-      img.src = URL.createObjectURL(await res.blob());
+      const old = shotUrl;
+      shotUrl = URL.createObjectURL(await res.blob());
+      const img = $("shotView");
+      img.src = shotUrl;
+      img.alt = t("lbLatestShot");
       img.classList.remove("hidden");
+      if (old) URL.revokeObjectURL(old);
+      renderShotButtons();
     } catch (e) { toast(e.message); }
   });
+  $("btnShotFull").addEventListener("click", () => openShot($("btnShotFull")));
+  $("shotView").addEventListener("click", () => openShot($("shotView")));
+  $("shotView").addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openShot($("shotView")); } });
 
+  let proofUrls = [];
+  let proofToken = 0;
   async function showProofs(run) {
     const box = $("proofBox");
+    const token = ++proofToken;
+    proofUrls.forEach((u) => URL.revokeObjectURL(u));
+    proofUrls = [];
     box.replaceChildren();
+    const items = [];
     for (const r of run.results || []) {
       if (!r.proof) continue;
       try {
         const res = await fetch(`/api/proof/${run.id}/${r.proof}`, { headers: { "X-API-Key": apiKey } });
         if (!res.ok) continue;
-        const url = URL.createObjectURL(await res.blob());
+        const blob = await res.blob();
+        if (token !== proofToken) return;
+        const url = URL.createObjectURL(blob);
+        proofUrls.push(url);
+        const cap = `${r.contact} ${r.sent_at || ""}`.trim();
+        items.push({ url, caption: cap, filename: `${r.contact}-${run.id}-${r.proof}`.replace(/[^\w.-]+/g, "_") });
+        const idx = items.length - 1;
         const img = el("img", { src: url, alt: t("proofAlt", { name: r.contact }) });
-        img.addEventListener("click", () => window.open(url, "_blank"));
-        box.append(el("figure", {}, [img, el("figcaption", { textContent: `${r.contact} — ${r.sent_at || ""}` })]));
+        const btn = el("button", { className: "proof-btn", type: "button", "aria-label": t("proofAlt", { name: r.contact }) }, [img]);
+        btn.addEventListener("click", () => openLightbox(items, idx, btn));
+        box.append(el("figure", {}, [btn, el("figcaption", { textContent: `${r.contact} — ${r.sent_at || ""}` })]));
       } catch (e) { /* abaikan */ }
     }
   }
@@ -762,6 +906,7 @@
   async function loadHistory() {
     const { runs } = await api("/history");
     history = runs;
+    renderIdleLog();
     renderHistory();
     renderDashboard();
   }
@@ -1183,6 +1328,11 @@
     renderSettingsStates();
     const b = $("runBadge");
     if (b.dataset.status) b.textContent = statusLabel(b.dataset.status);
+    idleLogKey = null;
+    renderIdleLog();
+    if (lb.open) showLightboxItem();
+    renderShotButtons();
+    $("shotView").title = t("fullScreen");
     if (!$("app").classList.contains("hidden")) renderSchedules(readSchedules());
   }
 
@@ -1190,6 +1340,7 @@
   document.documentElement.lang = lang;
   document.querySelectorAll(".segmented [data-lang]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.lang === lang)));
   applyStaticI18n();
+  renderShotButtons();
   renderLoginSteps();
   renderLoginMsg();
   showTab("dashboard");
