@@ -7,6 +7,11 @@
   <title>Bara</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%3E%3Cstyle%3E.f%7Bstroke:%23FF6A00%7D.h%7Bstroke:%231C1C1E%7D.d%7Bfill:%23FF6A00%7D%40media%20(prefers-color-scheme:dark)%7B.f%7Bstroke:%23FF8A33%7D.h%7Bstroke:%23FFFFFF%7D.d%7Bfill:%23FF8A33%7D%7D%3C/style%3E%3Cpath%20class='f'%20fill='none'%20stroke-width='1.5'%20stroke-linejoin='round'%20d='M13%202.5C13.6%206%2018.5%208.8%2018.5%2015A6.5%206.5%200%200%201%205.5%2015C5.5%2011.2%207.6%208.6%209.4%207.2C9.4%209.2%2010.3%2010.4%2011.2%2010.9C11%207.8%2011.6%204.8%2013%202.5Z'/%3E%3Cpath%20class='h'%20fill='none'%20stroke-width='1.5'%20stroke-linecap='round'%20d='M12%2015L10.09%2013.9'/%3E%3Cpath%20class='h'%20fill='none'%20stroke-width='1.2'%20stroke-linecap='round'%20d='M12%2015L14.68%2013.45'/%3E%3Ccircle%20class='d'%20cx='12'%20cy='15'%20r='.7'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="/static/style.css">
+  <style>
+    .boot-fail { position: fixed; inset: 0; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 24px; text-align: center; background: Canvas; color: CanvasText; font: 16px/1.4 system-ui, sans-serif; }
+    .boot-fail[hidden] { display: none; }
+    .boot-fail button { font: inherit; font-weight: 600; padding: 12px 22px; border: 0; border-radius: 12px; background: #0071E3; color: #fff; cursor: pointer; }
+  </style>
 </head>
 <body>
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -453,6 +458,19 @@
     </form>
   </div>
   <div id="toast" class="toast hidden" role="status"></div>
-  <script src="/static/app.js"></script>
+  <div id="bootFail" class="boot-fail" hidden>
+    <p id="bootFailMsg">Gagal Memuat Panel. Tekan Ctrl+F5 untuk Memuat Ulang.</p>
+    <button type="button" onclick="location.reload()">Muat Ulang</button>
+  </div>
+  <script>
+    (function () {
+      function visible(id) { var e = document.getElementById(id); return !!e && !e.classList.contains("hidden"); }
+      function fail() { if (!visible("login") && !visible("app")) document.getElementById("bootFail").hidden = false; }
+      window.addEventListener("error", function () { setTimeout(fail, 1500); });
+      window.__bootFail = fail;
+      setTimeout(fail, 8000);
+    })();
+  </script>
+  <script src="/static/app.js" onerror="window.__bootFail&&window.__bootFail()"></script>
 </body>
 </html>

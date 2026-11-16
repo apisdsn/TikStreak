@@ -1,3 +1,4 @@
+import hashlib
 import json
 import logging
 import os
@@ -642,9 +643,37 @@ def clear_history(user=Depends(current_user)):
 
 
 # ---------------------------------------------------------------- frontend
-app.mount("/static", StaticFiles(directory=STATIC), name="static")
+class VersionedStatic(StaticFiles):
+    """File statis: immutable bila diminta dengan ?v=, selain itu selalu revalidasi (ETag)."""
+
+    async def get_response(self, path, scope):
+        resp = await super().get_response(path, scope)
+        if resp.status_code in (200, 304):
+            if b"v=" in scope.get("query_string", b""):
+                resp.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+            else:
+                resp.headers["Cache-Control"] = "no-cache"
+        return resp
+
+
+def _asset_version():
+    h = hashlib.sha1()
+    for name in ("app.js", "style.css", "index.html"):
+        try:
+            with open(os.path.join(STATIC, name), "rb") as f:
+                h.update(f.read())
+        except OSError:
+            pass
+    return h.hexdigest()[:10]
+
+
+ASSET_VER = _asset_version()
+app.mount("/static", VersionedStatic(directory=STATIC), name="static")
 
 
 @app.get("/", include_in_schema=False)
 def index():
-    return FileResponse(os.path.join(STATIC, "index.html"))
+    with open(os.path.join(STATIC, "index.html"), "r", encoding="utf-8") as f:
+        html = f.read()
+    html = html.replace("/static/style.css", f"/static/style.css?v={ASSET_VER}").replace("/static/app.js", f"/static/app.js?v={ASSET_VER}")
+    return Response(html, media_type="text/html; charset=utf-8", headers={"Cache-Control": "no-cache"})

@@ -667,11 +667,13 @@
   }
 
   async function initAuth() {
-    try {
-      const s = await api("/auth/state");
-      setupMode = s.setup_required;
-      if (s.user) { await enter(); return; }
-    } catch (e) { /* tampilkan login */ }
+    let s = null;
+    for (let i = 0; i < 4 && !s; i++) {  // server bisa sedang restart (502 dari proxy): coba lagi dengan jeda bertahap
+      try { s = await api("/auth/state"); } catch (e) { if (i < 3) await new Promise((r) => setTimeout(r, 600 * 2 ** i)); }
+    }
+    if (!s) { if (window.__bootFail) window.__bootFail(); return; }
+    setupMode = s.setup_required;
+    if (s.user) { try { await enter(); return; } catch (e) { /* tampilkan login */ } }
     showLogin();
   }
 
