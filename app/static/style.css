@@ -341,10 +341,27 @@ td.num { font-variant-numeric: tabular-nums; }
 
 .toast { position: fixed; bottom: 26px; left: 50%; transform: translateX(-50%); background: rgba(28, 28, 30, .92); color: #FFFFFF; padding: 12px 20px; border-radius: 99px; z-index: 30; font-weight: 600; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); max-width: calc(100% - 32px); text-align: center; }
 
+/* dashboard: kartu Hari Ini dan Log sama tinggi */
+.dash-cols { align-items: stretch; }
+.dash-cols > .group:last-child { display: flex; flex-direction: column; }
+.dash-cols .log { flex: 1 1 0; height: auto; min-height: 220px; }
+.dash-cols .shot { flex: none; }
+
+/* top bar satu baris di atas 720px */
+@media (min-width: 721px) {
+  .topbar-in { flex-wrap: nowrap; }
+  .topbar-in > .brand, .topbar-in > .segmented, .topbar-in > .icon-btn, .topbar-in > .acct-pill, .topbar-in > #logout { flex-shrink: 0; white-space: nowrap; }
+  .tabs { flex: 0 1 auto; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tabs button { flex-shrink: 0; white-space: nowrap; }
+  .topbar-in .spacer { flex: 1 1 0; min-width: 0; }
+}
+
 /* ------------------------------------------------------------------ responsive */
 @media (max-width: 1000px) {
   .widgets { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .two-col, .two-col.wide-right, .two-col.wide-left { grid-template-columns: minmax(0, 1fr); }
+  .dash-cols .log { flex: none; height: 300px; }
 }
 @media (max-width: 720px) {
   h1 { font-size: 30px; }
