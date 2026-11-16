@@ -8,6 +8,8 @@ services:
     environment:
       API_KEY: ${API_KEY:?Isi API_KEY di file .env}
       TZ: ${TZ:-Asia/Jakarta}
+      TRUST_PROXY: ${TRUST_PROXY:-0}
+      FORWARDED_ALLOW_IPS: ${FORWARDED_ALLOW_IPS:-*}
     volumes:
       - streak-data:/data
     shm_size: "1gb"

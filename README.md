@@ -40,6 +40,42 @@ ssh -L 8000:127.0.0.1:8000 user@ip-vps
 
 Lalu buka `http://localhost:8000` di laptop selama tunnel aktif. Alternatif: VPN pribadi seperti Tailscale atau WireGuard.
 
+## Online dengan Domain (Caddy)
+
+Cara memasang panel di VPS dengan domain sendiri dan HTTPS otomatis lewat [Caddy](https://caddyserver.com).
+
+1. **DNS**: buat A record untuk domain Anda (mis. `panel.example.com`) yang mengarah ke IP VPS.
+2. **Port**: buka port 80 dan 443 di firewall VPS. Port panel (`PORT`) tidak perlu dibuka.
+3. **`.env`**: pastikan panel hanya bisa diakses dari VPS sendiri dan percayai header dari Caddy:
+
+   ```env
+   API_KEY=isi-dengan-kunci-acak-yang-panjang
+   BIND_ADDRESS=127.0.0.1
+   PORT=8001
+   TRUST_PROXY=1
+   ```
+
+   `TRUST_PROXY=1` membuat panel memakai IP asli pengunjung (untuk pembatasan login) dan menandai cookie sebagai `Secure`. Aktifkan hanya bila `BIND_ADDRESS=127.0.0.1` dan semua akses lewat Caddy; jika port terbuka langsung, pengunjung bisa memalsukan IP.
+4. **Jalankan panel**: `docker compose up -d --build`.
+5. **Caddyfile**: tambahkan isi [`deploy/Caddyfile.example`](deploy/Caddyfile.example) ke `/etc/caddy/Caddyfile` (ganti domain, dan port harus sama dengan `PORT`):
+
+   ```caddyfile
+   panel.example.com {
+   	encode zstd gzip
+   	header {
+   		Strict-Transport-Security "max-age=31536000"
+   		X-Content-Type-Options nosniff
+   		Referrer-Policy no-referrer
+   		-Server
+   	}
+   	reverse_proxy 127.0.0.1:8001
+   }
+   ```
+6. **Muat ulang Caddy**: `sudo systemctl reload caddy`.
+7. Buka `https://panel.example.com`, lalu buat admin pertama (isi `API_KEY`, username, dan password).
+
+Karena panel bisa diakses publik, pakai `API_KEY` yang panjang dan acak (`openssl rand -hex 24`) serta password admin yang kuat.
+
 ## Langkah pertama di UI
 
 1. **Akun** (opsional): tab *Akun* untuk menambah akun lain. Akun pertama bernama "Utama". Pilih akun aktif di pojok kanan atas; tab Kontak, Cookie, dan Dashboard mengikuti akun yang dipilih.

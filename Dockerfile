@@ -22,4 +22,5 @@ HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
     CMD curl -fs http://127.0.0.1:8000/api/health || exit 1
 
 ENTRYPOINT ["tini", "--"]
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# TRUST_PROXY=1 hanya bila ada reverse proxy tepercaya di depan (lihat .env.example)
+CMD ["sh", "-c", "if [ \"$TRUST_PROXY\" = 1 ] || [ \"$TRUST_PROXY\" = true ]; then exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips \"${FORWARDED_ALLOW_IPS:-*}\"; else exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --no-proxy-headers; fi"]

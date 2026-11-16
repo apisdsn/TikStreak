@@ -206,7 +206,7 @@ def csrf_ok(request):
         return False
     origin = request.headers.get("origin")
     if origin:
-        host = request.headers.get("x-forwarded-host") or request.headers.get("host", "")
+        host = (config.TRUST_PROXY and request.headers.get("x-forwarded-host")) or request.headers.get("host", "")
         if urlparse(origin).netloc != host and urlparse(origin).netloc != request.headers.get("host", ""):
             return False
     return True

@@ -9,6 +9,7 @@ USER_AGENT = os.getenv(
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
 )
+TRUST_PROXY = os.getenv("TRUST_PROXY", "0").lower() in ("1", "true", "yes")
 HEADLESS = os.getenv("HEADLESS", "true").lower() == "true"
 
 TIKTOK_URL = "https://www.tiktok.com"
