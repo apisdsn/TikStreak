@@ -1,6 +1,7 @@
 """Pengguna, sesi cookie, throttling login, dan otorisasi akses akun."""
 import hashlib
 import hmac
+import os
 import re
 import secrets
 import threading
@@ -221,10 +222,16 @@ def require_csrf(request):
 API_USER = {"id": "apikey", "username": "api", "role": "admin", "synthetic": True, "session": None}
 
 
+def api_key_user():
+    """Akses X-API-Key bertindak sebagai admin aktif tertua (hanya melihat akun miliknya)."""
+    admins = active_admins()
+    return {**admins[0], "synthetic": True, "session": None} if admins else API_USER
+
+
 def current_user(request: Request, x_api_key: Optional[str] = Header(None)):
     if x_api_key:
         if config.API_KEY and secrets.compare_digest(x_api_key, config.API_KEY):
-            return API_USER
+            return api_key_user()
         raise HTTPException(401, "Kunci API Salah atau Tidak Ada")
     user = user_from_token(request.cookies.get(COOKIE))
     if not user:
@@ -245,13 +252,13 @@ def is_admin(user):
     return user["role"] == "admin"
 
 
+# Peran admin hanya untuk mengelola pengguna dan pengaturan global: akun TikTok hanya milik pemiliknya
 def can_access(user, acc):
-    return is_admin(user) or acc.get("owner_id") == user["id"]
+    return bool(acc) and acc.get("owner_id") == user["id"]
 
 
 def visible_accounts(user):
-    accs = list_accounts()
-    return accs if is_admin(user) else [a for a in accs if a.get("owner_id") == user["id"]]
+    return [a for a in list_accounts() if a.get("owner_id") == user["id"]]
 
 
 def accessible_ids(user):
@@ -259,16 +266,11 @@ def accessible_ids(user):
 
 
 def run_accessible(user, run):
-    if is_admin(user):
-        return True
     return bool(run) and (run.get("account") or {}).get("id") in accessible_ids(user)
 
 
 def owner_for_new(user):
-    if not user.get("synthetic"):
-        return user["id"]
-    admins = active_admins()
-    return admins[0]["id"] if admins else None
+    return user["id"] if user["id"] != "apikey" else None
 
 
 # ------------------------------------------------------------------ endpoints
@@ -307,7 +309,7 @@ def _optional_user(request):
 @router.get("/api/auth/state")
 def auth_state(request: Request):
     u = _optional_user(request)
-    if u and u["role"] == "user":
+    if u:
         ensure_default_account(u["id"])
     return {"setup_required": not list_users(), "user": public_user(u) if u else None}
 
@@ -348,8 +350,7 @@ def auth_login(body: LoginIn, request: Request, response: Response):
         throttle_fail(keys)
         raise HTTPException(401, "Nama Pengguna atau Kata Sandi Salah")
     throttle_ok(keys)
-    if user["role"] == "user":
-        ensure_default_account(user["id"])
+    ensure_default_account(user["id"])
     set_cookie(request, response, create_session(user["id"]))
     return {"setup_required": False, "user": public_user(user)}
 
@@ -440,13 +441,17 @@ def users_update(uid: str, body: UserUpdate, user=Depends(require_admin)):
     if kill:
         invalidate_user_sessions(uid)
         _stop_login_of(uid)
-    if not new_disabled and new_role == "user":
+    if not new_disabled:
         ensure_default_account(uid)
     return user_view(target)
 
 
 @router.delete("/api/users/{uid}")
-def users_delete(uid: str, reassign_to: Optional[str] = None, user=Depends(require_admin)):
+def users_delete(uid: str, user=Depends(require_admin)):
+    """Hapus pengguna beserta semua akun TikTok dan datanya (tidak dipindahkan ke admin)."""
+    from .login import login_session
+    from .runner import runner
+    from .store import delete_account
     with _lock:
         users = list_users()
         target = next((u for u in users if u["id"] == uid), None)
@@ -456,20 +461,30 @@ def users_delete(uid: str, reassign_to: Optional[str] = None, user=Depends(requi
             raise HTTPException(400, "Tidak Bisa Menghapus Diri Sendiri")
         if target["role"] == "admin" and not target.get("disabled") and len(active_admins()) <= 1:
             raise HTTPException(400, "Tidak Bisa Menghapus Admin Aktif Terakhir")
-        dest_id = reassign_to or (user["id"] if not user.get("synthetic") else None)
-        dest = get_user(dest_id) if dest_id else None
-        if dest is None and user.get("synthetic"):
-            dest = active_admins()[0] if active_admins() else None
-        if not dest or dest.get("disabled") or dest["role"] != "admin" or dest["id"] == uid:
-            raise HTTPException(400, "Tujuan Pemindahan Akun Harus Admin Aktif Lain")
-        for acc in list_accounts():
-            if acc.get("owner_id") == uid:
-                acc["owner_id"] = dest["id"]
-                save_account(acc)
+        owned = [acc for acc in list_accounts() if acc.get("owner_id") == uid]
+        cur = runner.current
+        if cur and cur["status"] == "running" and cur["account"]["id"] in {a["id"] for a in owned}:
+            raise HTTPException(409, "Akun Pengguna Ini Sedang Dipakai Proses yang Berjalan")
         users_store.write([u for u in users if u["id"] != uid])
-    invalidate_user_sessions(uid)
     _stop_login_of(uid)
-    return {"ok": True, "reassigned_to": dest["id"]}
+    ids = {a["id"] for a in owned}
+    for aid in ids:
+        delete_account(aid)  # akun, cookie, kontak, jadwal, meta, dan peta percakapan
+    _purge_runs(ids)
+    invalidate_user_sessions(uid)
+    return {"ok": True, "deleted_accounts": len(ids)}
+
+
+def _purge_runs(account_ids):
+    """Hapus riwayat dan bukti dari akun yang dihapus."""
+    import shutil
+    from .runner import PROOFS_DIR
+    from .store import history_store
+    hist = history_store.read()
+    gone = [r for r in hist if (r.get("account") or {}).get("id") in account_ids]
+    history_store.write([r for r in hist if r not in gone])
+    for r in gone:
+        shutil.rmtree(os.path.join(PROOFS_DIR, r.get("id", "-")), ignore_errors=True)
 
 
 # ------------------------------------------------------ notifikasi pribadi

@@ -19,7 +19,6 @@ from .auth import (
     accessible_ids,
     can_access,
     current_user,
-    is_admin,
     owner_for_new,
     public_user,
     require_admin,
@@ -43,7 +42,6 @@ from .store import (
     settings_store,
     stores,
 )
-from .auth import get_user
 
 if not config.API_KEY:
     raise SystemExit("API_KEY belum diatur. Isi API_KEY pada file .env")
@@ -97,7 +95,6 @@ class SettingsIn(BaseModel):
     discord_enabled: Optional[bool] = None
     discord_webhook: Optional[str] = None
     notify_screenshot: Optional[bool] = None
-    notify_all_accounts: Optional[bool] = None
     keepalive_enabled: Optional[bool] = None
     keepalive_hours: Optional[int] = None
     page_load_wait: Optional[int] = None
@@ -107,7 +104,6 @@ class SettingsIn(BaseModel):
 
 class AccountIn(BaseModel):
     name: Optional[str] = None
-    owner_id: Optional[str] = None
     schedules: Optional[List[ScheduleIn]] = None
 
 
@@ -169,12 +165,7 @@ def keepalive_next(aid):
 
 def account_view(acc, user=None):
     st = stores(acc["id"])
-    extra = {}
-    if user is not None and is_admin(user):
-        owner = get_user(acc.get("owner_id")) if acc.get("owner_id") else None
-        extra = {"owner_id": acc.get("owner_id"), "owner_name": owner["username"] if owner else None}
     return {
-        **extra,
         "id": acc["id"],
         "name": acc["name"],
         "contacts": len(st.contacts.read()),
@@ -187,16 +178,16 @@ def account_view(acc, user=None):
 
 
 def _login_visible(user):
-    return login_session.active and (is_admin(user) or login_session.owner_id == user["id"])
+    return login_session.active and login_session.owner_id == user["id"]
 
 
 @app.get("/api/status")
 def status(user=Depends(current_user)):
     ids = accessible_ids(user)
-    hist = [r for r in history_store.read() if is_admin(user) or (r.get("account") or {}).get("id") in ids]
+    hist = [r for r in history_store.read() if (r.get("account") or {}).get("id") in ids]
     cur = runner.current
     running = bool(cur and cur["status"] == "running")
-    cur_ok = bool(cur) and (is_admin(user) or cur["account"]["id"] in ids)
+    cur_ok = bool(cur) and cur["account"]["id"] in ids
     return {
         "running": running,
         "foreign_busy": running and not cur_ok,
@@ -299,8 +290,11 @@ def add_account(body: AccountIn, user=Depends(current_user)):
     owner = owner_for_new(user)
     if len(list_accounts()) >= 10:
         raise HTTPException(400, "Maksimal 10 Akun")
-    if user["role"] == "user" and sum(1 for a in list_accounts() if a.get("owner_id") == owner) >= 5:
-        raise HTTPException(400, "Maksimal 5 Akun per Pengguna")
+    cap = 10 if user["role"] == "admin" else 5
+    if owner is None:
+        raise HTTPException(400, "Belum Ada Admin: Selesaikan Setup Dulu")
+    if sum(1 for a in list_accounts() if a.get("owner_id") == owner) >= cap:
+        raise HTTPException(400, f"Maksimal {cap} Akun per Pengguna")
     acc = create_account(clean_name(body.name, owner), owner)
     return account_view(acc, user)
 
@@ -308,20 +302,6 @@ def add_account(body: AccountIn, user=Depends(current_user)):
 @app.put("/api/accounts/{aid}")
 def update_account(aid: str, body: AccountIn, user=Depends(current_user)):
     acc = resolve_account(user, aid)
-    if body.owner_id is not None and body.owner_id != acc.get("owner_id"):
-        if not is_admin(user):
-            raise HTTPException(403, "Hanya Admin yang Boleh Memindahkan Pemilik Akun")
-        new_owner = get_user(body.owner_id)
-        if not new_owner or new_owner.get("disabled"):
-            raise HTTPException(400, "Pemilik Baru Tidak Valid")
-        old = acc.get("owner_id")
-        acc["owner_id"] = new_owner["id"]
-        save_account(acc)
-        if old:
-            from .auth import ensure_default_account
-            old_user = get_user(old)
-            if old_user and old_user["role"] == "user" and not old_user.get("disabled"):
-                ensure_default_account(old)
     if body.name is not None and body.name.strip() != acc["name"]:
         acc["name"] = clean_name(body.name, acc.get("owner_id"), aid)
     if body.schedules is not None:
@@ -334,7 +314,7 @@ def update_account(aid: str, body: AccountIn, user=Depends(current_user)):
 def remove_account(aid: str, user=Depends(current_user)):
     acc = resolve_account(user, aid)
     mine = [a for a in list_accounts() if a.get("owner_id") == acc.get("owner_id")]
-    if len(list_accounts()) <= 1 or (acc.get("owner_id") and len(mine) <= 1):
+    if len(mine) <= 1:
         raise HTTPException(400, "Minimal Harus Ada Satu Akun")
     if runner.current and runner.current["status"] == "running" and runner.current["account"]["id"] == aid:
         raise HTTPException(409, "Akun Sedang Dipakai Proses yang Berjalan")
@@ -454,7 +434,7 @@ def _login_call(fn, *a):
 
 def _login_guard(user):
     """Sesi login remote hanya boleh dipakai pemiliknya atau admin."""
-    if login_session.active and not (is_admin(user) or login_session.owner_id == user["id"]):
+    if login_session.active and login_session.owner_id != user["id"]:
         raise HTTPException(403, "Sesi Login Sedang Dipakai Pengguna Lain")
 
 
@@ -534,7 +514,7 @@ def stop(user=Depends(current_user)):
 def current(since: int = 0, user=Depends(current_user)):
     cur = runner.current
     running = bool(cur and cur["status"] == "running")
-    if not cur or not (is_admin(user) or cur["account"]["id"] in accessible_ids(user)):
+    if not cur or cur["account"]["id"] not in accessible_ids(user):
         return {"run": None, "logs": [], "next": 0, "running": running}
     logs = cur["logs"]
     return {"run": run_view(cur), "logs": logs[since:], "next": len(logs), "running": running}
@@ -545,14 +525,13 @@ def run_screenshot(user=Depends(current_user)):
     from .bot import SHOT_META_PATH, SHOT_PATH
     if not os.path.exists(SHOT_PATH):
         raise HTTPException(404, "Belum Ada Screenshot")
-    if not is_admin(user):
-        try:
-            with open(SHOT_META_PATH, "r", encoding="utf-8") as f:
-                aid = json.load(f).get("account_id")
-        except Exception:  # noqa: BLE001
-            aid = None
-        if not aid or aid not in accessible_ids(user):
-            raise HTTPException(404, "Belum Ada Screenshot")
+    try:
+        with open(SHOT_META_PATH, "r", encoding="utf-8") as f:
+            aid = json.load(f).get("account_id")
+    except Exception:  # noqa: BLE001
+        aid = None
+    if not aid or aid not in accessible_ids(user):
+        raise HTTPException(404, "Belum Ada Screenshot")
     return FileResponse(SHOT_PATH, media_type="image/jpeg", headers={"Cache-Control": "no-store"})
 
 
@@ -561,10 +540,9 @@ def proof(run_id: str, name: str, user=Depends(current_user)):
     from .runner import PROOFS_DIR
     if not re.fullmatch(r"[0-9a-f]{8}", run_id) or not re.fullmatch(r"\d+\.jpg", name):
         raise HTTPException(404, "Tidak Ditemukan")
-    if not is_admin(user):
-        r = next((x for x in history_store.read() if x.get("id") == run_id), None)
-        if not run_accessible_user(user, r):
-            raise HTTPException(404, "Tidak Ditemukan")
+    r = next((x for x in history_store.read() if x.get("id") == run_id), None)
+    if not run_accessible_user(user, r):
+        raise HTTPException(404, "Tidak Ditemukan")
     path = os.path.join(PROOFS_DIR, run_id, name)
     if not os.path.exists(path):
         raise HTTPException(404, "Bukti Sudah Dihapus")
@@ -579,16 +557,13 @@ def run_accessible_user(user, run):
 def history(user=Depends(current_user)):
     ids = accessible_ids(user)
     return {"runs": [{**run_view(r), "logs": r.get("logs", [])} for r in history_store.read()
-                     if is_admin(user) or (r.get("account") or {}).get("id") in ids]}
+                     if (r.get("account") or {}).get("id") in ids]}
 
 
 @app.delete("/api/history")
 def clear_history(user=Depends(current_user)):
-    if is_admin(user):
-        history_store.write([])
-    else:
-        ids = accessible_ids(user)
-        history_store.write([r for r in history_store.read() if (r.get("account") or {}).get("id") not in ids])
+    ids = accessible_ids(user)
+    history_store.write([r for r in history_store.read() if (r.get("account") or {}).get("id") not in ids])
     return {"ok": True}
 
 

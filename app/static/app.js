@@ -77,14 +77,14 @@
       changePassword: "Ganti Kata Sandi", currentPassword: "Kata Sandi Saat Ini", newPassword: "Kata Sandi Baru", pwChanged: "Kata Sandi Diganti",
       myAccount: "Akun Saya", myNotifs: "Notifikasi Saya", myNotifsHint: "Notifikasi Hanya untuk Akun TikTok Milik Anda",
       discordNotif: "Notifikasi Discord", telegramNotif: "Notifikasi Telegram",
-      adminNotifs: "Notifikasi Admin (Global)", notifyAll: "Terima Notifikasi Semua Akun",
-      notifyAllHint: "Jika Mati, Saluran Global Hanya Menerima Akun Milik Admin", adminOnlyNote: "Pengaturan Global Diatur oleh Admin",
+      adminNotifs: "Notifikasi Admin (Global)",
+      adminOnlyNote: "Pengaturan Global Diatur oleh Admin",
       users: "Pengguna", addUser: "Tambah Pengguna", resetPw: "Reset Kata Sandi", makeAdmin: "Jadikan Admin", makeUser: "Jadikan Pengguna",
       disable: "Nonaktifkan", enable: "Aktifkan", disabledBadge: "Nonaktif", you: "Anda",
-      confirmDeleteUser: "Hapus Pengguna \"{name}\"? Akun TikTok Miliknya Akan Dipindahkan ke Anda", confirmDisable: "Nonaktifkan Pengguna \"{name}\"?",
+      confirmDeleteUser: "Hapus \"{name}\"? Pengguna Ini dan {n} Akun TikTok Miliknya Akan Dihapus Permanen.", confirmDisable: "Nonaktifkan Pengguna \"{name}\"?",
       promptNewPw: "Kata Sandi Baru untuk {name} (Minimal 8 Karakter):", toastUserAdded: "Pengguna Ditambahkan", toastUserUpdated: "Pengguna Diperbarui",
       toastUserDeleted: "Pengguna Dihapus", toastNotifSaved: "Notifikasi Disimpan", toastOwnerChanged: "Pemilik Akun Diubah",
-      ownerLine: "Pemilik: {name}", changeOwner: "Ubah Pemilik", manageAccounts: "Kelola Akun", activeBadge: "Aktif", moreActions: "Aksi Lainnya",
+      manageAccounts: "Kelola Akun", activeBadge: "Aktif", moreActions: "Aksi Lainnya",
       lastAccount: "Minimal Satu Akun", yourself: "Akun Anda Sendiri", cookiesHint: "Kelola Sesi Login TikTok", panelBusy: "Panel Sedang Dipakai",
       byLabel: "oleh {name}", wrongLogin: "Nama Pengguna atau Kata Sandi Salah",
       manualIntro: "Cara Termudah Adalah Login lewat Browser Server di Atas. Gunakan Cara Ini Jika Login Itu Gagal.",
@@ -133,7 +133,7 @@
       webhookDiscord: "URL Webhook Discord",
       sendTestMsg: "Kirim Pesan Uji",
       myNotifFoot: "Dikirim untuk Akun TikTok Milik Anda.",
-      adminNotifFoot: "Saluran Global Menerima Notifikasi Akun Semua Pengguna. Pengguna Tetap Menerima Notifikasinya Sendiri.",
+      adminNotifFoot: "Saluran Global Hanya Menerima Notifikasi Akun Milik Admin dan Peringatan Sistem.",
       gChannels: "Discord & Telegram Global",
       gMessage: "Pesan & Zona Waktu",
       gWaits: "Waktu Tunggu",
@@ -227,14 +227,14 @@
       changePassword: "Change Password", currentPassword: "Current Password", newPassword: "New Password", pwChanged: "Password Changed",
       myAccount: "My Account", myNotifs: "My Notifications", myNotifsHint: "Notifications Only for TikTok Accounts You Own",
       discordNotif: "Discord Notifications", telegramNotif: "Telegram Notifications",
-      adminNotifs: "Admin Notifications (Global)", notifyAll: "Receive Notifications from All Accounts",
-      notifyAllHint: "When Off, Global Channels Only Receive Admin-Owned Accounts", adminOnlyNote: "Global Settings Are Managed by the Admin",
+      adminNotifs: "Admin Notifications (Global)",
+      adminOnlyNote: "Global Settings Are Managed by the Admin",
       users: "Users", addUser: "Add User", resetPw: "Reset Password", makeAdmin: "Make Admin", makeUser: "Make User",
       disable: "Disable", enable: "Enable", disabledBadge: "Disabled", you: "You",
-      confirmDeleteUser: "Delete User \"{name}\"? Their TikTok Accounts Will Be Moved to You", confirmDisable: "Disable User \"{name}\"?",
+      confirmDeleteUser: "Delete \"{name}\"? This User and {n} TikTok Accounts Will Be Permanently Deleted.", confirmDisable: "Disable User \"{name}\"?",
       promptNewPw: "New Password for {name} (At Least 8 Characters):", toastUserAdded: "User Added", toastUserUpdated: "User Updated",
       toastUserDeleted: "User Deleted", toastNotifSaved: "Notifications Saved", toastOwnerChanged: "Account Owner Changed",
-      ownerLine: "Owner: {name}", changeOwner: "Change Owner", manageAccounts: "Manage Accounts", activeBadge: "Active", moreActions: "More Actions",
+      manageAccounts: "Manage Accounts", activeBadge: "Active", moreActions: "More Actions",
       lastAccount: "At Least One Account", yourself: "Your Own Account", cookiesHint: "Manage TikTok Login Sessions", panelBusy: "Panel Is Busy",
       byLabel: "by {name}", wrongLogin: "Wrong Username or Password",
       manualIntro: "The Easiest Way Is Logging In via the Server Browser Above. Use This Method if That Login Fails.",
@@ -281,7 +281,7 @@
       webhookDiscord: "Discord Webhook URL",
       sendTestMsg: "Send Test Message",
       myNotifFoot: "Sent for the TikTok Accounts You Own.",
-      adminNotifFoot: "The Global Channel Receives Notifications for Every User’s Accounts. Users Still Get Their Own.",
+      adminNotifFoot: "The Global Channel Only Receives Notifications for the Admin’s Own Accounts and System Alerts.",
       gChannels: "Global Discord & Telegram",
       gMessage: "Message & Time Zone",
       gWaits: "Wait Times",
@@ -864,15 +864,14 @@
   }
 
   function renderAccountList(force) {
-    const sig = JSON.stringify([lang, currentId, accounts, me && me.role]);
+    const sig = JSON.stringify([lang, currentId, accounts]);
     if (!force && renderAccountList.sig === sig) return;
     renderAccountList.sig = sig;
     const box = $("accountList");
     box.replaceChildren();
     accounts.forEach((a) => {
       const on = a.id === currentId;
-      const sameOwner = accounts.filter((x) => (x.owner_id || null) === (a.owner_id || null)).length;
-      const lastOne = isAdmin() ? sameOwner < 2 : accounts.length < 2;
+      const lastOne = accounts.length < 2;
       const more = el("button", { className: "more-btn", type: "button", "aria-haspopup": "menu", "aria-expanded": "false", "aria-label": `${t("moreActions")}: ${a.name}` }, [icon("i-more")]);
       more.addEventListener("click", () => {
         const items = [
@@ -884,18 +883,6 @@
             catch (e) { toast(e.message); }
           } },
         ];
-        if (isAdmin()) {
-          items.push({ label: t("changeOwner"), onClick: () => setTimeout(() => {
-            openMenu(more, users.filter((u) => !u.disabled).map((u) => ({
-              label: u.username, role: "menuitemradio", checked: u.id === a.owner_id, avatar: initial(u.username), avatarId: u.id,
-              onClick: async () => {
-                if (u.id === a.owner_id) return;
-                try { await api("/accounts/" + a.id, { method: "PUT", body: { owner_id: u.id } }); toast(t("toastOwnerChanged")); await refresh(); await loadUsers(); }
-                catch (e) { toast(e.message); }
-              },
-            })), t("changeOwner"));
-          }, 0) });
-        }
         items.push({ sep: true }, { label: t("del"), danger: true, disabled: lastOne, reason: lastOne ? t("lastAccount") : "", onClick: async () => {
           if (!confirm(t("confirmDeleteAccount", { name: a.name }))) return;
           try { await api("/accounts/" + a.id, { method: "DELETE" }); await refresh(); }
@@ -907,7 +894,6 @@
       const titleLine = el("div", { className: "title-line" }, [el("span", { className: "title", textContent: a.name })]);
       if (on) titleLine.append(el("span", { className: "badge accent", textContent: t("activeBadge") }));
       const info = [titleLine, el("div", { className: "meta line", textContent: meta })];
-      if (isAdmin() && a.owner_name) info.push(el("div", { className: "meta line", textContent: t("ownerLine", { name: a.owner_name }) }));
       box.append(el("div", { className: on ? "current" : "" }, [
         paint(el("span", { className: "avatar-sm", textContent: initial(a.name), "aria-hidden": "true" }), a.id),
         el("div", { className: "grow" }, info),
@@ -1786,7 +1772,6 @@
     $("setTgToken").value = "";
     $("setDcEnabled").checked = s0.discord_enabled;
     $("setDcWebhook").value = "";
-    $("setNotifyAll").checked = s0.notify_all_accounts !== false;
     renderSettingsStates();
     renderDashboard();
   }
@@ -1846,10 +1831,6 @@
       closeSetSheet();
       await refresh();
     } catch (err) { setText("settingsMsg", err.message); }
-  });
-  $("setNotifyAll").addEventListener("change", async () => {
-    try { await saveGlobal({ notify_all_accounts: $("setNotifyAll").checked }); toast(t("toastSettingsSaved")); }
-    catch (e) { toast(e.message); $("setNotifyAll").checked = !$("setNotifyAll").checked; }
   });
   const testHook = (path, save) => async () => {
     try { if (save) await save(); await api(path, { method: "POST" }); toast(t("toastTestSent")); }
@@ -1938,7 +1919,7 @@
         } },
         { sep: true },
         { label: t("delUser"), icon: "i-trash", danger: true, disabled: self, reason: self ? t("yourself") : "", onClick: async () => {
-          if (!confirm(t("confirmDeleteUser", { name: u.username }))) return;
+          if (!confirm(t("confirmDeleteUser", { name: u.username, n: u.accounts }))) return;
           try { await api("/users/" + u.id, { method: "DELETE" }); toast(t("toastUserDeleted")); await loadUsers(); await refresh(); }
           catch (e) { toast(e.message); }
         } },

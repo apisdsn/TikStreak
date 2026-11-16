@@ -147,7 +147,7 @@ class Runner:
                     shutil.rmtree(os.path.join(PROOFS_DIR, d), ignore_errors=True)
 
     def _targets(self, settings, run):
-        """Kanal penerima: pribadi pemilik akun, lalu global admin. Tidak ada kanal yang dipakai dua kali."""
+        """Kanal penerima: pribadi pemilik akun, plus global bila pemiliknya admin. Tidak ada kanal yang dipakai dua kali."""
         from .auth import get_user, user_notify
         acc = get_account(run["account"]["id"])
         owner = get_user(acc.get("owner_id")) if acc and acc.get("owner_id") else None
@@ -173,7 +173,7 @@ class Runner:
 
         if owner_active:
             add(user_notify(owner))
-        if settings.get("notify_all_accounts", True) or not owner or owner["role"] == "admin":
+        if owner_active and owner["role"] == "admin":  # saluran global hanya untuk akun milik admin
             add(settings)
         return out
 

@@ -16,7 +16,6 @@ DEFAULT_SETTINGS = {
     "discord_enabled": False,
     "discord_webhook": "",
     "notify_screenshot": False,
-    "notify_all_accounts": True,
     "keepalive_enabled": True,
     "keepalive_hours": 12,
     "page_load_wait": 5,
@@ -66,7 +65,7 @@ accounts_store = JsonStore("accounts.json", [])
 
 def get_settings():
     data = settings_store.read()
-    for legacy in ("schedules", "schedule_enabled", "schedule_time"):
+    for legacy in ("schedules", "schedule_enabled", "schedule_time", "notify_all_accounts"):
         data.pop(legacy, None)  # jadwal kini per akun
     return {**DEFAULT_SETTINGS, **data}
 
