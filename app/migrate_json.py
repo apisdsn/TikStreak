@@ -128,3 +128,22 @@ def run():
     if os.path.isdir(_p("accounts")):
         shutil.move(_p("accounts"), os.path.join(backup, "accounts"))
     log.warning("Data JSON dimigrasikan ke SQLite %s; salinan lama di %s", stats, backup)
+
+
+def backup_dirs():
+    """Folder cadangan JSON lama (berisi cookie plaintext) di DATA_DIR."""
+    root = DATA_DIR
+    try:
+        names = sorted(os.listdir(root))
+    except OSError:
+        return []
+    return [os.path.join(root, n) for n in names if n.startswith("backup-json-") and os.path.isdir(os.path.join(root, n))
+            and not os.path.islink(os.path.join(root, n))]
+
+
+def delete_backups():
+    n = 0
+    for d in backup_dirs():
+        shutil.rmtree(d, ignore_errors=True)
+        n += 1
+    return n

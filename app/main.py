@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import re
 from datetime import datetime, timedelta
@@ -26,7 +27,7 @@ from .auth import (
     visible_accounts,
 )
 from .cookies import parse_cookies, summary
-from . import jobs
+from . import jobs, migrate_json
 from .login import login_mgr
 from .notify import DISCORD_RE, send_discord, send_telegram
 from .runner import runner
@@ -83,6 +84,10 @@ def acct(account: Optional[str] = Query(None), user=Depends(current_user)):
 @app.on_event("startup")
 def _startup():
     runner.start_workers()
+    old = migrate_json.backup_dirs()
+    if old:
+        logging.getLogger("bara").warning("Cadangan JSON lama berisi cookie plaintext masih ada (%d folder di %s). Hapus lewat Pengaturan "
+                                          "atau hapus folder backup-json-* setelah yakin.", len(old), config.DATA_DIR)
 
 
 @app.on_event("shutdown")
@@ -538,6 +543,11 @@ def queue_slots(user=Depends(current_user)):
     return {"slots": runner.load_slots(), "capacity": cap, "busy_at": max(2, int(cap * 0.6)), "workers": runner.workers}
 
 
+@app.delete("/api/system/json-backups")
+def delete_json_backups(user=Depends(require_admin)):
+    return {"ok": True, "deleted": migrate_json.delete_backups()}
+
+
 @app.get("/api/queue/admin")
 def queue_admin(user=Depends(require_admin)):
     from .login import login_mgr as lm
@@ -545,7 +555,7 @@ def queue_admin(user=Depends(require_admin)):
     for k, v in runner.load_slots().items():
         hourly[k[:2] + ":00"] = hourly.get(k[:2] + ":00", 0) + v
     return {**jobs.counts(), "workers": runner.workers, "login_sessions": lm.count(), "login_limit": config.LOGIN_SESSIONS,
-            "load_by_hour": dict(sorted(hourly.items()))}
+            "load_by_hour": dict(sorted(hourly.items())), "json_backups": len(migrate_json.backup_dirs())}
 
 
 @app.get("/api/run/current")

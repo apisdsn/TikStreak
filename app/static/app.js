@@ -49,7 +49,7 @@
       showing: "Menampilkan {a}–{b} dari {n}", showingNone: "Tidak Ada Data", fAll: "Semua", fSend: "Kirim", fCheck: "Cek Cookie", statusAll: "Semua Status",
       filterMode: "Filter Jenis", filterStatus: "Filter Status", pageSizeLbl: "Baris per Halaman", perPage: "{n} per Halaman", prevPage: "Halaman Sebelumnya",
       nextPage: "Halaman Berikutnya", pageN: "Halaman {n}", noHistoryFiltered: "Tidak Ada Riwayat yang Cocok", pagination: "Navigasi Halaman",
-      queueAdmin: "Antrean Browser", qWorkers: "Pekerja Browser", qQueued: "Dalam Antrean", qRunning: "Sedang Berjalan", qLoad: "Beban per Jam",
+      queueAdmin: "Antrean & Sistem", delBackups: "Hapus Cadangan JSON Lama", delBackupsHint: "Cadangan Hasil Migrasi Masih Menyimpan Cookie Tanpa Enkripsi", confirmDelBackups: "Hapus Permanen Semua Cadangan JSON Lama? Tindakan Ini Tidak Bisa Dibatalkan.", toastBackupsDeleted: "Cadangan JSON Lama Dihapus", qWorkers: "Pekerja Browser", qQueued: "Dalam Antrean", qRunning: "Sedang Berjalan", qLoad: "Beban per Jam",
       qLogin: "Sesi Login", queueAdminFoot: "Hanya Hitungan, Tanpa Nama atau Isi Akun", qNoLoad: "Belum Ada Jadwal Aktif",
       busyHint: "Jam Ini Ramai, Pilih Jam Lain agar Lebih Cepat",
       noSchedule: "Belum Ada Jadwal Aktif", noScheduleHint: "Tambahkan Jadwal di Tab Akun & Jadwal",
@@ -209,7 +209,7 @@
       showing: "Showing {a}–{b} of {n}", showingNone: "No Data", fAll: "All", fSend: "Send", fCheck: "Check Cookie", statusAll: "All Statuses",
       filterMode: "Filter Type", filterStatus: "Filter Status", pageSizeLbl: "Rows per Page", perPage: "{n} per Page", prevPage: "Previous Page",
       nextPage: "Next Page", pageN: "Page {n}", noHistoryFiltered: "No Matching History", pagination: "Page Navigation",
-      queueAdmin: "Browser Queue", qWorkers: "Browser Workers", qQueued: "Queued", qRunning: "In Progress", qLoad: "Load per Hour",
+      queueAdmin: "Queue & System", delBackups: "Delete Old JSON Backups", delBackupsHint: "Migration Backups Still Hold Unencrypted Cookies", confirmDelBackups: "Permanently Delete All Old JSON Backups? This Cannot Be Undone.", toastBackupsDeleted: "Old JSON Backups Deleted", qWorkers: "Browser Workers", qQueued: "Queued", qRunning: "In Progress", qLoad: "Load per Hour",
       qLogin: "Login Sessions", queueAdminFoot: "Counts Only, No Account Names or Contents", qNoLoad: "No Active Schedules Yet",
       busyHint: "This Time Is Busy, Pick Another Time for Faster Delivery",
       noSchedule: "No Active Schedule", noScheduleHint: "Add One in the Accounts & Schedules Tab",
@@ -923,6 +923,14 @@
     load.forEach(([h, n]) => bars.append(el("div", { className: "lb-col", title: `${h} · ${n}` }, [el("span", { className: "lb-bar", style: `height:${6 + Math.round((n / max) * 40)}px` }),
       el("span", { className: "lb-n", textContent: String(n) }), el("span", { className: "lb-h", textContent: h.slice(0, 2) })])));
     box.append(el("div", { className: "nav-row static col" }, [el("span", { className: "nr-label", textContent: t("qLoad") }), bars]));
+    if (queueAdmin.json_backups > 0) {
+      const b = el("button", { type: "button", className: "btn plain small destructive-text", id: "btnDelBackups", textContent: t("delBackups") });
+      b.addEventListener("click", async () => {
+        if (!confirm(t("confirmDelBackups"))) return;
+        try { await api("/system/json-backups", { method: "DELETE" }); toast(t("toastBackupsDeleted")); await loadQueueAdmin(); } catch (e) { toast(e.message); }
+      });
+      box.append(el("div", { className: "nav-row static col" }, [el("span", { className: "nr-label muted", textContent: t("delBackupsHint") }), b]));
+    }
   }
 
   // kepadatan jadwal per slot 30 menit (untuk petunjuk di editor jadwal)
@@ -1147,7 +1155,7 @@
     const c = a.cookies;
     $("cookieIcon").className = "w-icon " + (c.invalid ? "red" : !c.present ? "" : "green");
     setText("cookieValue", t(c.invalid ? "cookieInvalid" : !c.present ? "cookieUnset" : "cookieValid"));
-    setText("cookieSub", c.invalid ? c.invalid : !c.present ? t("cookieNotSet") : c.last_ok ? t("checkedAgo", { when: relTime(c.last_ok) }) : t("notVerified"));
+    setText("cookieSub", c.invalid ? titleCase(c.invalid) : !c.present ? t("cookieNotSet") : c.last_ok ? t("checkedAgo", { when: relTime(c.last_ok) }) : t("notVerified"));
     if (settings) {
       const ka = settings.keepalive_enabled;
       setText("refreshValue", ka ? tn("refreshEvery", settings.keepalive_hours) : t("refreshOff"));
@@ -1661,7 +1669,7 @@
       if (kind !== "ok" && !manualTouched) $("manualCookie").open = true;
     }
     let title, sub;
-    if (kind === "bad") { title = t("bannerBad"); sub = c.invalid; }
+    if (kind === "bad") { title = t("bannerBad"); sub = titleCase(c.invalid); }
     else if (kind === "none") { title = t("bannerNone"); sub = t("bannerNoneSub"); }
     else {
       title = t("bannerOk");

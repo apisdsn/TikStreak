@@ -564,14 +564,13 @@ details.group textarea { margin-top: 4px; }
   .acct-pill .pill-name { max-width: 150px; }
 }
 @media (min-width: 1180px) {
-  .brand strong { display: none; }
   .user-pill .pill-name, .user-pill .caret { display: none; }
   .user-pill { padding-right: 4px; }
   .tabs button { padding: 0 9px; gap: 6px; }
   .topbar-in { gap: 10px 8px; }
   .acct-pill .pill-name { max-width: 140px; }
 }
-@media (min-width: 721px) and (max-width: 1000px) {
+@media (min-width: 721px) and (max-width: 1099px) {
   .brand strong { display: none; }
   .topbar-in { gap: 10px 8px; }
 }
@@ -739,3 +738,8 @@ details.group label { margin-top: 4px; }
 .lb-n, .lb-h { font-size: 10.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .widget .qrow { background: rgba(127, 127, 127, .22); color: inherit; }
 .widget .qrow .btn.plain { color: #FF6961; }
+
+@media (max-width: 720px) {
+  .w-head h2 { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.2; }
+}
+.nav-row.static .btn { align-self: flex-start; }
