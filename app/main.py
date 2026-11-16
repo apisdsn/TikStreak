@@ -26,9 +26,10 @@ from .auth import (
     visible_accounts,
 )
 from .cookies import parse_cookies, summary
-from .login import login_session
+from . import jobs
+from .login import login_mgr
 from .notify import DISCORD_RE, send_discord, send_telegram
-from .runner import Busy, runner
+from .runner import runner
 from .store import (
     DEFAULT_SETTINGS,
     create_account,
@@ -78,7 +79,12 @@ def acct(account: Optional[str] = Query(None), user=Depends(current_user)):
 
 @app.on_event("startup")
 def _startup():
-    threading.Thread(target=runner.scheduler_loop, daemon=True).start()
+    runner.start_workers()
+
+
+@app.on_event("shutdown")
+def _shutdown():
+    runner.shutdown()
 
 
 # ---------------------------------------------------------------- schemas
@@ -181,24 +187,26 @@ def account_view(acc, user=None):
     }
 
 
-def _login_visible(user):
-    return login_session.active and login_session.owner_id == user["id"]
+def _my_login(user):
+    s = login_mgr.session_for(user["id"])
+    return s
 
 
 @app.get("/api/status")
 def status(user=Depends(current_user)):
     ids = accessible_ids(user)
     last = store_last_run(user["id"])
-    cur = runner.current
-    running = bool(cur and cur["status"] == "running")
-    cur_ok = bool(cur) and cur["account"]["id"] in ids
+    mine_running = runner.running_runs(ids)
+    cur = mine_running[0] if mine_running else None
+    q = runner.view_for(user["id"])
+    s_login = _my_login(user)
     return {
-        "running": running,
-        "foreign_busy": running and not cur_ok,
-        "current": run_view(cur) if cur_ok else None,
+        "running": bool(mine_running),
+        "current": run_view(cur) if cur else None,
+        "queue": q,
         "last_run": run_view(last, with_logs=True) if last else None,
         "accounts": [account_view(a, user) for a in visible_accounts(user)],
-        "login": login_session.account_id if _login_visible(user) else None,
+        "login": s_login.account_id if s_login.active else None,
         "server_now": datetime.now().isoformat(timespec="seconds"),
         "user": public_user(user),
     }
@@ -320,10 +328,10 @@ def remove_account(aid: str, user=Depends(current_user)):
     mine = [a for a in list_accounts() if a.get("owner_id") == acc.get("owner_id")]
     if len(mine) <= 1:
         raise HTTPException(400, "Minimal Harus Ada Satu Akun")
-    if runner.current and runner.current["status"] == "running" and runner.current["account"]["id"] == aid:
+    if runner.account_busy(aid):
         raise HTTPException(409, "Akun Sedang Dipakai Proses yang Berjalan")
-    if login_session.active and login_session.account_id == aid:
-        login_session.stop()
+    login_mgr.stop_account(aid)
+    jobs.drop_account(aid)
     delete_account(aid)
     delete_runs(account_ids=[aid])
     return {"ok": True}
@@ -439,37 +447,26 @@ def _login_call(fn, *a):
         raise HTTPException(500, f"Browser Error: {e}")
 
 
-def _login_guard(user):
-    """Sesi login remote hanya boleh dipakai pemiliknya atau admin."""
-    if login_session.active and login_session.owner_id != user["id"]:
-        raise HTTPException(403, "Sesi Login Sedang Dipakai Pengguna Lain")
-
-
 @app.post("/api/login/start")
 def login_start(acc=Depends(acct), user=Depends(current_user)):
-    if runner.current and runner.current["status"] == "running":
+    if runner.account_busy(acc["id"]):
         raise HTTPException(409, "Tunggu Proses yang Sedang Berjalan Selesai")
-    _login_guard(user)
-    was_active = login_session.active
-    _login_call(login_session.start, acc["id"])
-    if not was_active:
-        login_session.owner_id = user["id"]
+    _login_call(login_mgr.start, user["id"], acc["id"])
     return {"ok": True}
 
 
 @app.get("/api/login/status")
 def login_status(user=Depends(current_user)):
-    _login_guard(user)
-    return _login_call(login_session.status)
+    return _login_call(_my_login(user).status)
 
 
 @app.get("/api/login/frame")
 def login_frame(user=Depends(current_user)):
-    _login_guard(user)
+    s = _my_login(user)
     try:
-        data = login_session.frame()
+        data = s.frame()
     except RuntimeError as e:
-        if not login_session.active:  # sesi sudah berakhir: jangan jadikan galat di konsol browser
+        if not s.active:  # sesi sudah berakhir: jangan jadikan galat di konsol browser
             return Response(status_code=204)
         raise HTTPException(400, str(e))
     except Exception as e:  # noqa: BLE001
@@ -479,25 +476,23 @@ def login_frame(user=Depends(current_user)):
 
 @app.post("/api/login/input")
 def login_input(body: LoginInput, user=Depends(current_user)):
-    _login_guard(user)
-    _login_call(login_session.input, body.model_dump())
+    _login_call(_my_login(user).input, body.model_dump())
     return {"ok": True}
 
 
 @app.post("/api/login/save")
 def login_save(user=Depends(current_user)):
-    _login_guard(user)
-    aid = login_session.account_id
-    n = _login_call(login_session.save)
-    login_session.stop()
+    s = _my_login(user)
+    aid = s.account_id
+    n = _login_call(s.save)
+    login_mgr.stop_owner(user["id"])
     reset_cookie_meta(aid)
     return {"saved": n, **cookie_view(aid)}
 
 
 @app.post("/api/login/stop")
 def login_stop(user=Depends(current_user)):
-    _login_guard(user)
-    login_session.stop()
+    login_mgr.stop_owner(user["id"])
     return {"ok": True}
 
 
@@ -506,32 +501,58 @@ def run(body: RunIn, user=Depends(current_user)):
     acc = resolve_account(user, body.account)
     if body.mode not in ("send", "test", "check"):
         raise HTTPException(400, "Mode Harus Send, Test, atau Check")
-    if login_session.active:
+    if login_mgr.account_active(acc["id"]):
         raise HTTPException(409, "Tutup Sesi Login di Tab Cookie Dulu")
     try:
-        r = runner.start(acc["id"], body.mode, body.message.strip() if body.message else None, by=user["username"])
-    except Busy:
-        raise HTTPException(409, "Masih Ada Proses yang Berjalan")
-    return run_view(r)
+        job = runner.submit(acc, body.mode, user["id"], user["username"], body.message.strip() if body.message else None)
+    except jobs.Duplicate:
+        raise HTTPException(409, "Sudah Ada Proses untuk Akun Ini di Antrean")
+    mine = next((j for j in runner.view_for(user["id"])["mine"] if j["id"] == job["id"]), {})
+    return {"job": {k: job[k] for k in ("id", "account_id", "kind", "trigger", "status")}, **mine}
 
 
 @app.post("/api/run/stop")
-def stop(user=Depends(current_user)):
-    cur = runner.current
-    if cur and cur["status"] == "running" and not can_access(user, get_account(cur["account"]["id"]) or {}):
-        raise HTTPException(403, "Proses Ini Bukan Milik Anda")
-    runner.stop()
+def stop(account: Optional[str] = Query(None), user=Depends(current_user)):
+    return {"ok": True, "stopped": runner.stop(user["id"], account)}
+
+
+@app.delete("/api/jobs/{job_id}")
+def cancel_job(job_id: str, user=Depends(current_user)):
+    if not runner.cancel_job(job_id, user["id"]):
+        raise HTTPException(404, "Job Tidak Ditemukan atau Sudah Berjalan")
     return {"ok": True}
+
+
+@app.get("/api/queue")
+def queue_info(user=Depends(current_user)):
+    return runner.view_for(user["id"])
+
+
+@app.get("/api/queue/slots")
+def queue_slots(user=Depends(current_user)):
+    """Jumlah jadwal aktif seluruh panel per slot 30 menit (hanya hitungan, tanpa nama)."""
+    cap = 15 * runner.workers
+    return {"slots": runner.load_slots(), "capacity": cap, "busy_at": max(2, int(cap * 0.6)), "workers": runner.workers}
+
+
+@app.get("/api/queue/admin")
+def queue_admin(user=Depends(require_admin)):
+    from .login import login_mgr as lm
+    hourly = {}
+    for k, v in runner.load_slots().items():
+        hourly[k[:2] + ":00"] = hourly.get(k[:2] + ":00", 0) + v
+    return {**jobs.counts(), "workers": runner.workers, "login_sessions": lm.count(), "login_limit": config.LOGIN_SESSIONS,
+            "load_by_hour": dict(sorted(hourly.items()))}
 
 
 @app.get("/api/run/current")
 def current(since: int = 0, user=Depends(current_user)):
-    cur = runner.current
-    running = bool(cur and cur["status"] == "running")
-    if not cur or cur["account"]["id"] not in accessible_ids(user):
-        return {"run": None, "logs": [], "next": 0, "running": running}
+    mine = runner.running_runs(accessible_ids(user))
+    if not mine:
+        return {"run": None, "logs": [], "next": 0, "running": False}
+    cur = mine[0]
     logs = cur["logs"]
-    return {"run": run_view(cur), "logs": logs[since:], "next": len(logs), "running": running}
+    return {"run": run_view(cur), "logs": logs[since:], "next": len(logs), "running": True}
 
 
 @app.get("/api/run/screenshot")

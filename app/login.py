@@ -57,7 +57,6 @@ class LoginSession:
         self.active_id = None
         self.diag = deque(maxlen=20)
         self._reqs = OrderedDict()
-        threading.Thread(target=self._reaper, daemon=True).start()
 
     @property
     def active(self):
@@ -230,12 +229,8 @@ class LoginSession:
                 self.account_id = None
                 self._tabs, self._order, self.active_id = {}, [], None
 
-    def _reaper(self):
-        while True:
-            time.sleep(15)
-            with self._lock:
-                if self.page and time.time() - self.last_used > IDLE_TIMEOUT:
-                    self.stop()
+    def idle_expired(self):
+        return bool(self.page) and time.time() - self.last_used > IDLE_TIMEOUT
 
     def _need(self):
         if not self.page:
@@ -338,4 +333,74 @@ class LoginSession:
             return len(cookies)
 
 
-login_session = LoginSession()
+class LoginManager:
+    """Sesi login remote: satu per pengguna, dibatasi LOGIN_SESSIONS di seluruh panel."""
+
+    def __init__(self):
+        self._sessions = {}
+        self._lock = threading.RLock()
+        self._thread = None
+
+    def _ensure_reaper(self):
+        if self._thread:
+            return
+        self._thread = threading.Thread(target=self._reaper, daemon=True, name="bara-login-reaper")
+        self._thread.start()
+
+    def _reaper(self):
+        while True:
+            time.sleep(15)
+            with self._lock:
+                for uid, s in list(self._sessions.items()):
+                    if s.idle_expired():
+                        s.stop()
+                    if not s.active:
+                        self._sessions.pop(uid, None)
+
+    def session_for(self, owner_id):
+        """Sesi milik pengguna; bila belum ada, objek tidak aktif (semua operasinya gagal dengan pesan wajar)."""
+        with self._lock:
+            return self._sessions.get(owner_id) or LoginSession()
+
+    def start(self, owner_id, account_id):
+        with self._lock:
+            self._ensure_reaper()
+            s = self._sessions.get(owner_id)
+            if s and s.active:
+                s.start(account_id)
+                return s
+            busy = [x for x in self._sessions.values() if x.active]
+            if len(busy) >= config.LOGIN_SESSIONS:
+                raise RuntimeError("Browser Login Sedang Dipakai, Coba Lagi Sebentar")
+            s = LoginSession()
+            s.owner_id = owner_id
+            s.start(account_id)
+            self._sessions[owner_id] = s
+            return s
+
+    def active_account_ids(self):
+        with self._lock:
+            return {s.account_id for s in self._sessions.values() if s.active}
+
+    def account_active(self, account_id):
+        return account_id in self.active_account_ids()
+
+    def stop_owner(self, owner_id):
+        with self._lock:
+            s = self._sessions.pop(owner_id, None)
+        if s:
+            s.stop()
+
+    def stop_account(self, account_id):
+        with self._lock:
+            for uid, s in list(self._sessions.items()):
+                if s.active and s.account_id == account_id:
+                    s.stop()
+                    self._sessions.pop(uid, None)
+
+    def count(self):
+        with self._lock:
+            return sum(1 for s in self._sessions.values() if s.active)
+
+
+login_mgr = LoginManager()

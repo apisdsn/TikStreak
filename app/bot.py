@@ -106,7 +106,7 @@ def xpath_literal(s):
 
 
 class StreakBot:
-    def __init__(self, settings, log, cancel_event, cookies_store, test_mode=False, message=None, check_only=False, proof_dir=None, convs_store=None, account_id=None):
+    def __init__(self, settings, log, cancel_event, cookies_store, test_mode=False, message=None, check_only=False, proof_dir=None, convs_store=None, account_id=None, provider=None):
         self.s = settings
         self.cookies_store = cookies_store
         self.log = log
@@ -117,6 +117,7 @@ class StreakBot:
         self.proof_dir = proof_dir
         self.convs = convs_store
         self.account_id = account_id
+        self.provider = provider  # pemberi tab di konteks terisolasi (pool); None = browser sendiri
         self.page = None
         self.logged_in = False
         self.cookies_saved = False
@@ -134,6 +135,10 @@ class StreakBot:
 
     # ---------------------------------------------------------------- browser
     def _create_browser(self):
+        if self.provider:
+            self.page = self.provider.acquire(block_media=True)
+            self.log("Browser Siap")
+            return
         if not os.path.exists(config.BROWSER_PATH):
             raise RuntimeError(f"Browser Tidak Ditemukan di {config.BROWSER_PATH}")
         opts = ChromiumOptions()
@@ -157,6 +162,13 @@ class StreakBot:
         browser.apply_fingerprint(self.page)
         self.log("Browser Siap")
 
+    def _cookies(self, all_info=False):
+        """Cookie browser. Di konteks terisolasi (pool) hanya Network.getAllCookies yang tersaring per konteks."""
+        if self.provider:
+            raw = self.page.run_cdp("Network.getAllCookies")["cookies"]
+            return raw if all_info else [{"name": c["name"], "value": c["value"], "domain": c["domain"]} for c in raw]
+        return self.page.cookies(all_domains=True, all_info=all_info)
+
     def _load_cookies(self):
         cookies = self.cookies_store.read()
         if not cookies:
@@ -178,7 +190,7 @@ class StreakBot:
             raise CookieInvalid("Cookie Kedaluwarsa atau Tidak Valid (Diarahkan ke Halaman Login)")
         if "messages" not in url:
             raise RuntimeError(f"URL Tidak Terduga: {url}")
-        names = {c.get("name") for c in self.page.cookies(all_domains=True)}
+        names = {c.get("name") for c in self._cookies()}
         if "sessionid" not in names:
             raise CookieInvalid("Cookie sessionid Ditolak TikTok (Sesi Sudah Tidak Berlaku)")
         try:
@@ -195,7 +207,7 @@ class StreakBot:
     def _save_cookies(self):
         """Simpan cookie terbaru dari browser (TikTok memperbarui sesi saat dipakai)."""
         try:
-            fresh = from_browser(self.page.cookies(all_domains=True, all_info=True))
+            fresh = from_browser(self._cookies(all_info=True))
             if any(c["name"] == "sessionid" for c in fresh):
                 self.cookies_store.write(fresh)
                 self.cookies_saved = True
@@ -548,7 +560,10 @@ class StreakBot:
                 if self.logged_in and not self.check_only:
                     self._save_cookies()
                 try:
-                    self.page.quit()
+                    if self.provider:
+                        self.provider.release(self.page)
+                    else:
+                        self.page.quit()
                 except Exception:  # noqa: BLE001
                     pass
                 self.log("Browser Ditutup")

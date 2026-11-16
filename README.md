@@ -116,6 +116,28 @@ curl -H "X-API-Key: $API_KEY" http://localhost:8000/api/status
 | POST | `/api/auth/setup`, `/api/auth/login`, `/api/auth/logout`, `/api/auth/password` | Autentikasi |
 | GET / DELETE | `/api/history` | Riwayat |
 
+## Kapasitas & Antrean
+
+Semua pekerjaan browser (kirim, uji, cek cookie) masuk ke **antrean yang disimpan di database** dan dijalankan oleh sejumlah worker Chromium (`BROWSER_WORKERS`, default 1). Aturan antrean:
+
+- Maksimal satu job aktif per akun dan jenis; dua job untuk akun yang sama tidak pernah berjalan bersamaan; akun yang sedang login remote dilewati.
+- Prioritas: kirim/uji manual, lalu kirim terjadwal (urut jam jatuh tempo), lalu cek cookie otomatis. Cek cookie tidak dimulai bila ada jadwal kirim dalam 10 menit.
+- Jadwal yang jatuh tempo dimasukkan ke antrean sekali. Bila jendela 3 jam habis sebelum sempat jalan, job dicatat sebagai **Terlewat** di riwayat dan pemiliknya diberi notifikasi. Setelah restart, job yang sedang berjalan kembali ke antrean bila masih dalam jendela.
+- Panel menghitung perkiraan waktu mulai (posisi antrean dan ETA) dari rata-rata 5 run terakhir akun; bila belum ada data: 30 detik per kontak + 20 detik. Bila perkiraan jatuh setelah tengah malam, pemilik mendapat satu peringatan per hari.
+- Jeda acak 5-20 detik antar job (`QUEUE_JITTER_MIN/MAX`).
+- Satu proses Chromium dipakai ulang per worker; tiap job memakai konteks browser terisolasi (cookie tidak bocor antar akun) dan konteksnya dibuang setelah selesai. Proses dimulai ulang tiap `BROWSER_RECYCLE_JOBS` job, saat crash, atau bila memori (PSS) melewati `BROWSER_MAX_MB`. Request video/audio diblokir pada job kirim/cek.
+- `BROWSER_KIND=auto` memakai `chrome-headless-shell` bila terpasang (jauh lebih hemat memori), selain itu Chromium penuh. Login remote selalu memakai Chromium penuh.
+
+Panduan RAM (hanya Bara, tanpa aplikasi lain):
+
+| RAM server | `BROWSER_WORKERS` |
+|---|---|
+| 2 GB | 1 |
+| 4 GB | 2 |
+| 8 GB | 3-4 |
+
+Hitungan kasar: satu kirim ke 4 kontak sekitar 2 menit, jadi **satu worker menangani sekitar 27 akun per jam**. Sebarkan jam jadwal; UI memberi petunjuk bila slot 30 menit sudah ramai. Pengukuran memori satu browser dengan satu tab (PSS): Chromium penuh sekitar 360 MB, `chrome-headless-shell` sekitar 90 MB.
+
 ## Backup
 
 Semua data ada di satu file SQLite (`/data/streak.db`) plus `secret.key` (atau env `SECRET_KEY`) dan folder `proofs/`. Cookie dan rahasia notifikasi dienkripsi; **tanpa kunci yang sama cookie tidak bisa dibaca**, jadi simpan `SECRET_KEY` (atau `secret.key`) bersama backup database.

@@ -113,9 +113,8 @@ def make_user(username, password, role):
 
 
 def _stop_login_of(uid):
-    from .login import login_session
-    if login_session.active and login_session.owner_id == uid:
-        login_session.stop()
+    from .login import login_mgr
+    login_mgr.stop_owner(uid)
 
 
 def ensure_default_account(uid):
@@ -456,7 +455,7 @@ def users_update(uid: str, body: UserUpdate, user=Depends(require_admin)):
 @router.delete("/api/users/{uid}")
 def users_delete(uid: str, user=Depends(require_admin)):
     """Hapus pengguna beserta semua akun TikTok dan datanya (tidak dipindahkan ke admin)."""
-    from .login import login_session
+    from . import jobs
     from .runner import runner
     from .store import delete_account
     with _lock:
@@ -468,13 +467,13 @@ def users_delete(uid: str, user=Depends(require_admin)):
         if target["role"] == "admin" and not target.get("disabled") and len(active_admins()) <= 1:
             raise HTTPException(400, "Tidak Bisa Menghapus Admin Aktif Terakhir")
         owned = [acc for acc in list_accounts() if acc.get("owner_id") == uid]
-        cur = runner.current
-        if cur and cur["status"] == "running" and cur["account"]["id"] in {a["id"] for a in owned}:
+        if any(runner.account_busy(a["id"]) for a in owned):
             raise HTTPException(409, "Akun Pengguna Ini Sedang Dipakai Proses yang Berjalan")
         user_delete(uid)
     _stop_login_of(uid)
     ids = {a["id"] for a in owned}
     for aid in ids:
+        jobs.drop_account(aid)
         delete_account(aid)  # akun, cookie, kontak, jadwal, meta, dan peta percakapan
     _purge_runs(ids)
     invalidate_user_sessions(uid)

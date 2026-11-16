@@ -312,6 +312,14 @@ def _run(r, logs=True):
     return out
 
 
+def new_run_id():
+    """ID run 8 hex (dipakai juga untuk folder bukti); dipastikan belum dipakai agar tidak menimpa riwayat."""
+    while True:
+        rid = uuid.uuid4().hex[:8]
+        if not db.q1("SELECT 1 FROM runs WHERE id=?", (rid,)):
+            return rid
+
+
 def insert_run(run):
     acc = run.get("account") or {}
     with db.tx():

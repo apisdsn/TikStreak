@@ -7,6 +7,7 @@ ENV PYTHONUNBUFFERED=1 \
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends chromium fonts-liberation fonts-noto-color-emoji tzdata tini curl \
+    && (apt-get install -y --no-install-recommends chromium-headless-shell || echo 'chromium-headless-shell tidak tersedia di distro ini; memakai Chromium penuh') \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /srv

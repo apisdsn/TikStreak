@@ -112,7 +112,27 @@ def _m1(c):
     """)
 
 
-MIGRATIONS = [_m1]
+def _m2(c):
+    _script(c, """
+    CREATE TABLE jobs(
+      id TEXT PRIMARY KEY, account_id TEXT NOT NULL, owner_id TEXT, kind TEXT NOT NULL, trigger TEXT NOT NULL,
+      run_by TEXT, label TEXT, message TEXT, contacts_json TEXT, priority INTEGER NOT NULL DEFAULT 1,
+      due_at REAL NOT NULL, enqueued_at REAL NOT NULL, started_at REAL, status TEXT NOT NULL,
+      run_id TEXT, reason TEXT, finished_at REAL);
+    CREATE UNIQUE INDEX jobs_active_uq ON jobs(account_id, kind) WHERE status IN ('queued','running');
+    CREATE INDEX jobs_status ON jobs(status, priority, due_at);
+    CREATE INDEX jobs_owner ON jobs(owner_id, status)
+    """)
+
+
+def _m3(c):
+    _script(c, """
+    CREATE INDEX runs_owner_filter ON runs(owner_id, mode, status, started_at DESC);
+    CREATE INDEX runs_account_filter ON runs(account_id, mode, status, started_at DESC)
+    """)
+
+
+MIGRATIONS = [_m1, _m2, _m3]
 
 
 def init():
