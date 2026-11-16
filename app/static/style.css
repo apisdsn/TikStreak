@@ -389,7 +389,7 @@ td.num { font-variant-numeric: tabular-nums; }
 }
 .acct-pill { max-width: 100%; }
 @media (min-width: 721px) and (max-width: 1479px) {
-  .user-pill .pill-name { display: none; }
+  .user-pill .pill-name, .user-pill .caret { display: none; }
   .user-pill { padding-right: 4px; }
   .acct-pill .pill-name { max-width: 170px; }
   .tabs button:not(.active) span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -424,7 +424,7 @@ td.num { font-variant-numeric: tabular-nums; }
   .tabs button.active { background: transparent; box-shadow: none; color: var(--blue-text); }
   .brand strong { display: none; }
   .acct-pill .pill-name { max-width: 120px; }
-  .user-pill .pill-name { display: none; }
+  .user-pill .pill-name, .user-pill .caret { display: none; }
   .user-pill { padding-right: 4px; }
   .widgets { gap: 12px; grid-auto-rows: minmax(160px, auto); }
   .widget { border-radius: 22px; padding: 14px; }
@@ -543,4 +543,49 @@ details.group textarea { margin-top: 4px; }
   .gstep { flex-wrap: wrap; }
   .gstep .gtxt { flex: 1 1 calc(100% - 44px); }
   .gstep .btn { margin-left: 40px; }
+}
+
+/* menu pengguna */
+.menu .m-ico { width: 18px; height: 18px; flex: none; color: var(--muted); }
+.menu button.danger .m-ico { color: inherit; }
+.menu.user-menu { width: 280px; }
+.menu-head { display: flex; align-items: center; gap: 12px; padding: 8px 10px 4px; }
+.menu-head .avatar-sm { width: 40px; height: 40px; flex-basis: 40px; }
+.menu-head .mh-name { font-weight: 700; font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.menu-head .mh-sub { color: var(--muted); font-size: 13px; }
+.menu-head .mh-txt { min-width: 0; }
+
+/* modal ganti password */
+.overlay.center { align-items: center; justify-content: center; padding: 16px; z-index: 37; }
+.overlay.center .sheet-card { margin-bottom: 0; max-width: 420px; }
+.modal h2 { font-size: 20px; margin-bottom: 4px; }
+.modal .field { display: flex; flex-direction: column; gap: 6px; }
+.modal label, .login-card label { margin: 0; }
+.pw-field { position: relative; }
+.pw-field input { padding-right: 48px; }
+.eye { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 40px; height: 40px; border: 0; border-radius: 10px; background: transparent; color: var(--muted); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.eye:hover { color: var(--text); }
+.eye svg { width: 20px; height: 20px; }
+.modal .hint { margin: 0; font-size: 13px; color: var(--muted); }
+.modal .error { margin: 0; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 6px; }
+
+/* layar login */
+.login { overflow: hidden; }
+.login-tools { position: absolute; top: 16px; right: 16px; display: flex; gap: 8px; z-index: 2; }
+.tool-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; min-width: 44px; padding: 0 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--group); color: var(--text); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.tool-btn.icon { padding: 0; width: 44px; }
+.tool-btn svg { width: 18px; height: 18px; }
+.login-watermark { position: absolute; left: 50%; top: 50%; width: min(86vmin, 680px); height: min(86vmin, 680px); transform: translate(-50%, -50%); opacity: .07; pointer-events: none; --logo-sec-op: 1; }
+.login-card { position: relative; z-index: 1; }
+.login-card .field { width: 100%; display: flex; flex-direction: column; gap: 6px; text-align: left; }
+.login-card .field input { margin: 0; }
+.login-card .field.hidden { display: none; }
+@media (max-height: 520px) { .login-watermark { display: none; } }
+@media (min-width: 721px) { .login-tools { top: 24px; right: 24px; } }
+
+#userAvatar { background: var(--blue); color: #FFFFFF; }
+@media (max-width: 720px) {
+  .menu.user-menu { width: auto; }
+  #acctBtn { order: 9; max-width: 100%; }
 }

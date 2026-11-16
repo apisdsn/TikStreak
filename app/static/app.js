@@ -98,6 +98,10 @@
       guidePrivacy: "Cookie Sama dengan Kunci Akun. Jangan Bagikan ke Orang Lain.",
       ckOk: "{n} Cookie Terbaca · sessionid Ditemukan", ckNoSession: "{n} Cookie Terbaca, tetapi sessionid Tidak Ada. Pastikan Anda Sudah Login di TikTok.",
       ckBad: "Format Tidak Dikenali", ckFmtJson: "JSON", ckFmtHeader: "Header",
+      reload: "Muat Ulang", manageUsers: "Kelola Pengguna", acctCount: "{n} Akun TikTok", acctCount1: "{n} Akun TikTok",
+      confirmNewPassword: "Konfirmasi Password Baru", pwHint: "Minimal 8 Karakter", pwSessionsHint: "Sesi di Perangkat Lain Akan Keluar",
+      savePassword: "Simpan Password", showPassword: "Tampilkan Password", hidePassword: "Sembunyikan Password",
+      pwTooShort: "Password Baru Minimal 8 Karakter", pwRequired: "Semua Kolom Wajib Diisi",
       noRuns: "Belum Ada Proses", lbClose: "Tutup", lbDownload: "Unduh", lbPrev: "Sebelumnya", lbNext: "Berikutnya",
       lbLatestShot: "Tangkapan Layar Terakhir", reloadScreenshot: "Muat Ulang Tangkapan Layar", fullScreen: "Layar Penuh", lbZoomIn: "Klik untuk Ukuran Asli", lbZoomOut: "Klik untuk Muat Layar", lbViewer: "Penampil Gambar",
     },
@@ -105,7 +109,7 @@
       brand: "Streak Panel", loginHint: "Login with Your Username and Password", accessKey: "Access Key", signIn: "Login",
       wrongKey: "Wrong Access Key", navLabel: "Main Navigation", navDashboard: "Dashboard", navAccounts: "Accounts & Schedules",
       navContacts: "Contacts", navCookies: "Cookie & Login", navSettings: "Settings", language: "Language", toggleTheme: "Toggle Theme",
-      activeAccount: "Active Account", signOut: "Sign Out", nextSchedule: "Next Schedule", customMessagePh: "Custom Message (Optional)",
+      activeAccount: "Active Account", signOut: "Log Out", nextSchedule: "Next Schedule", customMessagePh: "Custom Message (Optional)",
       sendNow: "Send Now", dryRun: "Test Without Sending", stop: "Stop", streakDays: "Day Streak", todayGoal: "Today's Goal",
       last7Days: "Last 7 Days", cookie: "Cookie", cookieRefresh: "Cookie Refresh", notifications: "Notifications", accounts: "Accounts",
       today: "Today", latestLog: "Latest Log", viewScreenshot: "View Screenshot", history: "History", clearHistory: "Clear History",
@@ -190,6 +194,10 @@
       guidePrivacy: "A Cookie Is the Same as an Account Key. Never Share It with Anyone.",
       ckOk: "{n} Cookies Read · sessionid Found", ckOk1: "{n} Cookie Read · sessionid Found", ckNoSession: "{n} Cookies Read, but sessionid Is Missing. Make Sure You Are Logged In to TikTok.", ckNoSession1: "{n} Cookie Read, but sessionid Is Missing. Make Sure You Are Logged In to TikTok.",
       ckBad: "Format Not Recognized", ckFmtJson: "JSON", ckFmtHeader: "Header",
+      reload: "Reload", manageUsers: "Manage Users", acctCount: "{n} TikTok Accounts", acctCount1: "{n} TikTok Account",
+      confirmNewPassword: "Confirm New Password", pwHint: "At Least 8 Characters", pwSessionsHint: "Sessions on Other Devices Will Be Signed Out",
+      savePassword: "Save Password", showPassword: "Show Password", hidePassword: "Hide Password",
+      pwTooShort: "New Password Must Be at Least 8 Characters", pwRequired: "All Fields Are Required",
       noRuns: "No Runs Yet", lbClose: "Close", lbDownload: "Download", lbPrev: "Previous", lbNext: "Next",
       lbLatestShot: "Latest Screenshot", reloadScreenshot: "Reload Screenshot", fullScreen: "Full Screen", lbZoomIn: "Click for Actual Size", lbZoomOut: "Click to Fit Screen", lbViewer: "Image Viewer",
     },
@@ -358,16 +366,19 @@
     document.documentElement.dataset.theme = th;
     const m = document.querySelector('meta[name="theme-color"]');
     if (m) m.content = th === "dark" ? "#000000" : "#EEF2F8";
+    document.querySelectorAll("#themeBtn use, #loginTheme use").forEach((u) => u.setAttribute("href", th === "dark" ? "#i-sun" : "#i-moon"));
+  }
+  function toggleTheme() {
+    applyTheme(theme === "dark" ? "light" : "dark");
+    try { localStorage.setItem(THEME_KEY, theme); } catch (e) { /* abaikan */ }
   }
   let initialTheme = "light";
   try {
     initialTheme = localStorage.getItem(THEME_KEY) || (window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
   } catch (e) { /* abaikan */ }
   applyTheme(initialTheme === "dark" ? "dark" : "light");
-  $("themeBtn").addEventListener("click", () => {
-    applyTheme(theme === "dark" ? "light" : "dark");
-    try { localStorage.setItem(THEME_KEY, theme); } catch (e) { /* abaikan */ }
-  });
+  $("themeBtn").addEventListener("click", toggleTheme);
+  $("loginTheme").addEventListener("click", toggleTheme);
 
   const TAB_KEYS = { dashboard: "navDashboard", accounts: "navAccounts", contacts: "navContacts", cookies: "navCookies", settings: "navSettings" };
   function applyStaticI18n() {
@@ -390,8 +401,15 @@
     document.documentElement.lang = l;
     document.querySelectorAll(".segmented [data-lang]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.lang === l)));
     applyStaticI18n();
+    renderLoginMode();
+    renderLoginMsg();
+    renderLoginSteps();
+    $("loginLangCode").textContent = l.toUpperCase();
+    $("loginLang").setAttribute("aria-label", `${t("language")}: ${l.toUpperCase()}`);
+    $("loginLang").title = $("loginLang").getAttribute("aria-label");
     renderAll();
   }
+  $("loginLang").addEventListener("click", () => setLang(lang === "id" ? "en" : "id"));
   document.querySelectorAll(".segmented [data-lang]").forEach((b) => b.addEventListener("click", () => setLang(b.dataset.lang)));
 
   // ------------------------------------------------------------------- auth
@@ -402,8 +420,8 @@
     $("loginTitle").textContent = t(setupMode ? "setupTitle" : "brand");
     $("loginHint").textContent = t(setupMode ? "setupHint" : "loginHint");
     $("loginSubmit").textContent = t(setupMode ? "createAdmin" : "signIn");
-    $("setupKey").classList.toggle("hidden", !setupMode);
-    $("loginPass2").classList.toggle("hidden", !setupMode);
+    $("fieldSetupKey").classList.toggle("hidden", !setupMode);
+    $("fieldPass2").classList.toggle("hidden", !setupMode);
     $("setupKey").required = $("loginPass2").required = setupMode;
     $("loginPass").autocomplete = setupMode ? "new-password" : "current-password";
   }
@@ -414,13 +432,14 @@
     clearInterval(pollTimer);
     clearInterval(histTimer);
     closeMenu();
-    closeUserSheet(true);
+    closePwModal(true);
     me = null;
     renderLoginMode();
   }
 
   function applyRole() {
     $("userBtnName").textContent = me.username;
+    $("userAvatar").textContent = initial(me.username);
     $("userBtn").title = me.username;
     $("adminArea").classList.toggle("hidden", !isAdmin());
     $("adminNote").classList.toggle("hidden", isAdmin());
@@ -484,7 +503,6 @@
     resetSession();
     showLogin();
   }
-  $("btnLogout").addEventListener("click", logout);
 
   async function initAuth() {
     try {
@@ -508,16 +526,24 @@
     menuAnchor = null;
   }
   // items: {label, onClick, role, checked, danger, disabled, reason, avatar, dot, sep}
-  function openMenu(anchor, items, label) {
+  function openMenu(anchor, items, label, opts = {}) {
     const same = menuAnchor === anchor;
     closeMenu(false);
     if (same) return;
-    const m = el("div", { className: "menu", role: "menu", "aria-label": label || "" });
+    const m = el("div", { className: "menu" + (opts.className ? " " + opts.className : ""), role: "menu", "aria-label": label || "" });
     items.forEach((it) => {
-      if (it.sep) { m.append(el("hr")); return; }
+      if (it.sep) { m.append(el("hr", { role: "separator" })); return; }
+      if (it.header) {
+        m.append(el("div", { className: "menu-head" }, [
+          el("span", { className: "avatar-sm on", textContent: it.avatar, "aria-hidden": "true" }),
+          el("div", { className: "mh-txt" }, [el("div", { className: "mh-name", textContent: it.title }), el("div", { className: "mh-sub", textContent: it.sub })]),
+        ]));
+        return;
+      }
       const b = el("button", { type: "button", role: it.role || "menuitem", disabled: !!it.disabled });
       if (it.role === "menuitemradio") b.setAttribute("aria-checked", String(!!it.checked));
       if (it.danger) b.classList.add("danger");
+      if (it.icon) b.append(icon(it.icon, "m-ico"));
       if (it.avatar) b.append(el("span", { className: "avatar-sm" + (it.checked ? " on" : ""), textContent: it.avatar, "aria-hidden": "true" }));
       const lab = el("span", { className: "m-label", textContent: it.label });
       if (it.reason) lab.append(el("span", { className: "m-reason", textContent: it.reason }));
@@ -554,64 +580,95 @@
   });
   window.addEventListener("resize", () => closeMenu(false));
 
-  // sheet pengguna
-  let sheetTrigger = null;
-  function openUserSheet() {
+  // menu pengguna
+  $("userBtn").addEventListener("click", () => {
+    openMenu($("userBtn"), [
+      { header: true, avatar: initial(me.username), title: me.username, sub: `${t(isAdmin() ? "roleAdmin" : "roleUser")} · ${tn("acctCount", accounts.length)}` },
+      { sep: true },
+      { label: t("reload"), icon: "i-refresh", onClick: reloadAll },
+      { label: t("changePassword"), icon: "i-key", onClick: () => setTimeout(openPwModal, 0) },
+      ...(isAdmin() ? [{ label: t("manageUsers"), icon: "i-people", onClick: goUsers }] : []),
+      { sep: true },
+      { label: t("signOut"), icon: "i-exit", danger: true, onClick: logout },
+    ], me.username, { className: "user-menu" });
+  });
+
+  async function reloadAll() {
+    try {
+      await Promise.all([loadSettings(), loadMyNotif(), loadContacts(), loadHistory(), isAdmin() ? loadUsers() : Promise.resolve()]);
+      dashSig = "";
+      await refresh();
+    } catch (e) { toast(e.message); }
+  }
+  function goUsers() {
+    showTab("settings");
+    const h = $("usersHeading");
+    setTimeout(() => { h.scrollIntoView({ behavior: "smooth", block: "start" }); h.focus({ preventScroll: true }); }, 50);
+  }
+
+  // modal ganti password
+  let pwTrigger = null;
+  function updateEyes() {
+    document.querySelectorAll(".eye").forEach((b) => {
+      const shown = $(b.dataset.eye).type === "text";
+      b.setAttribute("aria-pressed", String(shown));
+      b.setAttribute("aria-label", t(shown ? "hidePassword" : "showPassword"));
+      b.title = b.getAttribute("aria-label");
+      b.querySelector("use").setAttribute("href", shown ? "#i-eye-off" : "#i-eye");
+    });
+  }
+  function openPwModal() {
     closeMenu(false);
-    sheetTrigger = $("userBtn");
-    $("usName").textContent = me.username;
-    const rb = $("usRole");
-    rb.textContent = t(isAdmin() ? "roleAdmin" : "roleUser");
-    rb.className = "badge " + (isAdmin() ? "accent" : "neutral");
-    $("userSheet").classList.remove("hidden");
-    $("userBtn").setAttribute("aria-expanded", "true");
+    pwTrigger = document.activeElement && document.activeElement !== document.body ? document.activeElement : $("userBtn");
+    $("pwForm").reset();
+    ["pwCur", "pwNew", "pwConf"].forEach((id) => { $(id).type = "password"; });
+    $("pwErr").textContent = "";
+    $("pwSave").disabled = false;
+    updateEyes();
+    $("pwModal").classList.remove("hidden");
     document.body.style.overflow = "hidden";
-    $("usClose").focus();
+    $("pwCur").focus();
   }
-  function closeUserSheet(silent) {
-    if ($("userSheet").classList.contains("hidden")) return;
-    $("userSheet").classList.add("hidden");
-    $("userBtn").setAttribute("aria-expanded", "false");
+  function closePwModal(silent) {
+    if ($("pwModal").classList.contains("hidden")) return;
+    $("pwModal").classList.add("hidden");
     document.body.style.overflow = "";
-    if (!silent && sheetTrigger) sheetTrigger.focus();
+    $("pwForm").reset();
+    if (!silent && pwTrigger) pwTrigger.focus();
   }
-  $("userBtn").addEventListener("click", openUserSheet);
-  $("usClose").addEventListener("click", () => closeUserSheet());
-  $("userSheet").addEventListener("mousedown", (e) => { if (e.target === $("userSheet")) closeUserSheet(); });
+  document.querySelectorAll(".eye").forEach((b) => b.addEventListener("click", () => {
+    const inp = $(b.dataset.eye);
+    inp.type = inp.type === "password" ? "text" : "password";
+    updateEyes();
+  }));
+  $("pwCancel").addEventListener("click", () => closePwModal());
+  $("pwModal").addEventListener("mousedown", (e) => { if (e.target === $("pwModal")) closePwModal(); });
   document.addEventListener("keydown", (e) => {
-    if ($("userSheet").classList.contains("hidden")) return;
-    if (e.key === "Escape") { e.preventDefault(); closeUserSheet(); }
+    if ($("pwModal").classList.contains("hidden")) return;
+    if (e.key === "Escape") { e.preventDefault(); closePwModal(); }
     else if (e.key === "Tab") {
-      const f = [...$("userSheet").querySelectorAll("button:not([disabled]), input, select")].filter((x) => x.offsetParent !== null);
+      const f = [...$("pwModal").querySelectorAll("button:not([disabled]), input")].filter((x) => x.offsetParent !== null);
       const first = f[0], last = f[f.length - 1];
-      if (!$("userSheet").contains(document.activeElement)) { e.preventDefault(); first.focus(); }
+      if (!$("pwModal").contains(document.activeElement)) { e.preventDefault(); first.focus(); }
       else if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
       else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
     }
   });
-
-  // formulir ganti password (dipakai di sheet dan di tab Pengaturan)
-  function buildPasswordForm(box) {
-    const mk = (type, key, auto) => el("input", { type, placeholder: t(key), "aria-label": t(key), autocomplete: auto, required: true });
-    const cur = mk("password", "currentPassword", "current-password");
-    const nw = mk("password", "newPassword", "new-password");
-    const cf = mk("password", "confirmPassword", "new-password");
-    const msg = el("p", { className: "msg", role: "status" });
-    const btn = el("button", { className: "btn primary block", type: "submit", textContent: t("changePassword") });
-    const form = el("form", { className: "pw-form" }, [cur, nw, cf, btn, msg]);
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      msg.className = "msg";
-      if (nw.value !== cf.value) { msg.className = "msg err"; msg.textContent = t("passMismatch"); return; }
-      try {
-        await api("/auth/password", { method: "POST", body: { current: cur.value, new: nw.value } });
-        cur.value = nw.value = cf.value = "";
-        msg.textContent = t("pwChanged");
-        toast(t("pwChanged"));
-      } catch (ex) { msg.className = "msg err"; msg.textContent = ex.message; }
-    });
-    box.replaceChildren(form);
-  }
+  $("pwForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const err = $("pwErr");
+    err.textContent = "";
+    const cur = $("pwCur").value, nw = $("pwNew").value, cf = $("pwConf").value;
+    if (!cur || !nw || !cf) { err.textContent = t("pwRequired"); return; }
+    if (nw.length < 8) { err.textContent = t("pwTooShort"); $("pwNew").focus(); return; }
+    if (nw !== cf) { err.textContent = t("passMismatch"); $("pwConf").focus(); return; }
+    $("pwSave").disabled = true;
+    try {
+      await api("/auth/password", { method: "POST", body: { current: cur, new: nw } });
+      closePwModal();
+      toast(t("pwChanged"));
+    } catch (ex) { err.textContent = ex.message; $("pwSave").disabled = false; }
+  });
 
   // ------------------------------------------------------------------- tabs
   function showTab(tab) {
@@ -1658,6 +1715,12 @@
   $("btnMyDcTest").addEventListener("click", testHook("/me/notifications/test/discord"));
   $("btnMyTgTest").addEventListener("click", testHook("/me/notifications/test/telegram"));
 
+  function renderMyPwButton() {
+    const b = el("button", { className: "btn tinted", type: "button", textContent: t("changePassword") });
+    b.addEventListener("click", openPwModal);
+    $("myPw").replaceChildren(b);
+  }
+
   // ------------------------------------------------------ kelola pengguna
   async function userAction(u, body, doneKey) {
     try { await api("/users/" + u.id, { method: "PUT", body }); toast(t(doneKey || "toastUserUpdated")); await loadUsers(); }
@@ -1719,12 +1782,8 @@
     renderMyNotifStates();
     renderCookieCheck();
     renderUsers();
-    buildPasswordForm($("usPw"));
-    buildPasswordForm($("myPw"));
-    renderLoginMode();
-    if (me) {
-      $("usRole").textContent = t(isAdmin() ? "roleAdmin" : "roleUser");
-    }
+    renderMyPwButton();
+    updateEyes();
     const b = $("runBadge");
     if (b.dataset.status) b.textContent = statusLabel(b.dataset.status);
     idleLogKey = null;
@@ -1739,6 +1798,11 @@
   document.documentElement.lang = lang;
   document.querySelectorAll(".segmented [data-lang]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.lang === lang)));
   applyStaticI18n();
+  applyTheme(theme);
+  $("loginLangCode").textContent = lang.toUpperCase();
+  $("loginLang").setAttribute("aria-label", `${t("language")}: ${lang.toUpperCase()}`);
+  $("loginLang").title = $("loginLang").getAttribute("aria-label");
+  updateEyes();
   renderShotButtons();
   renderLoginSteps();
   renderLoginMsg();
