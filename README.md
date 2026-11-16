@@ -1,6 +1,6 @@
-# TikTok Streak Panel
+# Bara
 
-Panel web untuk mengotomatiskan pengiriman pesan streak TikTok. Berjalan di satu container Docker (FastAPI + Chromium headless + scheduler bawaan).
+Bara adalah panel web untuk mengotomatiskan pengiriman pesan streak TikTok. Berjalan di satu container Docker (FastAPI + Chromium headless + scheduler bawaan).
 
 ## Fitur
 
@@ -81,7 +81,7 @@ Karena panel bisa diakses publik, pakai `API_KEY` yang panjang dan acak (`openss
 1. **Akun** (opsional): tab *Akun* untuk menambah akun lain. Akun pertama bernama "Utama". Pilih akun aktif di pojok kanan atas; tab Kontak, Cookie, dan Dashboard mengikuti akun yang dipilih.
 2. **Cookie**: di tab *Cookie* klik *Mulai login*, login ke TikTok pada tampilan browser di panel (klik/ketik langsung, captcha juga bisa), lalu *Simpan sesi login*. Alternatif: tempel cookie manual (JSON dari Cookie-Editor atau string header `Cookie`).
 3. **Kontak**: tambahkan nickname persis seperti di daftar pesan TikTok.
-4. **Dashboard**: jalankan *Uji* dulu untuk memastikan login dan kontak terbaca, lalu *Kirim streak sekarang*.
+4. **Dashboard**: jalankan *Uji* dulu untuk memastikan login dan kontak terbaca, lalu *Kirim Sekarang*.
 5. **Pengaturan**: atur pesan default, zona waktu, dan Discord/Telegram.
 
 ## API

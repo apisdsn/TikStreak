@@ -9,7 +9,7 @@
   // Semua teks UI memakai Title Case (konektor selain kata pertama tetap huruf kecil)
   const I18N = {
     id: {
-      brand: "Streak Panel", loginHint: "Masuk dengan Nama Pengguna dan Kata Sandi", accessKey: "Kunci Akses", signIn: "Masuk",
+      brand: "Bara", loginHint: "Masuk dengan Nama Pengguna dan Kata Sandi", accessKey: "Kunci Akses", signIn: "Masuk",
       wrongKey: "Kunci Akses Salah", navLabel: "Navigasi Utama", navDashboard: "Dashboard", navAccounts: "Akun & Jadwal",
       navContacts: "Kontak", navCookies: "Cookie & Login", navSettings: "Pengaturan", language: "Bahasa", toggleTheme: "Ganti Tema",
       activeAccount: "Akun Aktif", signOut: "Keluar", nextSchedule: "Jadwal Berikutnya", customMessagePh: "Pesan Khusus (Opsional)",
@@ -162,7 +162,7 @@
       lbLatestShot: "Tangkapan Layar Terakhir", reloadScreenshot: "Muat Ulang Tangkapan Layar", fullScreen: "Layar Penuh", lbZoomIn: "Klik untuk Ukuran Asli", lbZoomOut: "Klik untuk Muat Layar", lbViewer: "Penampil Gambar",
     },
     en: {
-      brand: "Streak Panel", loginHint: "Login with Your Username and Password", accessKey: "Access Key", signIn: "Login",
+      brand: "Bara", loginHint: "Login with Your Username and Password", accessKey: "Access Key", signIn: "Login",
       wrongKey: "Wrong Access Key", navLabel: "Main Navigation", navDashboard: "Dashboard", navAccounts: "Accounts & Schedules",
       navContacts: "Contacts", navCookies: "Cookie & Login", navSettings: "Settings", language: "Language", toggleTheme: "Toggle Theme",
       activeAccount: "Active Account", signOut: "Log Out", nextSchedule: "Next Schedule", customMessagePh: "Custom Message (Optional)",

@@ -46,7 +46,7 @@ from .store import (
 if not config.API_KEY:
     raise SystemExit("API_KEY belum diatur. Isi API_KEY pada file .env")
 
-app = FastAPI(title="TikTok Streak Panel", docs_url=None, redoc_url=None, openapi_url=None)
+app = FastAPI(title="Bara", docs_url=None, redoc_url=None, openapi_url=None)
 app.include_router(auth_router)
 STATIC = os.path.join(os.path.dirname(__file__), "static")
 
@@ -234,7 +234,7 @@ def write_settings(body: SettingsIn):
 
 @app.post("/api/telegram/test", dependencies=[Depends(require_admin)])
 def telegram_test():
-    ok, err = send_telegram(get_settings(), "✅ Tes notifikasi dari TikTok Streak Panel")
+    ok, err = send_telegram(get_settings(), "✅ Tes Notifikasi dari Bara")
     if not ok:
         raise HTTPException(400, err)
     return {"ok": True}
@@ -242,7 +242,7 @@ def telegram_test():
 
 @app.post("/api/discord/test", dependencies=[Depends(require_admin)])
 def discord_test():
-    ok, err = send_discord(get_settings(), "✅ Tes notifikasi dari TikTok Streak Panel")
+    ok, err = send_discord(get_settings(), "✅ Tes Notifikasi dari Bara")
     if not ok:
         raise HTTPException(400, err)
     return {"ok": True}

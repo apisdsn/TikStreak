@@ -1,4 +1,4 @@
-# Contoh Caddyfile. Ganti panel.example.com dengan domain Anda.
+# Bara: contoh Caddyfile. Ganti panel.example.com dengan domain Anda.
 # Port di reverse_proxy harus sama dengan PORT di file .env.
 panel.example.com {
 	encode zstd gzip

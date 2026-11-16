@@ -549,7 +549,7 @@ def my_notifications_put(body: NotifyIn, user=Depends(current_user)):
 
 
 def _test_msg():
-    return "✅ Tes notifikasi dari TikTok Streak Panel"
+    return "✅ Tes Notifikasi dari Bara"
 
 
 @router.post("/api/me/notifications/test/discord")

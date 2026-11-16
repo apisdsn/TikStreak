@@ -31,7 +31,7 @@ def send_discord(settings, text, files=()):
     url = settings.get("discord_webhook")
     if not url:
         return False, "Webhook URL belum diisi"
-    payload = {"content": text[:1900], "username": "Streak Panel"}
+    payload = {"content": text[:1900], "username": "Bara"}
     try:
         if files:
             r = requests.post(
