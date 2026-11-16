@@ -278,12 +278,19 @@
             <ol class="steps" id="loginSteps"></ol>
             <div class="two-col wide-left">
               <div id="remoteWrap" class="remote hidden">
-                <div class="remote-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">tiktok.com/login</span></div>
+                <div class="remote-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url" id="remoteUrl">tiktok.com/login</span>
+                  <button type="button" class="rb" id="remBack" data-i18n-aria="remBack" data-i18n-title="remBack"><svg aria-hidden="true" style="transform:scaleX(-1)"><use href="#i-chev"/></svg></button>
+                  <button type="button" class="rb" id="remReload" data-i18n-aria="remReload" data-i18n-title="remReload"><svg aria-hidden="true"><use href="#i-refresh"/></svg></button>
+                  <button type="button" class="rb text" id="remLogin" data-i18n="remLoginPage"></button>
+                  <button type="button" class="rb text hidden" id="remTab" data-i18n-title="remTabSwitch"></button>
+                </div>
+                <p class="remote-info hidden" id="remoteInfo" role="status"></p>
                 <img id="remoteView" data-i18n-alt="remoteBrowser" tabindex="0" draggable="false">
                 <div class="remote-send">
                   <label for="remoteText" data-i18n="sendText"></label>
                   <input id="remoteText" type="text" data-i18n-ph="sendTextPh">
                 </div>
+                <details class="remote-diag" id="remoteDiag"><summary data-i18n="diagTitle"></summary><pre id="remoteDiagBody"></pre></details>
               </div>
               <div class="stack">
                 <div class="note" id="loginStateBox"><strong id="loginState"></strong></div>

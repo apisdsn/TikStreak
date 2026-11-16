@@ -421,6 +421,8 @@ class LoginInput(BaseModel):
     dy: float = 0
     key: str = ""
     text: str = ""
+    action: str = ""
+    index: int = 0
 
 
 def _login_call(fn, *a):
@@ -459,8 +461,15 @@ def login_status(user=Depends(current_user)):
 @app.get("/api/login/frame")
 def login_frame(user=Depends(current_user)):
     _login_guard(user)
-    return Response(_login_call(login_session.frame), media_type="image/jpeg",
-                    headers={"Cache-Control": "no-store"})
+    try:
+        data = login_session.frame()
+    except RuntimeError as e:
+        if not login_session.active:  # sesi sudah berakhir: jangan jadikan galat di konsol browser
+            return Response(status_code=204)
+        raise HTTPException(400, str(e))
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(500, f"Browser Error: {e}")
+    return Response(data, media_type="image/jpeg", headers={"Cache-Control": "no-store"})
 
 
 @app.post("/api/login/input")

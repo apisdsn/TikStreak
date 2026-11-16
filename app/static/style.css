@@ -679,3 +679,14 @@ details.group label { margin-top: 4px; }
 
 .cell-actions { display: flex !important; align-items: center; justify-content: space-between; gap: 12px; }
 #myNotifForm .error { margin: 8px 16px 0; }
+
+/* remote login: bilah alamat dan diagnostik */
+.remote-bar { flex-wrap: wrap; }
+.remote-bar .url { min-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rb { min-height: 32px; min-width: 32px; padding: 0 8px; border: 0; border-radius: 10px; background: var(--group); color: var(--text); font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.rb svg { width: 15px; height: 15px; }
+.rb:hover { background: var(--group2); }
+.remote-info { margin: 0; padding: 6px 14px; font-size: 13px; color: var(--orange-text); background: rgba(255, 159, 10, .12); }
+.remote-diag { padding: 8px 14px 12px; font-size: 13px; }
+.remote-diag summary { cursor: pointer; color: var(--muted); font-weight: 600; }
+.remote-diag pre { margin: 8px 0 0; max-height: 180px; overflow: auto; white-space: pre-wrap; font: 12px/1.5 ui-monospace, "SF Mono", Menlo, monospace; color: var(--muted); }

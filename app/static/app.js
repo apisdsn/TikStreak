@@ -156,6 +156,8 @@
       pwOtherSessions: "Sesi di Perangkat Lain Akan Keluar",
       delUser: "Hapus Pengguna",
       timeLeft: "Sisa Waktu",
+      remBack: "Kembali", remReload: "Muat Ulang", remLoginPage: "Buka Halaman Login", remTabN: "Tab {i}/{n}", remTabSwitch: "Ganti Tab",
+      diagTitle: "Detail Teknis", diagEmpty: "Belum Ada Catatan",
       noRuns: "Belum Ada Proses", lbClose: "Tutup", lbDownload: "Unduh", lbPrev: "Sebelumnya", lbNext: "Berikutnya",
       lbLatestShot: "Tangkapan Layar Terakhir", reloadScreenshot: "Muat Ulang Tangkapan Layar", fullScreen: "Layar Penuh", lbZoomIn: "Klik untuk Ukuran Asli", lbZoomOut: "Klik untuk Muat Layar", lbViewer: "Penampil Gambar",
     },
@@ -304,6 +306,8 @@
       pwOtherSessions: "Sessions on Other Devices Will Be Signed Out",
       delUser: "Delete User",
       timeLeft: "Time Left",
+      remBack: "Back", remReload: "Reload", remLoginPage: "Open Login Page", remTabN: "Tab {i}/{n}", remTabSwitch: "Switch Tab",
+      diagTitle: "Technical Details", diagEmpty: "No Entries Yet",
       noRuns: "No Runs Yet", lbClose: "Close", lbDownload: "Download", lbPrev: "Previous", lbNext: "Next",
       lbLatestShot: "Latest Screenshot", reloadScreenshot: "Reload Screenshot", fullScreen: "Full Screen", lbZoomIn: "Click for Actual Size", lbZoomOut: "Click to Fit Screen", lbViewer: "Image Viewer",
     },
@@ -1556,29 +1560,46 @@
     $("btnLoginStop").classList.toggle("hidden", !active);
   }
 
+  let frameFails = 0;
   async function pullFrame() {
     if (framePending) return;
     framePending = true;
     try {
       const res = await fetch("/api/login/frame?t=" + Date.now(), { credentials: "same-origin" });
+      if (res.status === 204) { if (loginMode !== "idle") endLogin("loginEnded"); return; }
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).detail || res.status);
       const url = URL.createObjectURL(await res.blob());
       const old = view.src;
       view.src = url;
       if (old.startsWith("blob:")) URL.revokeObjectURL(old);
+      frameFails = 0;
     } catch (e) {
-      if (loginMode !== "idle") endLogin("loginEnded");
+      if (loginMode !== "idle" && ++frameFails >= 3) endLogin("loginEnded");
     } finally { framePending = false; }
   }
 
+  let lastDiag = "";
   async function pullStatus() {
     try {
-      const s = await api("/login/status");
+      const st2 = await api("/login/status");
       if (loginMode === "idle") return;
-      if (!s.active) return endLogin("loginEnded");
-      loginMode = s.logged_in ? "logged" : "open";
+      if (!st2.active) return endLogin("loginEnded");
+      loginMode = st2.logged_in ? "logged" : "open";
       renderLoginSteps();
-      if (s.logged_in) setLoginMsg("loginDetected", "ok"); else setLoginMsg("loginWaiting", "warn");
+      if (st2.logged_in) setLoginMsg("loginDetected", "ok"); else setLoginMsg("loginWaiting", "warn");
+      setText("remoteUrl", st2.url || "-");
+      const tabBtn = $("remTab");
+      tabBtn.classList.toggle("hidden", !(st2.tabs > 1));
+      tabBtn.textContent = t("remTabN", { i: st2.tab, n: st2.tabs });
+      const diag = st2.diag || [];
+      const sig = JSON.stringify(diag);
+      if (sig !== lastDiag) {
+        lastDiag = sig;
+        $("remoteDiagBody").textContent = diag.length ? diag.map((d) => `[${d.t}] ${d.msg}`).join("\n") : t("diagEmpty");
+        const info = [...diag].reverse().find((d) => d.kind === "dialog" || d.kind === "tab");
+        $("remoteInfo").textContent = info ? info.msg : "";
+        $("remoteInfo").classList.toggle("hidden", !info);
+      }
     } catch (e) { /* diabaikan */ }
   }
 
@@ -1602,8 +1623,10 @@
       setLoginMsg("loginWaiting", "warn");
       clearInterval(loginTimer);
       let n = 0;
-      loginTimer = setInterval(() => { pullFrame(); if (++n % 5 === 0) pullStatus(); }, 700);
+      lastDiag = "";
+      loginTimer = setInterval(() => { pullFrame(); if (++n % 3 === 0) pullStatus(); }, 700);
       pullFrame();
+      pullStatus();
     } catch (e) { setLoginMsg(null); $("cookieErr").textContent = e.message; }
   });
 
@@ -1628,7 +1651,23 @@
     const r = view.getBoundingClientRect();
     return { x: (ev.clientX - r.left) * view.naturalWidth / r.width, y: (ev.clientY - r.top) * view.naturalHeight / r.height };
   }
-  const send = (body) => api("/login/input", { method: "POST", body }).catch(() => {});
+  // setelah klik/ketik langsung minta tampilan baru agar pengguna melihat reaksinya
+  const send = (body, refreshNow = true) => api("/login/input", { method: "POST", body }).then(() => {
+    if (!refreshNow) return;
+    pullFrame();
+    setTimeout(() => { pullFrame(); pullStatus(); }, 350);
+  }).catch(() => {});
+  let lastMove = 0;
+  view.addEventListener("mousemove", (e) => {
+    const now = Date.now();
+    if (now - lastMove < 125) return;
+    lastMove = now;
+    send({ type: "move", ...coords(e) }, false);
+  });
+  $("remBack").addEventListener("click", () => send({ type: "nav", action: "back" }));
+  $("remReload").addEventListener("click", () => send({ type: "nav", action: "reload" }));
+  $("remLogin").addEventListener("click", () => send({ type: "nav", action: "login" }));
+  $("remTab").addEventListener("click", () => send({ type: "nav", action: "tab" }));
 
   view.addEventListener("click", (e) => { view.focus(); send({ type: "click", ...coords(e) }); });
   view.addEventListener("wheel", (e) => {

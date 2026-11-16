@@ -10,7 +10,7 @@ from datetime import datetime
 from DrissionPage import ChromiumOptions, ChromiumPage
 from DrissionPage.common import Keys
 
-from . import config
+from . import browser, config
 from .cookies import from_browser
 
 SHOT_PATH = os.path.join(config.DATA_DIR, "last_run.jpg")
@@ -152,8 +152,9 @@ class StreakBot:
             opts.set_argument(arg)
         if config.HEADLESS:
             opts.set_argument("--headless=new")
-        opts.set_user_agent(config.USER_AGENT)
+        opts.set_user_agent(browser.build_ua())
         self.page = ChromiumPage(opts)
+        browser.apply_fingerprint(self.page)
         self.log("Browser Siap")
 
     def _load_cookies(self):
