@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#000000">
   <title>Streak Panel</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12.9 2.2c.3 2.6 1.6 4.2 3.2 5.9 1.7 1.8 3.4 3.7 3.4 7a7.5 7.5 0 01-15 0c0-2.4 1-4.2 2.4-5.6.4-.4 1-.1 1 .4-.1 1.4.3 2.6 1.2 3.2.1-3.6 1.3-7.2 3.2-10.6.2-.4.6-.5.6-.3z' fill='%23FF6A00'/%3E%3Cpath d='M12 22a3.6 3.6 0 01-3.6-3.6c0-2 1.6-3.2 2.5-4.6.3-.5 1-.4 1.2.1.5 1.1 1.4 1.8 2.1 2.6.9 1 1.4 1.8 1.4 2.9A3.6 3.6 0 0112 22z' fill='%23FFD60A'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
@@ -25,17 +25,22 @@
       <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.9"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.9"/></symbol>
       <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></symbol>
       <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 019.5 4a8 8 0 1010.5 10.5z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></symbol>
+      <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M4.5 20.5c.8-4 3.8-6 7.5-6s6.7 2 7.5 6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></symbol>
+      <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5.5" cy="12" r="1.9" fill="currentColor"/><circle cx="12" cy="12" r="1.9" fill="currentColor"/><circle cx="18.5" cy="12" r="1.9" fill="currentColor"/></symbol>
       <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     </defs>
   </svg>
 
   <div id="login" class="login hidden">
-    <form id="loginForm" class="sheet login-card">
-      <span class="app-icon" aria-hidden="true"><svg><use href="#i-flame"/></svg></span>
-      <h1 data-i18n="brand"></h1>
-      <p class="sub" data-i18n="loginHint"></p>
-      <input id="keyInput" type="password" data-i18n-ph="accessKey" data-i18n-aria="accessKey" autocomplete="current-password" required>
-      <button class="btn primary block" type="submit" data-i18n="signIn"></button>
+    <form id="loginForm" class="sheet login-card" autocomplete="on">
+      <svg class="logo big" aria-hidden="true"><use href="#i-flame"/></svg>
+      <h1 id="loginTitle" data-i18n="brand"></h1>
+      <p class="sub" id="loginHint" data-i18n="loginHint"></p>
+      <input id="setupKey" class="hidden" type="password" data-i18n-ph="apiKey" data-i18n-aria="apiKey" autocomplete="off">
+      <input id="loginUser" type="text" data-i18n-ph="username" data-i18n-aria="username" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+      <input id="loginPass" type="password" data-i18n-ph="password" data-i18n-aria="password" autocomplete="current-password" required>
+      <input id="loginPass2" class="hidden" type="password" data-i18n-ph="confirmPassword" data-i18n-aria="confirmPassword" autocomplete="new-password">
+      <button class="btn primary block" id="loginSubmit" type="submit" data-i18n="signIn"></button>
       <p id="loginErr" class="error" role="alert"></p>
     </form>
   </div>
@@ -43,7 +48,7 @@
   <div id="app" class="hidden">
     <header class="topbar">
       <div class="topbar-in">
-        <div class="brand"><span class="app-icon small" aria-hidden="true"><svg><use href="#i-flame"/></svg></span><strong data-i18n="brand"></strong></div>
+        <div class="brand"><svg class="logo" aria-hidden="true"><use href="#i-flame"/></svg><strong data-i18n="brand"></strong></div>
         <nav id="tabs" class="tabs" data-i18n-aria="navLabel">
           <button type="button" data-tab="dashboard" class="active"><svg aria-hidden="true"><use href="#i-home"/></svg><span data-i18n="navDashboard"></span></button>
           <button type="button" data-tab="accounts"><svg aria-hidden="true"><use href="#i-cal"/></svg><span data-i18n="navAccounts"></span></button>
@@ -57,11 +62,15 @@
           <button type="button" data-lang="en" aria-pressed="false">EN</button>
         </div>
         <button type="button" id="themeBtn" class="icon-btn" data-i18n-aria="toggleTheme" data-i18n-title="toggleTheme"><svg aria-hidden="true"><use href="#i-moon"/></svg></button>
-        <label class="acct-pill">
+        <button type="button" id="acctBtn" class="acct-pill" aria-haspopup="menu" aria-expanded="false" data-i18n-aria="activeAccount">
           <span class="avatar" id="acctAvatar" aria-hidden="true">U</span>
-          <select id="accountSelect" data-i18n-aria="activeAccount"></select>
-        </label>
-        <button type="button" id="logout" class="btn plain small" data-i18n="signOut"></button>
+          <span class="pill-name" id="acctBtnName"></span>
+          <svg class="caret" aria-hidden="true"><use href="#i-chev"/></svg>
+        </button>
+        <button type="button" id="userBtn" class="acct-pill user-pill" aria-haspopup="dialog" aria-expanded="false" data-i18n-aria="userMenu" data-i18n-title="userMenu">
+          <span class="avatar user" aria-hidden="true"><svg><use href="#i-user"/></svg></span>
+          <span class="pill-name" id="userBtnName"></span>
+        </button>
       </div>
     </header>
 
@@ -181,10 +190,13 @@
 
       <!-- Accounts & schedules -->
       <section id="tab-accounts" class="hidden">
-        <div class="page-head"><div><p class="eyebrow" data-i18n="accountsHint"></p><h1 data-i18n="navAccounts"></h1></div></div>
+        <div class="page-head"><div><p class="eyebrow" data-i18n="accountsHint"></p><h1 data-i18n="navAccounts"></h1></div><span class="pill acct-chip"><span class="acct-name-text"></span></span></div>
         <div class="two-col wide-right">
           <div class="stack">
-            <div class="inset-list" id="accountList"></div>
+            <div class="group">
+              <div class="group-head"><h2 data-i18n="accounts"></h2><span class="badge" id="accountsCount"></span></div>
+              <div class="inset-list" id="accountList"></div>
+            </div>
             <div class="group">
               <label for="newAccountName" data-i18n="newAccountName"></label>
               <input id="newAccountName" type="text" maxlength="40" data-i18n-ph="newAccountPh">
@@ -192,8 +204,8 @@
               <p id="accountErr" class="error" role="alert"></p>
             </div>
           </div>
-          <div class="stack">
-            <div class="group-head"><h2><span data-i18n="sendSchedules"></span> · <span class="acct-name-text"></span></h2><span class="muted small-text" id="tzLabel"></span></div>
+          <div class="group">
+            <div class="group-head"><h2 data-i18n="sendSchedules"></h2><span class="muted small-text" id="tzLabel"></span></div>
             <p class="muted small-text" data-i18n="schedulesHint"></p>
             <div id="scheduleList" class="stack"></div>
             <button id="btnAddSchedule" class="btn dashed block" type="button" data-i18n="addSchedule"></button>
@@ -207,15 +219,15 @@
 
       <!-- Contacts -->
       <section id="tab-contacts" class="hidden">
-        <div class="page-head"><div><p class="eyebrow" data-i18n="contactsHint"></p><h1><span data-i18n="navContacts"></span> · <span class="acct-name-text"></span></h1></div></div>
+        <div class="page-head"><div><p class="eyebrow" data-i18n="contactsHint"></p><h1 data-i18n="navContacts"></h1></div><span class="pill acct-chip"><span class="acct-name-text"></span></span></div>
         <div class="two-col wide-right">
           <div class="group">
             <h2 data-i18n="addContacts"></h2>
             <textarea id="contactsInput" rows="4" data-i18n-ph="contactsPh" data-i18n-aria="addContacts"></textarea>
-            <div class="row"><button id="btnAddContacts" class="btn primary" type="button" data-i18n="add"></button></div>
+            <button id="btnAddContacts" class="btn primary block" type="button" data-i18n="add"></button>
             <p id="contactsErr" class="error" role="alert"></p>
           </div>
-          <div class="stack">
+          <div class="group">
             <div class="group-head"><h2 data-i18n="contactList"></h2><span id="contactsCount" class="badge"></span></div>
             <ul id="contactsList" class="inset-list"></ul>
           </div>
@@ -225,8 +237,8 @@
       <!-- Cookies -->
       <section id="tab-cookies" class="hidden">
         <div class="page-head">
-          <div><p class="eyebrow"><span data-i18n="account"></span>: <span class="acct-name-text"></span></p><h1 data-i18n="navCookies"></h1></div>
-          <button id="btnCheckCookies" class="btn tinted" type="button" data-i18n="checkCookieNow"></button>
+          <div><p class="eyebrow" data-i18n="cookiesHint"></p><h1 data-i18n="navCookies"></h1></div>
+          <div class="head-right"><span class="pill acct-chip"><span class="acct-name-text"></span></span><button id="btnCheckCookies" class="btn tinted" type="button" data-i18n="checkCookieNow"></button></div>
         </div>
         <div class="banner" id="cookieBanner"></div>
 
@@ -262,11 +274,23 @@
           <p id="cookieErr" class="error" role="alert"></p>
         </div>
 
-        <details class="group">
+        <details class="group" id="manualCookie">
           <summary><span><strong data-i18n="manualCookie"></strong><br><span class="muted small-text" data-i18n="manualCookieHint"></span></span><svg class="chev" aria-hidden="true"><use href="#i-chev"/></svg></summary>
-          <textarea id="cookieInput" rows="6" data-i18n-ph="cookiePh" data-i18n-aria="manualCookie"></textarea>
+          <p class="muted guide-intro" data-i18n="manualIntro"></p>
+          <ol class="guide">
+            <li class="gstep"><span class="n">1</span><div class="gtxt"><strong data-i18n="gs1t"></strong><span class="muted" data-i18n="gs1h"></span></div><a class="btn tinted small" href="https://www.tiktok.com" target="_blank" rel="noopener noreferrer" data-i18n="gs1b"></a></li>
+            <li class="gstep"><span class="n">2</span><div class="gtxt"><strong data-i18n="gs2t"></strong><span class="muted" data-i18n="gs2h"></span></div><a class="btn tinted small" href="https://cookie-editor.com" target="_blank" rel="noopener noreferrer" data-i18n="gs2b"></a></li>
+            <li class="gstep"><span class="n">3</span><div class="gtxt"><strong data-i18n="gs3t"></strong><span class="muted" data-i18n="gs3h"></span></div></li>
+            <li class="gstep"><span class="n">4</span><div class="gtxt"><strong data-i18n="gs4t"></strong><span class="muted" data-i18n="gs4h"></span></div></li>
+            <li class="gstep"><span class="n">5</span><div class="gtxt"><strong data-i18n="gs5t"></strong><span class="muted" data-i18n="gs5h"></span></div></li>
+            <li class="gstep"><span class="n">6</span><div class="gtxt"><strong data-i18n="gs6t"></strong><span class="muted" data-i18n="gs6h"></span></div></li>
+          </ol>
+          <p class="note warn" data-i18n="guideWarn"></p>
+          <p class="note" data-i18n="guidePrivacy"></p>
+          <textarea id="cookieInput" rows="6" data-i18n-ph="cookiePh" data-i18n-aria="manualCookie" spellcheck="false" autocomplete="off"></textarea>
+          <p id="cookieCheck" class="cookie-check" role="status"></p>
           <div class="row">
-            <button id="btnSaveCookies" class="btn primary" type="button" data-i18n="saveCookie"></button>
+            <button id="btnSaveCookies" class="btn primary" type="button" data-i18n="saveCookie" disabled></button>
             <button id="btnClearCookies" class="btn destructive" type="button" data-i18n="deleteCookie"></button>
           </div>
         </details>
@@ -275,6 +299,30 @@
       <!-- Settings -->
       <section id="tab-settings" class="hidden">
         <div class="page-head"><div><p class="eyebrow" data-i18n="settingsHint"></p><h1 data-i18n="navSettings"></h1></div></div>
+        <div class="settings">
+          <h3 class="list-title" data-i18n="myNotifs"></h3>
+          <form id="myNotifForm">
+            <div class="inset-list form">
+              <label class="cell switch-cell"><span data-i18n="discordNotif"></span><input id="myDcEnabled" type="checkbox" class="switch" role="switch"></label>
+              <div class="cell"><label for="myDcWebhook"><span data-i18n="webhookUrl"></span> <span id="myDcState" class="muted"></span></label><input id="myDcWebhook" type="password" placeholder="https://discord.com/api/webhooks/..." autocomplete="off"></div>
+              <div class="cell"><button id="btnMyDcTest" class="btn plain" type="button" data-i18n="testDiscord"></button></div>
+              <label class="cell switch-cell"><span data-i18n="telegramNotif"></span><input id="myTgEnabled" type="checkbox" class="switch" role="switch"></label>
+              <div class="cell"><label for="myTgToken"><span data-i18n="botToken"></span> <span id="myTgState" class="muted"></span></label><input id="myTgToken" type="password" data-i18n-ph="keepEmptyPh" autocomplete="off"></div>
+              <div class="cell"><label for="myTgChat" data-i18n="chatId"></label><input id="myTgChat" type="text"></div>
+              <div class="cell"><button id="btnMyTgTest" class="btn plain" type="button" data-i18n="testTelegram"></button></div>
+              <label class="cell switch-cell"><span data-i18n="attachScreenshot"></span><input id="myShot" type="checkbox" class="switch" role="switch"></label>
+            </div>
+            <p class="list-foot" data-i18n="myNotifsHint"></p>
+            <div class="savebar"><span id="myNotifMsg" class="muted"></span><button class="btn primary" type="submit" data-i18n="save"></button></div>
+          </form>
+
+          <h3 class="list-title" data-i18n="myAccount"></h3>
+          <div class="inset-list form"><div class="cell" id="myPw"></div></div>
+
+          <p id="adminNote" class="list-foot hidden" data-i18n="adminOnlyNote"></p>
+        </div>
+
+        <div id="adminArea" class="settings hidden">
         <form id="settingsForm" class="settings">
           <h3 class="list-title" data-i18n="message"></h3>
           <div class="inset-list form">
@@ -301,6 +349,12 @@
           </div>
           <p class="list-foot" data-i18n="attachScreenshotHint"></p>
 
+          <h3 class="list-title" data-i18n="adminNotifs"></h3>
+          <div class="inset-list form">
+            <label class="cell switch-cell"><span data-i18n="notifyAll"></span><input id="setNotifyAll" type="checkbox" class="switch" role="switch"></label>
+          </div>
+          <p class="list-foot" data-i18n="notifyAllHint"></p>
+
           <h3 class="list-title">Discord</h3>
           <div class="inset-list form">
             <label class="cell switch-cell"><span data-i18n="enableNotif"></span><input id="setDcEnabled" type="checkbox" class="switch" role="switch"></label>
@@ -321,8 +375,35 @@
             <button class="btn primary" type="submit" data-i18n="save"></button>
           </div>
         </form>
+
+          <h3 class="list-title" data-i18n="users"></h3>
+          <div class="inset-list" id="userList"></div>
+          <div class="group">
+            <h2 data-i18n="addUser"></h2>
+            <label for="newUserName" data-i18n="username"></label>
+            <input id="newUserName" type="text" autocomplete="off" autocapitalize="none" spellcheck="false">
+            <label for="newUserPass" data-i18n="password"></label>
+            <input id="newUserPass" type="password" autocomplete="new-password">
+            <label for="newUserRole" data-i18n="role"></label>
+            <select id="newUserRole"><option value="user" data-i18n="roleUser"></option><option value="admin" data-i18n="roleAdmin"></option></select>
+            <button id="btnAddUser" class="btn primary block" type="button" data-i18n="addUser"></button>
+            <p id="userErr" class="error" role="alert"></p>
+          </div>
+        </div>
       </section>
     </main>
+  </div>
+  <div id="userSheet" class="overlay hidden">
+    <div class="sheet sheet-card" role="dialog" aria-modal="true" aria-labelledby="usName">
+      <div class="us-head">
+        <span class="avatar-sm on" aria-hidden="true"><svg><use href="#i-user"/></svg></span>
+        <div class="grow"><div class="title" id="usName"></div><span class="badge" id="usRole"></span></div>
+        <button type="button" id="usClose" class="icon-btn" data-i18n-aria="lbClose" data-i18n-title="lbClose"><svg aria-hidden="true"><use href="#i-x"/></svg></button>
+      </div>
+      <h3 class="list-title" data-i18n="changePassword"></h3>
+      <div id="usPw"></div>
+      <button type="button" id="btnLogout" class="btn destructive block" data-i18n="signOut"></button>
+    </div>
   </div>
   <div id="toast" class="toast hidden" role="status"></div>
   <script src="/static/app.js"></script>

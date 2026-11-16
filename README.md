@@ -20,7 +20,15 @@ cp .env.example .env
 docker compose up -d --build
 ```
 
-Buka `http://localhost:8000`, masuk dengan `API_KEY`.
+Buka `http://localhost:8000`. Saat pertama kali, panel meminta Anda membuat **admin pertama**: isi `API_KEY` (dari `.env`), username, dan password (minimal 8 karakter). Setelah itu login memakai username dan password.
+
+### Pengguna dan peran
+
+- **admin**: melihat dan mengelola semua akun TikTok, pengaturan global, dan pengguna (tambah, reset password, ubah peran, nonaktifkan, hapus).
+- **user**: hanya melihat dan mengelola akun TikTok miliknya sendiri. Setiap pengguna punya notifikasi pribadi (Discord/Telegram) di tab Pengaturan; admin juga bisa menerima notifikasi semua akun lewat saluran global (`Terima Notifikasi Semua Akun`).
+- Sesi memakai cookie `sp_session` (HttpOnly, SameSite=Strict, berlaku 7 hari). Login dibatasi: 5 kali gagal dalam 15 menit mengunci selama 15 menit.
+- Setiap request tulis dari browser wajib menyertakan header `X-Requested-With: streak-panel` (sudah otomatis oleh UI).
+- Data lama (akun tanpa pemilik) otomatis menjadi milik admin pertama saat setup.
 
 ### Akses privat di VPS (tanpa ekspose ke internet)
 
@@ -42,7 +50,11 @@ Lalu buka `http://localhost:8000` di laptop selama tunnel aktif. Alternatif: VPN
 
 ## API
 
-Semua endpoint `/api/*` (kecuali `/api/health`) memakai header `X-API-Key`.
+Semua endpoint `/api/*` (kecuali `/api/health` dan `/api/auth/*`) memakai sesi cookie (UI) atau header `X-API-Key` (skrip/otomasi). `X-API-Key` dianggap admin dan tidak butuh header CSRF. `API_KEY` tetap wajib diisi saat startup karena dipakai untuk setup awal.
+
+```bash
+curl -H "X-API-Key: $API_KEY" http://localhost:8000/api/status
+```
 
 | Method | Path | Fungsi |
 |---|---|---|
@@ -54,12 +66,15 @@ Semua endpoint `/api/*` (kecuali `/api/health`) memakai header `X-API-Key`.
 | GET / POST / DELETE | `/api/contacts?account=ID` | Kelola kontak akun |
 | PUT / DELETE | `/api/cookies?account=ID` | Atur cookie akun |
 | POST | `/api/login/start`, `/api/login/save`, `/api/login/stop` | Login remote |
-| GET / PUT | `/api/settings` | Pengaturan |
+| GET / PUT | `/api/settings` | Pengaturan global (PUT khusus admin) |
+| GET / PUT | `/api/me/notifications` | Notifikasi pribadi pengguna |
+| GET / POST / PUT / DELETE | `/api/users` | Kelola pengguna (admin) |
+| POST | `/api/auth/setup`, `/api/auth/login`, `/api/auth/logout`, `/api/auth/password` | Autentikasi |
 | GET / DELETE | `/api/history` | Riwayat |
 
 ## Catatan
 
-- Taruh di belakang HTTPS (reverse proxy) bila diakses lewat internet. Jangan expose tanpa `API_KEY` yang kuat.
+- Taruh di belakang HTTPS (reverse proxy) bila diakses lewat internet. Gunakan password pengguna dan `API_KEY` yang kuat.
 - Cookie TikTok setara akses ke akun Anda; jaga volume `/data` tetap privat.
 - Selector halaman TikTok bisa berubah sewaktu-waktu; jika gagal, lihat log di dashboard.
 - Otomasi dapat melanggar ketentuan layanan TikTok. Gunakan dengan risiko sendiri.

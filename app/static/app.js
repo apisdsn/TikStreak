@@ -1,7 +1,6 @@
 (() => {
   const $ = (id) => document.getElementById(id);
   const NS = "http://www.w3.org/2000/svg";
-  const KEY = "streak_panel_key";
   const ACCT_KEY = "streak_panel_account";
   const LANG_KEY = "streak_panel_lang";
   const THEME_KEY = "streak_panel_theme";
@@ -10,7 +9,7 @@
   // Semua teks UI memakai Title Case (konektor selain kata pertama tetap huruf kecil)
   const I18N = {
     id: {
-      brand: "Streak Panel", loginHint: "Masukkan Kunci Akses untuk Membuka Panel", accessKey: "Kunci Akses", signIn: "Masuk",
+      brand: "Streak Panel", loginHint: "Masuk dengan Username dan Password", accessKey: "Kunci Akses", signIn: "Masuk",
       wrongKey: "Kunci Akses Salah", navLabel: "Navigasi Utama", navDashboard: "Dashboard", navAccounts: "Akun & Jadwal",
       navContacts: "Kontak", navCookies: "Cookie & Login", navSettings: "Pengaturan", language: "Bahasa", toggleTheme: "Ganti Tema",
       activeAccount: "Akun Aktif", signOut: "Keluar", nextSchedule: "Jadwal Berikutnya", customMessagePh: "Pesan Khusus (Opsional)",
@@ -72,11 +71,38 @@
       proofAlt: "Bukti {name}", evChat: "Chat Terverifikasi", evBubble: "Bubble Terverifikasi", evList: "Daftar Chat {time}",
       evRenamed: "Nama Baru {name}, Diperbarui Otomatis",
       rtNow: "Baru Saja", dash: "-",
+      apiKey: "Kunci API", username: "Username", password: "Password", confirmPassword: "Konfirmasi Password",
+      setupTitle: "Buat Admin Pertama", setupHint: "Isi Kunci API dari File .env, lalu Buat Akun Admin", createAdmin: "Buat Admin",
+      passMismatch: "Konfirmasi Password Tidak Sama", userMenu: "Menu Pengguna", roleAdmin: "Admin", roleUser: "Pengguna", role: "Peran",
+      changePassword: "Ganti Password", currentPassword: "Password Saat Ini", newPassword: "Password Baru", pwChanged: "Password Diganti",
+      myAccount: "Akun Saya", myNotifs: "Notifikasi Saya", myNotifsHint: "Notifikasi Hanya untuk Akun TikTok Milik Anda",
+      discordNotif: "Notifikasi Discord", telegramNotif: "Notifikasi Telegram",
+      adminNotifs: "Notifikasi Admin (Global)", notifyAll: "Terima Notifikasi Semua Akun",
+      notifyAllHint: "Jika Mati, Saluran Global Hanya Menerima Akun Milik Admin", adminOnlyNote: "Pengaturan Global Dikelola oleh Admin",
+      users: "Pengguna", addUser: "Tambah Pengguna", resetPw: "Reset Password", makeAdmin: "Jadikan Admin", makeUser: "Jadikan Pengguna",
+      disable: "Nonaktifkan", enable: "Aktifkan", disabledBadge: "Nonaktif", you: "Anda",
+      confirmDeleteUser: "Hapus Pengguna \"{name}\"? Akun TikTok Miliknya Akan Dipindahkan ke Anda", confirmDisable: "Nonaktifkan Pengguna \"{name}\"?",
+      promptNewPw: "Password Baru untuk {name} (Minimal 8 Karakter):", toastUserAdded: "Pengguna Ditambahkan", toastUserUpdated: "Pengguna Diperbarui",
+      toastUserDeleted: "Pengguna Dihapus", toastNotifSaved: "Notifikasi Disimpan", toastOwnerChanged: "Pemilik Akun Diubah",
+      ownerLine: "Pemilik: {name}", changeOwner: "Ubah Pemilik", manageAccounts: "Kelola Akun", activeBadge: "Aktif", moreActions: "Aksi Lainnya",
+      lastAccount: "Minimal Satu Akun", yourself: "Akun Anda Sendiri", cookiesHint: "Kelola Sesi Login TikTok", panelBusy: "Panel Sedang Dipakai",
+      byLabel: "oleh {name}", wrongLogin: "Username atau Password Salah",
+      manualIntro: "Cara Termudah Adalah Login lewat Browser Server di Atas. Gunakan Cara Ini Jika Login Itu Gagal.",
+      gs1t: "Buka TikTok di Laptop atau PC", gs1h: "Buka tiktok.com di Chrome atau Edge dan pastikan sudah login ke akun TikTok yang benar.", gs1b: "Buka TikTok",
+      gs2t: "Pasang Ekstensi Cookie-Editor", gs2h: "Pasang ekstensi gratis Cookie-Editor di browser Anda.", gs2b: "Pasang Cookie-Editor",
+      gs3t: "Buka Cookie-Editor di Tab TikTok", gs3h: "Di tab tiktok.com, klik ikon puzzle (Ekstensi) di kanan atas, lalu pilih Cookie-Editor.",
+      gs4t: "Ekspor sebagai JSON", gs4h: "Klik Export di bagian bawah, lalu pilih JSON. Cookie tersalin otomatis.",
+      gs5t: "Tempel dan Simpan", gs5h: "Tempel (Ctrl+V atau tekan lama lalu Tempel) di kotak di bawah, lalu tekan Simpan Cookie.",
+      gs6t: "Periksa", gs6h: "Tekan Cek Cookie Sekarang. Banner di bagian atas harus berubah hijau.",
+      guideWarn: "Jangan Klik Logout di TikTok Laptop Setelah Menyalin, Cookie Akan Ikut Mati. Cukup Tutup Tabnya.",
+      guidePrivacy: "Cookie Sama dengan Kunci Akun. Jangan Bagikan ke Orang Lain.",
+      ckOk: "{n} Cookie Terbaca · sessionid Ditemukan", ckNoSession: "{n} Cookie Terbaca, tetapi sessionid Tidak Ada. Pastikan Anda Sudah Login di TikTok.",
+      ckBad: "Format Tidak Dikenali", ckFmtJson: "JSON", ckFmtHeader: "Header",
       noRuns: "Belum Ada Proses", lbClose: "Tutup", lbDownload: "Unduh", lbPrev: "Sebelumnya", lbNext: "Berikutnya",
       lbLatestShot: "Tangkapan Layar Terakhir", reloadScreenshot: "Muat Ulang Tangkapan Layar", fullScreen: "Layar Penuh", lbZoomIn: "Klik untuk Ukuran Asli", lbZoomOut: "Klik untuk Muat Layar", lbViewer: "Penampil Gambar",
     },
     en: {
-      brand: "Streak Panel", loginHint: "Enter Your Access Key to Open the Panel", accessKey: "Access Key", signIn: "Log In",
+      brand: "Streak Panel", loginHint: "Login with Your Username and Password", accessKey: "Access Key", signIn: "Login",
       wrongKey: "Wrong Access Key", navLabel: "Main Navigation", navDashboard: "Dashboard", navAccounts: "Accounts & Schedules",
       navContacts: "Contacts", navCookies: "Cookie & Login", navSettings: "Settings", language: "Language", toggleTheme: "Toggle Theme",
       activeAccount: "Active Account", signOut: "Sign Out", nextSchedule: "Next Schedule", customMessagePh: "Custom Message (Optional)",
@@ -88,8 +114,8 @@
       addAccount: "Add Account", sendSchedules: "Send Schedules", schedulesHint: "Set the Time, Message, and Recipients for Each Schedule",
       schedulesSaveHint: "Press Save Schedules to Apply Changes", saveSchedules: "Save Schedules", addSchedule: "Add Schedule",
       contactsHint: "Contacts That Receive Streak Messages", addContacts: "Add Contacts", contactsPh: "One Name per Line, Exactly as in the TikTok Message List",
-      add: "Add", contactList: "Contact List", account: "Account", checkCookieNow: "Check Cookie Now", reLogin: "Log In Again",
-      idleNote: "Server Browser", remoteHint: "Open a Browser on the Server, Then Log In to TikTok from Here", startLogin: "Open Login Browser",
+      add: "Add", contactList: "Contact List", account: "Account", checkCookieNow: "Check Cookie Now", reLogin: "Login Again",
+      idleNote: "Server Browser", remoteHint: "Open a Browser on the Server, Then Login to TikTok from Here", startLogin: "Open Login Browser",
       remoteBrowser: "Server Browser View", sendText: "Send Text", sendTextPh: "Type Then Press Enter",
       tip1: "Click on the Screen to Select a Field", tip2: "Use the Text Field to Paste Passwords", tip3: "Once Login Is Detected, Save the Login Session",
       saveLoginSession: "Save Login Session", cancel: "Cancel", manualCookie: "Paste Cookie Manually", manualCookieHint: "Alternative if Login via Server Browser Fails",
@@ -129,14 +155,41 @@
       cookieBriefBad: "Cookie Invalid", cookieBriefNone: "Cookie Not Set", noNext: "None",
       schedEnabled: "Schedule Enabled", schedMsgPh: "Custom Message (Empty = Default)", sendToAll: "Send to All Contacts", hour: "Hour", minute: "Minute",
       delSched: "Delete Schedule {time}", tzLabel: "Time Zone: {tz}", tzServer: "Server",
-      bannerOk: "Cookie Valid", bannerBad: "Cookie Invalid", bannerNone: "No Cookie Yet", bannerNoneSub: "Log In or Paste a Cookie to Start",
+      bannerOk: "Cookie Valid", bannerBad: "Cookie Invalid", bannerNone: "No Cookie Yet", bannerNoneSub: "Login or Paste a Cookie to Start",
       cookieCount: "{n} Cookies", warnNoSession: "Warning: Sessionid Not Found",
-      step1: "Open Browser", step2: "Log In to TikTok", step3: "Save Session",
+      step1: "Open Browser", step2: "Login to TikTok", step3: "Save Session",
       loginOpening: "Opening Browser…", loginWaiting: "Waiting for Login…", loginDetected: "Login Detected. Click Save Login Session",
       loginEnded: "Login Session Ended", loginCancelled: "Cancelled", loginSaved: "Success: {n} Cookies Saved",
       proofAlt: "Proof {name}", evChat: "Chat Verified", evBubble: "Bubble Verified", evList: "Chat List {time}",
       evRenamed: "New Name {name}, Updated Automatically",
       rtNow: "Just Now", dash: "-",
+      apiKey: "API Key", username: "Username", password: "Password", confirmPassword: "Confirm Password",
+      setupTitle: "Create First Admin", setupHint: "Enter the API Key from the .env File, Then Create the Admin Account", createAdmin: "Create Admin",
+      passMismatch: "Passwords Do Not Match", userMenu: "User Menu", roleAdmin: "Admin", roleUser: "User", role: "Role",
+      changePassword: "Change Password", currentPassword: "Current Password", newPassword: "New Password", pwChanged: "Password Changed",
+      myAccount: "My Account", myNotifs: "My Notifications", myNotifsHint: "Notifications Only for TikTok Accounts You Own",
+      discordNotif: "Discord Notifications", telegramNotif: "Telegram Notifications",
+      adminNotifs: "Admin Notifications (Global)", notifyAll: "Receive Notifications from All Accounts",
+      notifyAllHint: "When Off, Global Channels Only Receive Admin-Owned Accounts", adminOnlyNote: "Global Settings Are Managed by the Admin",
+      users: "Users", addUser: "Add User", resetPw: "Reset Password", makeAdmin: "Make Admin", makeUser: "Make User",
+      disable: "Disable", enable: "Enable", disabledBadge: "Disabled", you: "You",
+      confirmDeleteUser: "Delete User \"{name}\"? Their TikTok Accounts Will Be Moved to You", confirmDisable: "Disable User \"{name}\"?",
+      promptNewPw: "New Password for {name} (At Least 8 Characters):", toastUserAdded: "User Added", toastUserUpdated: "User Updated",
+      toastUserDeleted: "User Deleted", toastNotifSaved: "Notifications Saved", toastOwnerChanged: "Account Owner Changed",
+      ownerLine: "Owner: {name}", changeOwner: "Change Owner", manageAccounts: "Manage Accounts", activeBadge: "Active", moreActions: "More Actions",
+      lastAccount: "At Least One Account", yourself: "Your Own Account", cookiesHint: "Manage TikTok Login Sessions", panelBusy: "Panel Is Busy",
+      byLabel: "by {name}", wrongLogin: "Wrong Username or Password",
+      manualIntro: "The Easiest Way Is Logging In via the Server Browser Above. Use This Method if That Login Fails.",
+      gs1t: "Open TikTok on a Laptop or PC", gs1h: "Open tiktok.com in Chrome or Edge and make sure you are logged in to the right TikTok account.", gs1b: "Open TikTok",
+      gs2t: "Install the Cookie-Editor Extension", gs2h: "Install the free Cookie-Editor extension in your browser.", gs2b: "Install Cookie-Editor",
+      gs3t: "Open Cookie-Editor on the TikTok Tab", gs3h: "On the tiktok.com tab, click the puzzle (Extensions) icon at the top right, then choose Cookie-Editor.",
+      gs4t: "Export as JSON", gs4h: "Click Export at the bottom, then choose JSON. The cookies are copied automatically.",
+      gs5t: "Paste and Save", gs5h: "Paste (Ctrl+V or long-press then Paste) into the box below, then press Save Cookie.",
+      gs6t: "Verify", gs6h: "Press Check Cookie Now. The banner at the top must turn green.",
+      guideWarn: "Do Not Click Logout on the Laptop TikTok After Copying, or the Cookie Will Die. Just Close the Tab.",
+      guidePrivacy: "A Cookie Is the Same as an Account Key. Never Share It with Anyone.",
+      ckOk: "{n} Cookies Read · sessionid Found", ckOk1: "{n} Cookie Read · sessionid Found", ckNoSession: "{n} Cookies Read, but sessionid Is Missing. Make Sure You Are Logged In to TikTok.", ckNoSession1: "{n} Cookie Read, but sessionid Is Missing. Make Sure You Are Logged In to TikTok.",
+      ckBad: "Format Not Recognized", ckFmtJson: "JSON", ckFmtHeader: "Header",
       noRuns: "No Runs Yet", lbClose: "Close", lbDownload: "Download", lbPrev: "Previous", lbNext: "Next",
       lbLatestShot: "Latest Screenshot", reloadScreenshot: "Reload Screenshot", fullScreen: "Full Screen", lbZoomIn: "Click for Actual Size", lbZoomOut: "Click to Fit Screen", lbViewer: "Image Viewer",
     },
@@ -149,19 +202,25 @@
 
   let lang = "id";
   let theme = "light";
-  let apiKey = "";
+  let me = null;            // {id, username, role}
+  let users = [];
+  let myNotif = null;
   let currentId = "";
   try {
-    apiKey = localStorage.getItem(KEY) || "";
     currentId = localStorage.getItem(ACCT_KEY) || "";
     const l = localStorage.getItem(LANG_KEY);
     if (l === "id" || l === "en") lang = l;
   } catch (e) { /* storage tidak tersedia */ }
 
+  const KEEP_WORDS = new Set(["sessionid", "tiktok.com"]);
   function titleCase(s) {
+    let sentenceStart = true;  // kata pertama dan kata setelah . ! ? selalu berhuruf besar
     return String(s).split(/(\s+)/).map((w, i) => {
       if (!w.trim() || w.includes("{")) return w;
-      if (i > 0 && CONNECTORS[lang].has(w.toLowerCase())) return w.toLowerCase();
+      const first = sentenceStart;
+      sentenceStart = /[.!?]$/.test(w);
+      if (KEEP_WORDS.has(w.replace(/[.,:;()?!]+$/, "").toLowerCase())) return w;
+      if (!first && CONNECTORS[lang].has(w.toLowerCase())) return w.toLowerCase();
       return w.replace(/\p{L}/u, (c) => c.toUpperCase());
     }).join("");
   }
@@ -198,11 +257,12 @@
   // ---------------------------------------------------------------- helpers
   async function api(path, opts = {}) {
     const res = await fetch("/api" + path, {
+      credentials: "same-origin",
       method: opts.method || "GET",
-      headers: { "X-API-Key": apiKey, ...(opts.body ? { "Content-Type": "application/json" } : {}) },
+      headers: { "X-Requested-With": "streak-panel", ...(opts.body ? { "Content-Type": "application/json" } : {}) },
       body: opts.body ? JSON.stringify(opts.body) : undefined,
     });
-    if (res.status === 401) { showLogin(); throw new Error("Unauthorized"); }
+    if (res.status === 401 && !path.startsWith("/auth/")) { showLogin(); throw new Error("Unauthorized"); }
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
     return data;
@@ -335,21 +395,48 @@
   document.querySelectorAll(".segmented [data-lang]").forEach((b) => b.addEventListener("click", () => setLang(b.dataset.lang)));
 
   // ------------------------------------------------------------------- auth
+  let setupMode = false;
+  const isAdmin = () => !!me && me.role === "admin";
+
+  function renderLoginMode() {
+    $("loginTitle").textContent = t(setupMode ? "setupTitle" : "brand");
+    $("loginHint").textContent = t(setupMode ? "setupHint" : "loginHint");
+    $("loginSubmit").textContent = t(setupMode ? "createAdmin" : "signIn");
+    $("setupKey").classList.toggle("hidden", !setupMode);
+    $("loginPass2").classList.toggle("hidden", !setupMode);
+    $("setupKey").required = $("loginPass2").required = setupMode;
+    $("loginPass").autocomplete = setupMode ? "new-password" : "current-password";
+  }
+
   function showLogin() {
     $("app").classList.add("hidden");
     $("login").classList.remove("hidden");
     clearInterval(pollTimer);
     clearInterval(histTimer);
+    closeMenu();
+    closeUserSheet(true);
+    me = null;
+    renderLoginMode();
+  }
+
+  function applyRole() {
+    $("userBtnName").textContent = me.username;
+    $("userBtn").title = me.username;
+    $("adminArea").classList.toggle("hidden", !isAdmin());
+    $("adminNote").classList.toggle("hidden", isAdmin());
   }
 
   async function enter() {
     st = await api("/status");
+    me = st.user;
     serverNow = st.server_now || serverNow;
     syncAccounts(st.accounts);
     $("login").classList.add("hidden");
     $("app").classList.remove("hidden");
-    await Promise.all([loadSettings(), loadContacts(), loadHistory()]);
+    applyRole();
+    await Promise.all([loadSettings(), loadMyNotif(), loadContacts(), loadHistory(), isAdmin() ? loadUsers() : Promise.resolve()]);
     renderSchedules(curAccount().schedules);
+    renderAll();
     await refresh();
     clearInterval(pollTimer);
     clearInterval(histTimer);
@@ -357,25 +444,174 @@
     histTimer = setInterval(() => loadHistory().catch(() => {}), 30000);
   }
 
+  // Reset data per sesi agar pengguna berikutnya tidak melihat sisa data
+  function resetSession() {
+    accounts = []; history = []; contactList = []; users = []; st = null; settings = null; myNotif = null;
+    lastRunId = null; logCursor = 0; pinned = false; idleLogKey = null; dashSig = "";
+    $("logBox").replaceChildren(); $("proofBox").replaceChildren(); setRunBadge("");
+    $("historyBody").replaceChildren(); $("scheduleList").replaceChildren();
+    $("shotView").classList.add("hidden");
+    if (shotUrl) { URL.revokeObjectURL(shotUrl); shotUrl = null; }
+    renderShotButtons();
+    renderAccountList.sig = null;
+  }
+
   $("loginForm").addEventListener("submit", async (e) => {
     e.preventDefault();
-    apiKey = $("keyInput").value.trim();
-    $("loginErr").textContent = "";
+    const err = $("loginErr");
+    err.textContent = "";
+    const username = $("loginUser").value.trim();
+    const password = $("loginPass").value;
     try {
+      if (setupMode) {
+        if (password !== $("loginPass2").value) { err.textContent = t("passMismatch"); return; }
+        await api("/auth/setup", { method: "POST", body: { api_key: $("setupKey").value.trim(), username, password } });
+      } else {
+        await api("/auth/login", { method: "POST", body: { username, password } });
+      }
+      $("loginPass").value = $("loginPass2").value = $("setupKey").value = "";
+      setupMode = false;
+      resetSession();
       await enter();
-      try { localStorage.setItem(KEY, apiKey); } catch (err) { /* abaikan */ }
-    } catch (err) {
-      $("loginErr").textContent = err.message === "Unauthorized" || /HTTP 401/.test(err.message) ? t("wrongKey") : err.message;
+    } catch (ex) {
+      err.textContent = ex.message;
       showLogin();
     }
   });
 
-  $("logout").addEventListener("click", () => {
-    try { localStorage.removeItem(KEY); } catch (e) { /* abaikan */ }
-    apiKey = "";
-    $("keyInput").value = "";
+  async function logout() {
+    try { await api("/auth/logout", { method: "POST" }); } catch (e) { /* abaikan */ }
+    resetSession();
     showLogin();
+  }
+  $("btnLogout").addEventListener("click", logout);
+
+  async function initAuth() {
+    try {
+      const s = await api("/auth/state");
+      setupMode = s.setup_required;
+      if (s.user) { await enter(); return; }
+    } catch (e) { /* tampilkan login */ }
+    showLogin();
+  }
+
+  // ------------------------------------------------- menu popover & sheet
+  let menuEl = null, menuAnchor = null, menuOnClose = null;
+  function closeMenu(restore = true) {
+    if (!menuEl) return;
+    menuEl.remove();
+    menuEl = null;
+    if (menuAnchor) {
+      menuAnchor.setAttribute("aria-expanded", "false");
+      if (restore) menuAnchor.focus();
+    }
+    menuAnchor = null;
+  }
+  // items: {label, onClick, role, checked, danger, disabled, reason, avatar, dot, sep}
+  function openMenu(anchor, items, label) {
+    const same = menuAnchor === anchor;
+    closeMenu(false);
+    if (same) return;
+    const m = el("div", { className: "menu", role: "menu", "aria-label": label || "" });
+    items.forEach((it) => {
+      if (it.sep) { m.append(el("hr")); return; }
+      const b = el("button", { type: "button", role: it.role || "menuitem", disabled: !!it.disabled });
+      if (it.role === "menuitemradio") b.setAttribute("aria-checked", String(!!it.checked));
+      if (it.danger) b.classList.add("danger");
+      if (it.avatar) b.append(el("span", { className: "avatar-sm" + (it.checked ? " on" : ""), textContent: it.avatar, "aria-hidden": "true" }));
+      const lab = el("span", { className: "m-label", textContent: it.label });
+      if (it.reason) lab.append(el("span", { className: "m-reason", textContent: it.reason }));
+      b.append(lab);
+      if (it.dot) b.append(el("span", { className: "dot " + it.dot, "aria-hidden": "true" }));
+      if (it.role === "menuitemradio") b.append(icon("i-check", "tick"));
+      b.addEventListener("click", () => { closeMenu(false); if (it.onClick) it.onClick(); });
+      m.append(b);
+    });
+    document.body.append(m);
+    const r = anchor.getBoundingClientRect();
+    const w = Math.max(240, Math.min(m.offsetWidth, 340));
+    m.style.top = Math.min(window.innerHeight - m.offsetHeight - 8, r.bottom + 8) + "px";
+    m.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, r.right - w)) + "px";
+    menuEl = m;
+    menuAnchor = anchor;
+    anchor.setAttribute("aria-expanded", "true");
+    const first = m.querySelector('[aria-checked="true"]') || m.querySelector("button:not([disabled])");
+    if (first) first.focus();
+  }
+  document.addEventListener("mousedown", (e) => {
+    if (menuEl && !menuEl.contains(e.target) && !(menuAnchor && menuAnchor.contains(e.target))) closeMenu(false);
   });
+  document.addEventListener("keydown", (e) => {
+    if (!menuEl) return;
+    const btns = [...menuEl.querySelectorAll("button:not([disabled])")];
+    const i = btns.indexOf(document.activeElement);
+    if (e.key === "Escape") { e.preventDefault(); closeMenu(); }
+    else if (e.key === "ArrowDown") { e.preventDefault(); btns[(i + 1) % btns.length].focus(); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); btns[(i - 1 + btns.length) % btns.length].focus(); }
+    else if (e.key === "Home") { e.preventDefault(); btns[0].focus(); }
+    else if (e.key === "End") { e.preventDefault(); btns[btns.length - 1].focus(); }
+    else if (e.key === "Tab") closeMenu(false);
+  });
+  window.addEventListener("resize", () => closeMenu(false));
+
+  // sheet pengguna
+  let sheetTrigger = null;
+  function openUserSheet() {
+    closeMenu(false);
+    sheetTrigger = $("userBtn");
+    $("usName").textContent = me.username;
+    const rb = $("usRole");
+    rb.textContent = t(isAdmin() ? "roleAdmin" : "roleUser");
+    rb.className = "badge " + (isAdmin() ? "accent" : "neutral");
+    $("userSheet").classList.remove("hidden");
+    $("userBtn").setAttribute("aria-expanded", "true");
+    document.body.style.overflow = "hidden";
+    $("usClose").focus();
+  }
+  function closeUserSheet(silent) {
+    if ($("userSheet").classList.contains("hidden")) return;
+    $("userSheet").classList.add("hidden");
+    $("userBtn").setAttribute("aria-expanded", "false");
+    document.body.style.overflow = "";
+    if (!silent && sheetTrigger) sheetTrigger.focus();
+  }
+  $("userBtn").addEventListener("click", openUserSheet);
+  $("usClose").addEventListener("click", () => closeUserSheet());
+  $("userSheet").addEventListener("mousedown", (e) => { if (e.target === $("userSheet")) closeUserSheet(); });
+  document.addEventListener("keydown", (e) => {
+    if ($("userSheet").classList.contains("hidden")) return;
+    if (e.key === "Escape") { e.preventDefault(); closeUserSheet(); }
+    else if (e.key === "Tab") {
+      const f = [...$("userSheet").querySelectorAll("button:not([disabled]), input, select")].filter((x) => x.offsetParent !== null);
+      const first = f[0], last = f[f.length - 1];
+      if (!$("userSheet").contains(document.activeElement)) { e.preventDefault(); first.focus(); }
+      else if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+  });
+
+  // formulir ganti password (dipakai di sheet dan di tab Pengaturan)
+  function buildPasswordForm(box) {
+    const mk = (type, key, auto) => el("input", { type, placeholder: t(key), "aria-label": t(key), autocomplete: auto, required: true });
+    const cur = mk("password", "currentPassword", "current-password");
+    const nw = mk("password", "newPassword", "new-password");
+    const cf = mk("password", "confirmPassword", "new-password");
+    const msg = el("p", { className: "msg", role: "status" });
+    const btn = el("button", { className: "btn primary block", type: "submit", textContent: t("changePassword") });
+    const form = el("form", { className: "pw-form" }, [cur, nw, cf, btn, msg]);
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      msg.className = "msg";
+      if (nw.value !== cf.value) { msg.className = "msg err"; msg.textContent = t("passMismatch"); return; }
+      try {
+        await api("/auth/password", { method: "POST", body: { current: cur.value, new: nw.value } });
+        cur.value = nw.value = cf.value = "";
+        msg.textContent = t("pwChanged");
+        toast(t("pwChanged"));
+      } catch (ex) { msg.className = "msg err"; msg.textContent = ex.message; }
+    });
+    box.replaceChildren(form);
+  }
 
   // ------------------------------------------------------------------- tabs
   function showTab(tab) {
@@ -401,21 +637,17 @@
   function syncAccounts(list) {
     accounts = list;
     let changed = false;
-    if (!accounts.find((a) => a.id === currentId)) {
+    if (accounts.length && !accounts.find((a) => a.id === currentId)) {
       currentId = accounts[0].id;
       changed = true;
       try { localStorage.setItem(ACCT_KEY, currentId); } catch (e) { /* abaikan */ }
     }
-    const sig = JSON.stringify(accounts.map((a) => [a.id, a.name, a.cookies.invalid ? 1 : 0]));
-    const sel = $("accountSelect");
-    if (sel.dataset.sig !== sig) {
-      sel.dataset.sig = sig;
-      sel.replaceChildren(...accounts.map((a) => new Option(a.name + (a.cookies.invalid ? " (!)" : ""), a.id)));
-    }
-    sel.value = currentId;
-    const name = curAccount().name;
+    const name = accounts.length ? curAccount().name : "-";
     $("acctAvatar").textContent = (name.trim()[0] || "?").toUpperCase();
+    $("acctBtnName").textContent = name;
+    $("acctBtn").title = name;
     document.querySelectorAll(".acct-name-text").forEach((n) => { n.textContent = name; });
+    setText("accountsCount", String(accounts.length));
     renderAccountList();
     return changed;
   }
@@ -430,40 +662,77 @@
     renderSchedules(curAccount().schedules);
     await refresh();
   }
-  $("accountSelect").addEventListener("change", (e) => switchAccount(e.target.value));
+
+  const cookieDot = (c) => (c.invalid ? "bad" : c.present ? "ok" : "");
+  const initial = (n) => (n.trim()[0] || "?").toUpperCase();
+
+  $("acctBtn").addEventListener("click", () => {
+    const items = accounts.map((a) => ({
+      label: a.name, role: "menuitemradio", checked: a.id === currentId, avatar: initial(a.name), dot: cookieDot(a.cookies),
+      onClick: () => { if (a.id !== currentId) switchAccount(a.id); },
+    }));
+    items.push({ sep: true }, { label: t("manageAccounts"), onClick: () => showTab("accounts") });
+    openMenu($("acctBtn"), items, t("activeAccount"));
+  });
 
   function cookieBrief(c) {
     return t(c.invalid ? "cookieBriefBad" : !c.present ? "cookieBriefNone" : c.last_ok ? "cookieBriefOk" : "cookieBriefSaved");
   }
 
+  async function loadUsers() {
+    users = (await api("/users")).users;
+    renderUsers();
+  }
+
   function renderAccountList(force) {
-    const sig = JSON.stringify([lang, currentId, accounts]);
+    const sig = JSON.stringify([lang, currentId, accounts, me && me.role]);
     if (!force && renderAccountList.sig === sig) return;
     renderAccountList.sig = sig;
     const box = $("accountList");
     box.replaceChildren();
     accounts.forEach((a) => {
       const on = a.id === currentId;
-      const pick = el("button", { className: "btn plain small", type: "button", textContent: on ? t("picked") : t("pick"), disabled: on });
-      const ren = el("button", { className: "btn plain small", type: "button", textContent: t("rename"), "aria-label": t("renameAria", { name: a.name }) });
-      const del = el("button", { className: "btn plain small destructive-text", type: "button", textContent: t("del"), disabled: accounts.length < 2, "aria-label": t("delAria", { name: a.name }) });
-      pick.addEventListener("click", () => switchAccount(a.id));
-      ren.addEventListener("click", async () => {
-        const name = prompt(t("promptAccountName"), a.name);
-        if (!name || name.trim() === a.name) return;
-        try { await api("/accounts/" + a.id, { method: "PUT", body: { name } }); await refresh(); }
-        catch (e) { toast(e.message); }
-      });
-      del.addEventListener("click", async () => {
-        if (!confirm(t("confirmDeleteAccount", { name: a.name }))) return;
-        try { await api("/accounts/" + a.id, { method: "DELETE" }); await refresh(); }
-        catch (e) { toast(e.message); }
+      const sameOwner = accounts.filter((x) => (x.owner_id || null) === (a.owner_id || null)).length;
+      const lastOne = isAdmin() ? sameOwner < 2 : accounts.length < 2;
+      const more = el("button", { className: "more-btn", type: "button", "aria-haspopup": "menu", "aria-expanded": "false", "aria-label": `${t("moreActions")}: ${a.name}` }, [icon("i-more")]);
+      more.addEventListener("click", () => {
+        const items = [
+          { label: on ? t("picked") : t("pick"), disabled: on, onClick: () => switchAccount(a.id) },
+          { label: t("rename"), onClick: async () => {
+            const name = prompt(t("promptAccountName"), a.name);
+            if (!name || name.trim() === a.name) return;
+            try { await api("/accounts/" + a.id, { method: "PUT", body: { name } }); await refresh(); }
+            catch (e) { toast(e.message); }
+          } },
+        ];
+        if (isAdmin()) {
+          items.push({ label: t("changeOwner"), onClick: () => setTimeout(() => {
+            openMenu(more, users.filter((u) => !u.disabled).map((u) => ({
+              label: u.username, role: "menuitemradio", checked: u.id === a.owner_id, avatar: initial(u.username),
+              onClick: async () => {
+                if (u.id === a.owner_id) return;
+                try { await api("/accounts/" + a.id, { method: "PUT", body: { owner_id: u.id } }); toast(t("toastOwnerChanged")); await refresh(); await loadUsers(); }
+                catch (e) { toast(e.message); }
+              },
+            })), t("changeOwner"));
+          }, 0) });
+        }
+        items.push({ sep: true }, { label: t("del"), danger: true, disabled: lastOne, reason: lastOne ? t("lastAccount") : "", onClick: async () => {
+          if (!confirm(t("confirmDeleteAccount", { name: a.name }))) return;
+          try { await api("/accounts/" + a.id, { method: "DELETE" }); await refresh(); }
+          catch (e) { toast(e.message); }
+        } });
+        openMenu(more, items, a.name);
       });
       const meta = t("acctMeta", { contacts: tn("nContacts", a.contacts), cookie: cookieBrief(a.cookies), next: a.next ? a.next.time : t("noNext") });
+      const titleLine = el("div", { className: "title-line" }, [el("span", { className: "title", textContent: a.name })]);
+      if (on) titleLine.append(el("span", { className: "badge accent", textContent: t("activeBadge") }));
+      const info = [titleLine, el("div", { className: "meta line", textContent: meta })];
+      if (isAdmin() && a.owner_name) info.push(el("div", { className: "meta line", textContent: t("ownerLine", { name: a.owner_name }) }));
       box.append(el("div", { className: on ? "current" : "" }, [
-        el("span", { className: "avatar-sm" + (on ? " on" : ""), textContent: (a.name.trim()[0] || "?").toUpperCase(), "aria-hidden": "true" }),
-        el("div", { className: "grow" }, [el("div", { className: "title", textContent: a.name }), el("div", { className: "meta", textContent: meta })]),
-        el("div", { className: "actions" }, [pick, ren, del]),
+        el("span", { className: "avatar-sm" + (on ? " on" : ""), textContent: initial(a.name), "aria-hidden": "true" }),
+        el("div", { className: "grow" }, info),
+        more,
       ]));
     });
   }
@@ -507,7 +776,7 @@
     if (!st || !accounts.length) return;
     const a = curAccount();
     ringState(a);
-    const sig = JSON.stringify([lang, currentId, accounts, st.running, st.current && [st.current.id, st.current.status, st.current.sent, (st.current.results || []).length],
+    const sig = JSON.stringify([lang, currentId, accounts, st.running, st.foreign_busy, st.current && [st.current.id, st.current.status, st.current.sent, (st.current.results || []).length],
       serverNow.slice(0, 16), history.map((r) => [r.id, r.status, r.sent]), settings, contactList]);
     if (!force && sig === dashSig) return;
     dashSig = sig;
@@ -519,7 +788,7 @@
     // pil antrean
     const pill = $("queuePill");
     pill.className = "pill " + (st.running ? "busy" : "ok");
-    pill.textContent = st.running ? (st.current && st.current.account ? t("busyAcct", { name: st.current.account.name }) : t("busy")) : t("ready");
+    pill.textContent = st.running ? (st.foreign_busy ? t("panelBusy") : st.current && st.current.account ? t("busyAcct", { name: st.current.account.name }) : t("busy")) : t("ready");
 
     // jadwal berikutnya
     const n = a.next;
@@ -686,7 +955,7 @@
       if (syncAccounts(s.accounts)) { await switchAccount(currentId); return; }
       renderDashboard();
       $("btnSend").disabled = $("btnTest").disabled = s.running;
-      $("btnStop").classList.toggle("hidden", !s.running);
+      $("btnStop").classList.toggle("hidden", !s.running || s.foreign_busy);
 
       if (cur.run) {
         if (cur.run.id !== lastRunId) {
@@ -858,7 +1127,7 @@
   }
   $("btnShot").addEventListener("click", async () => {
     try {
-      const res = await fetch("/api/run/screenshot?t=" + Date.now(), { headers: { "X-API-Key": apiKey } });
+      const res = await fetch("/api/run/screenshot?t=" + Date.now(), { credentials: "same-origin" });
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).detail || res.status);
       const old = shotUrl;
       shotUrl = URL.createObjectURL(await res.blob());
@@ -886,7 +1155,7 @@
     for (const r of run.results || []) {
       if (!r.proof) continue;
       try {
-        const res = await fetch(`/api/proof/${run.id}/${r.proof}`, { headers: { "X-API-Key": apiKey } });
+        const res = await fetch(`/api/proof/${run.id}/${r.proof}`, { credentials: "same-origin" });
         if (!res.ok) continue;
         const blob = await res.blob();
         if (token !== proofToken) return;
@@ -920,7 +1189,7 @@
     }
     history.forEach((r) => {
       const type = { test: t("typeTest"), check: t("typeCheck") }[r.mode] || t("typeSend");
-      const how = r.trigger === "schedule" ? r.label || "" : r.trigger === "keepalive" ? t("trAuto") : t("trManual");
+      const how = r.trigger === "schedule" ? r.label || "" : r.trigger === "keepalive" ? t("trAuto") : [t("trManual"), r.by].filter(Boolean).join(" · ");
       const tr = el("tr", { tabIndex: 0, title: t("clickForLog") }, [
         el("td", { textContent: fmtDateTime(r.started_at) }),
         el("td", { textContent: (r.account && r.account.name) || "-" }),
@@ -997,6 +1266,10 @@
     const box = $("cookieBanner");
     const kind = c.invalid ? "bad" : !c.present ? "none" : "ok";
     box.className = "banner " + kind;
+    if (kind !== lastCookieKind) {
+      lastCookieKind = kind;
+      if (kind !== "ok" && !manualTouched) $("manualCookie").open = true;
+    }
     let title, sub;
     if (kind === "bad") { title = t("bannerBad"); sub = c.invalid; }
     else if (kind === "none") { title = t("bannerNone"); sub = t("bannerNoneSub"); }
@@ -1021,11 +1294,43 @@
       await refresh();
     } catch (e) { $("cookieErr").textContent = e.message; }
   });
+  // Validasi cookie di sisi klien (mengikuti parser server); nilai cookie tidak pernah ditampilkan
+  function parseCookieText(raw) {
+    raw = (raw || "").trim();
+    if (!raw) return null;
+    let items = [];
+    if ("[{".includes(raw[0])) {
+      let data;
+      try { data = JSON.parse(raw); } catch (e) { return { bad: true }; }
+      if (data && !Array.isArray(data) && typeof data === "object") data = Array.isArray(data.cookies) ? data.cookies : [data];
+      if (!Array.isArray(data)) return { bad: true };
+      items = data;
+    } else {
+      raw.split(";").forEach((p) => { const i = p.indexOf("="); if (i > 0) items.push({ name: p.slice(0, i).trim(), value: p.slice(i + 1) }); });
+    }
+    const names = items.filter((c) => c && typeof c === "object" && c.name).map((c) => String(c.name));
+    return names.length ? { count: names.length, session: names.includes("sessionid") } : { bad: true };
+  }
+  function renderCookieCheck() {
+    const r = parseCookieText($("cookieInput").value);
+    const box = $("cookieCheck");
+    box.className = "cookie-check";
+    $("btnSaveCookies").disabled = !(r && !r.bad);
+    if (!r) { box.textContent = ""; return; }
+    if (r.bad) { box.className += " bad"; box.textContent = t("ckBad"); }
+    else if (r.session) { box.className += " ok"; box.textContent = tn("ckOk", r.count); }
+    else { box.className += " warn"; box.textContent = tn("ckNoSession", r.count); }
+  }
+  $("cookieInput").addEventListener("input", renderCookieCheck);
+  let manualTouched = false, lastCookieKind = null;
+  $("manualCookie").querySelector("summary").addEventListener("click", () => { manualTouched = true; });
+
   $("btnSaveCookies").addEventListener("click", async () => {
     $("cookieErr").textContent = "";
     try {
       await apiA("/cookies", { method: "PUT", body: { raw: $("cookieInput").value } });
       $("cookieInput").value = "";
+      renderCookieCheck();
       toast(t("toastCookieSaved"));
       await refresh();
     } catch (e) { $("cookieErr").textContent = e.message; }
@@ -1064,7 +1369,7 @@
     if (framePending) return;
     framePending = true;
     try {
-      const res = await fetch("/api/login/frame?t=" + Date.now(), { headers: { "X-API-Key": apiKey } });
+      const res = await fetch("/api/login/frame?t=" + Date.now(), { credentials: "same-origin" });
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).detail || res.status);
       const url = URL.createObjectURL(await res.blob());
       const old = view.src;
@@ -1272,6 +1577,7 @@
     $("setTgToken").value = "";
     $("setDcEnabled").checked = s.discord_enabled;
     $("setDcWebhook").value = "";
+    $("setNotifyAll").checked = s.notify_all_accounts !== false;
     renderSettingsStates();
     $("tzLabel").textContent = t("tzLabel", { tz: s.timezone || t("tzServer") });
     renderDashboard();
@@ -1296,6 +1602,7 @@
           page_load_wait: +$("setPageWait").value,
           element_wait: +$("setElementWait").value,
           send_delay: +$("setSendDelay").value,
+          notify_all_accounts: $("setNotifyAll").checked,
           discord_enabled: $("setDcEnabled").checked,
           discord_webhook: $("setDcWebhook").value.trim(),
           telegram_enabled: $("setTgEnabled").checked,
@@ -1316,6 +1623,89 @@
   $("btnDcTest").addEventListener("click", testHook("/discord/test"));
   $("btnTgTest").addEventListener("click", testHook("/telegram/test"));
 
+  // ------------------------------------------------- notifikasi pribadi
+  async function loadMyNotif() {
+    myNotif = await api("/me/notifications");
+    $("myDcEnabled").checked = myNotif.discord_enabled;
+    $("myTgEnabled").checked = myNotif.telegram_enabled;
+    $("myTgChat").value = myNotif.telegram_chat_id;
+    $("myShot").checked = myNotif.notify_screenshot;
+    $("myDcWebhook").value = "";
+    $("myTgToken").value = "";
+    renderMyNotifStates();
+  }
+  function renderMyNotifStates() {
+    if (!myNotif) return;
+    setText("myDcState", myNotif.discord_webhook_set ? t("saved") : "");
+    setText("myTgState", myNotif.telegram_token_set ? t("saved") : "");
+  }
+  $("myNotifForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    try {
+      await api("/me/notifications", { method: "PUT", body: {
+        discord_enabled: $("myDcEnabled").checked,
+        discord_webhook: $("myDcWebhook").value.trim(),
+        telegram_enabled: $("myTgEnabled").checked,
+        telegram_token: $("myTgToken").value.trim(),
+        telegram_chat_id: $("myTgChat").value.trim(),
+        notify_screenshot: $("myShot").checked,
+      } });
+      await loadMyNotif();
+      setText("myNotifMsg", "");
+      toast(t("toastNotifSaved"));
+    } catch (err) { setText("myNotifMsg", err.message); }
+  });
+  $("btnMyDcTest").addEventListener("click", testHook("/me/notifications/test/discord"));
+  $("btnMyTgTest").addEventListener("click", testHook("/me/notifications/test/telegram"));
+
+  // ------------------------------------------------------ kelola pengguna
+  async function userAction(u, body, doneKey) {
+    try { await api("/users/" + u.id, { method: "PUT", body }); toast(t(doneKey || "toastUserUpdated")); await loadUsers(); }
+    catch (e) { toast(e.message); }
+  }
+  function renderUsers() {
+    const box = $("userList");
+    box.replaceChildren();
+    users.forEach((u) => {
+      const self = me && u.id === me.id;
+      const more = el("button", { className: "more-btn", type: "button", "aria-haspopup": "menu", "aria-expanded": "false", "aria-label": `${t("moreActions")}: ${u.username}` }, [icon("i-more")]);
+      more.addEventListener("click", () => openMenu(more, [
+        { label: t("resetPw"), onClick: () => {
+          const pw = prompt(t("promptNewPw", { name: u.username }));
+          if (pw) userAction(u, { password: pw });
+        } },
+        { label: t(u.role === "admin" ? "makeUser" : "makeAdmin"), disabled: self, reason: self ? t("yourself") : "", onClick: () => userAction(u, { role: u.role === "admin" ? "user" : "admin" }) },
+        { label: t(u.disabled ? "enable" : "disable"), disabled: self, reason: self ? t("yourself") : "", onClick: () => {
+          if (u.disabled || confirm(t("confirmDisable", { name: u.username }))) userAction(u, { disabled: !u.disabled });
+        } },
+        { sep: true },
+        { label: t("del"), danger: true, disabled: self, reason: self ? t("yourself") : "", onClick: async () => {
+          if (!confirm(t("confirmDeleteUser", { name: u.username }))) return;
+          try { await api("/users/" + u.id, { method: "DELETE" }); toast(t("toastUserDeleted")); await loadUsers(); await refresh(); }
+          catch (e) { toast(e.message); }
+        } },
+      ], u.username));
+      const line = el("div", { className: "title-line" }, [el("span", { className: "title", textContent: u.username }),
+        el("span", { className: "badge " + (u.role === "admin" ? "accent" : "neutral"), textContent: t(u.role === "admin" ? "roleAdmin" : "roleUser") })]);
+      if (u.disabled) line.append(el("span", { className: "badge failed", textContent: t("disabledBadge") }));
+      if (self) line.append(el("span", { className: "badge neutral", textContent: t("you") }));
+      box.append(el("div", {}, [
+        el("span", { className: "avatar-sm" + (u.role === "admin" ? " on" : ""), textContent: initial(u.username), "aria-hidden": "true" }),
+        el("div", { className: "grow" }, [line, el("div", { className: "meta line", textContent: tn("nAccounts", u.accounts) })]),
+        more,
+      ]));
+    });
+  }
+  $("btnAddUser").addEventListener("click", async () => {
+    $("userErr").textContent = "";
+    try {
+      await api("/users", { method: "POST", body: { username: $("newUserName").value, password: $("newUserPass").value, role: $("newUserRole").value } });
+      $("newUserName").value = $("newUserPass").value = "";
+      toast(t("toastUserAdded"));
+      await loadUsers();
+    } catch (e) { $("userErr").textContent = e.message; }
+  });
+
   // ----------------------------------------------------------- render semua
   function renderAll() {
     renderLoginSteps();
@@ -1326,6 +1716,15 @@
     renderDashboard(true);
     renderContacts(contactList);
     renderSettingsStates();
+    renderMyNotifStates();
+    renderCookieCheck();
+    renderUsers();
+    buildPasswordForm($("usPw"));
+    buildPasswordForm($("myPw"));
+    renderLoginMode();
+    if (me) {
+      $("usRole").textContent = t(isAdmin() ? "roleAdmin" : "roleUser");
+    }
     const b = $("runBadge");
     if (b.dataset.status) b.textContent = statusLabel(b.dataset.status);
     idleLogKey = null;
@@ -1344,5 +1743,5 @@
   renderLoginSteps();
   renderLoginMsg();
   showTab("dashboard");
-  if (apiKey) enter().catch(showLogin); else showLogin();
+  initAuth();
 })();
