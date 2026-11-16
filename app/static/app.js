@@ -9,13 +9,13 @@
   // Semua teks UI memakai Title Case (konektor selain kata pertama tetap huruf kecil)
   const I18N = {
     id: {
-      brand: "Streak Panel", loginHint: "Masuk dengan Username dan Password", accessKey: "Kunci Akses", signIn: "Masuk",
+      brand: "Streak Panel", loginHint: "Masuk dengan Nama Pengguna dan Kata Sandi", accessKey: "Kunci Akses", signIn: "Masuk",
       wrongKey: "Kunci Akses Salah", navLabel: "Navigasi Utama", navDashboard: "Dashboard", navAccounts: "Akun & Jadwal",
       navContacts: "Kontak", navCookies: "Cookie & Login", navSettings: "Pengaturan", language: "Bahasa", toggleTheme: "Ganti Tema",
       activeAccount: "Akun Aktif", signOut: "Keluar", nextSchedule: "Jadwal Berikutnya", customMessagePh: "Pesan Khusus (Opsional)",
       sendNow: "Kirim Sekarang", dryRun: "Uji Tanpa Kirim", stop: "Hentikan", streakDays: "Hari Beruntun", todayGoal: "Target Hari Ini",
-      last7Days: "7 Hari Terakhir", cookie: "Cookie", cookieRefresh: "Penyegaran Cookie", notifications: "Notifikasi", accounts: "Akun",
-      today: "Hari Ini", latestLog: "Log Terbaru", viewScreenshot: "Lihat Tangkapan Layar", history: "Riwayat", clearHistory: "Hapus Riwayat",
+      last7Days: "7 Hari Terakhir", cookie: "Cookie", cookieRefresh: "Pembaruan Cookie", notifications: "Notifikasi", accounts: "Akun",
+      today: "Hari Ini", latestLog: "Log Terakhir", viewScreenshot: "Lihat Tangkapan Layar", history: "Riwayat", clearHistory: "Hapus Riwayat",
       colTime: "Waktu", colAccount: "Akun", colType: "Jenis", colResult: "Hasil", colDuration: "Durasi", colStatus: "Status",
       accountsHint: "Kelola Akun TikTok dan Jadwal Kirim", newAccountName: "Nama Akun Baru", newAccountPh: "Contoh: Akun Kedua",
       addAccount: "Tambah Akun", sendSchedules: "Jadwal Kirim", schedulesHint: "Atur Jam, Pesan, dan Penerima untuk Setiap Jadwal",
@@ -26,8 +26,8 @@
       remoteBrowser: "Tampilan Browser Server", sendText: "Kirim Teks", sendTextPh: "Ketik lalu Tekan Enter",
       tip1: "Klik pada Layar untuk Memilih Kolom", tip2: "Gunakan Kolom Teks untuk Menempel Kata Sandi", tip3: "Setelah Login Terdeteksi, Simpan Sesi Login",
       saveLoginSession: "Simpan Sesi Login", cancel: "Batal", manualCookie: "Tempel Cookie Manual", manualCookieHint: "Alternatif Jika Login lewat Browser Server Gagal",
-      cookiePh: "Tempel Cookie di Sini (JSON atau Header)", saveCookie: "Simpan Cookie", deleteCookie: "Hapus Cookie",
-      settingsHint: "Atur Pesan, Cookie, dan Notifikasi", message: "Pesan", defaultMessage: "Pesan Default", timezone: "Zona Waktu",
+      cookiePh: "[{\"domain\": \".tiktok.com\", \"name\": \"sessionid\", \"value\": \"••••••••\", ...}, ...]", saveCookie: "Simpan Cookie", deleteCookie: "Hapus Cookie",
+      settingsHint: "Atur Notifikasi, Pengguna, dan Pengaturan Global", message: "Pesan", defaultMessage: "Pesan Default", timezone: "Zona Waktu",
       keepalive: "Segarkan Cookie Otomatis", keepaliveHours: "Interval Penyegaran (Jam)", waits: "Waktu Tunggu (Detik)", pageLoad: "Muat Halaman",
       element: "Elemen", sendDelay: "Jeda Antar Kirim", proof: "Bukti", attachScreenshot: "Lampirkan Tangkapan Layar",
       attachScreenshotHint: "Kirim Tangkapan Layar Chat bersama Notifikasi", enableNotif: "Aktifkan Notifikasi", webhookUrl: "URL Webhook",
@@ -46,7 +46,7 @@
       refreshEvery: "Setiap {n} Jam", refreshEvery1: "Setiap {n} Jam", refreshOff: "Nonaktif",
       refreshOn: "Menjaga Sesi Tetap Aktif", refreshOffSub: "Cookie Bisa Kedaluwarsa",
       notifOff: "Nonaktif", notifShot: "Dengan Tangkapan Layar", notifNoShot: "Tanpa Tangkapan Layar", notifNone: "Belum Ada Notifikasi",
-      nAccounts: "{n} Akun", nAccounts1: "{n} Akun", totalContacts: "Total {n} Kontak",
+      nAccounts: "{n} Akun", nAccounts1: "{n} Akun", totalContacts: "{n} Kontak Total",
       nSchedules: "{n} Jadwal", nSchedules1: "{n} Jadwal", emptyToday: "Belum Ada Jadwal Aktif Hari Ini",
       noHistory: "Belum Ada Riwayat", noContacts: "Belum Ada Kontak", noContactsHere: "Belum Ada Kontak di Akun Ini", noScheds: "Belum Ada Jadwal",
       typeSend: "Kirim", typeTest: "Uji", typeCheck: "Cek Cookie", trManual: "Manual", trAuto: "Otomatis",
@@ -63,7 +63,7 @@
       cookieBriefBad: "Cookie Tidak Valid", cookieBriefNone: "Cookie Belum Diatur", noNext: "Tidak Ada",
       schedEnabled: "Jadwal Aktif", schedMsgPh: "Pesan Khusus (Kosong = Default)", sendToAll: "Kirim ke Semua Kontak", hour: "Jam", minute: "Menit",
       delSched: "Hapus Jadwal {time}", tzLabel: "Zona Waktu: {tz}", tzServer: "Server",
-      bannerOk: "Cookie Valid", bannerBad: "Cookie Tidak Valid", bannerNone: "Belum Ada Cookie", bannerNoneSub: "Login atau Tempel Cookie untuk Memulai",
+      bannerOk: "Cookie Valid", bannerBad: "Cookie Tidak Valid", bannerNone: "Cookie Belum Diatur", bannerNoneSub: "Pilih Salah Satu Cara di Bawah agar Panel Bisa Mengirim Pesan.",
       cookieCount: "{n} Cookie", warnNoSession: "Peringatan: Sessionid Tidak Ditemukan",
       step1: "Buka Browser", step2: "Login ke TikTok", step3: "Simpan Sesi",
       loginOpening: "Membuka Browser…", loginWaiting: "Menunggu Login…", loginDetected: "Login Terdeteksi. Klik Simpan Sesi Login",
@@ -71,37 +71,91 @@
       proofAlt: "Bukti {name}", evChat: "Chat Terverifikasi", evBubble: "Bubble Terverifikasi", evList: "Daftar Chat {time}",
       evRenamed: "Nama Baru {name}, Diperbarui Otomatis",
       rtNow: "Baru Saja", dash: "-",
-      apiKey: "Kunci API", username: "Username", password: "Password", confirmPassword: "Konfirmasi Password",
+      apiKey: "Kunci API", username: "Nama Pengguna", password: "Kata Sandi", confirmPassword: "Konfirmasi Kata Sandi",
       setupTitle: "Buat Admin Pertama", setupHint: "Isi Kunci API dari File .env, lalu Buat Akun Admin", createAdmin: "Buat Admin",
-      passMismatch: "Konfirmasi Password Tidak Sama", userMenu: "Menu Pengguna", roleAdmin: "Admin", roleUser: "Pengguna", role: "Peran",
-      changePassword: "Ganti Password", currentPassword: "Password Saat Ini", newPassword: "Password Baru", pwChanged: "Password Diganti",
+      passMismatch: "Konfirmasi Kata Sandi Tidak Sama", userMenu: "Menu Pengguna", roleAdmin: "Admin", roleUser: "Pengguna", role: "Peran",
+      changePassword: "Ganti Kata Sandi", currentPassword: "Kata Sandi Saat Ini", newPassword: "Kata Sandi Baru", pwChanged: "Kata Sandi Diganti",
       myAccount: "Akun Saya", myNotifs: "Notifikasi Saya", myNotifsHint: "Notifikasi Hanya untuk Akun TikTok Milik Anda",
       discordNotif: "Notifikasi Discord", telegramNotif: "Notifikasi Telegram",
       adminNotifs: "Notifikasi Admin (Global)", notifyAll: "Terima Notifikasi Semua Akun",
-      notifyAllHint: "Jika Mati, Saluran Global Hanya Menerima Akun Milik Admin", adminOnlyNote: "Pengaturan Global Dikelola oleh Admin",
-      users: "Pengguna", addUser: "Tambah Pengguna", resetPw: "Reset Password", makeAdmin: "Jadikan Admin", makeUser: "Jadikan Pengguna",
+      notifyAllHint: "Jika Mati, Saluran Global Hanya Menerima Akun Milik Admin", adminOnlyNote: "Pengaturan Global Diatur oleh Admin",
+      users: "Pengguna", addUser: "Tambah Pengguna", resetPw: "Reset Kata Sandi", makeAdmin: "Jadikan Admin", makeUser: "Jadikan Pengguna",
       disable: "Nonaktifkan", enable: "Aktifkan", disabledBadge: "Nonaktif", you: "Anda",
       confirmDeleteUser: "Hapus Pengguna \"{name}\"? Akun TikTok Miliknya Akan Dipindahkan ke Anda", confirmDisable: "Nonaktifkan Pengguna \"{name}\"?",
-      promptNewPw: "Password Baru untuk {name} (Minimal 8 Karakter):", toastUserAdded: "Pengguna Ditambahkan", toastUserUpdated: "Pengguna Diperbarui",
+      promptNewPw: "Kata Sandi Baru untuk {name} (Minimal 8 Karakter):", toastUserAdded: "Pengguna Ditambahkan", toastUserUpdated: "Pengguna Diperbarui",
       toastUserDeleted: "Pengguna Dihapus", toastNotifSaved: "Notifikasi Disimpan", toastOwnerChanged: "Pemilik Akun Diubah",
       ownerLine: "Pemilik: {name}", changeOwner: "Ubah Pemilik", manageAccounts: "Kelola Akun", activeBadge: "Aktif", moreActions: "Aksi Lainnya",
       lastAccount: "Minimal Satu Akun", yourself: "Akun Anda Sendiri", cookiesHint: "Kelola Sesi Login TikTok", panelBusy: "Panel Sedang Dipakai",
-      byLabel: "oleh {name}", wrongLogin: "Username atau Password Salah",
+      byLabel: "oleh {name}", wrongLogin: "Nama Pengguna atau Kata Sandi Salah",
       manualIntro: "Cara Termudah Adalah Login lewat Browser Server di Atas. Gunakan Cara Ini Jika Login Itu Gagal.",
-      gs1t: "Buka TikTok di Laptop atau PC", gs1h: "Buka tiktok.com di Chrome atau Edge dan pastikan sudah login ke akun TikTok yang benar.", gs1b: "Buka TikTok",
-      gs2t: "Pasang Ekstensi Cookie-Editor", gs2h: "Pasang ekstensi gratis Cookie-Editor di browser Anda.", gs2b: "Pasang Cookie-Editor",
+      gs1t: "Buka TikTok di Laptop atau PC", gs1h: "Buka tiktok.com di Chrome atau Edge dan pastikan Anda sudah login ke akun TikTok yang benar.", gs1b: "Buka TikTok",
+      gs2t: "Pasang Ekstensi Cookie-Editor", gs2h: "Ekstensi gratis untuk Chrome, Edge, dan Firefox. Klik tombol, lalu pilih “Add to Chrome” atau “Get”.", gs2b: "Pasang Cookie-Editor",
       gs3t: "Buka Cookie-Editor di Tab TikTok", gs3h: "Di tab tiktok.com, klik ikon puzzle (Ekstensi) di kanan atas, lalu pilih Cookie-Editor.",
-      gs4t: "Ekspor sebagai JSON", gs4h: "Klik Export di bagian bawah, lalu pilih JSON. Cookie tersalin otomatis.",
-      gs5t: "Tempel dan Simpan", gs5h: "Tempel (Ctrl+V atau tekan lama lalu Tempel) di kotak di bawah, lalu tekan Simpan Cookie.",
-      gs6t: "Periksa", gs6h: "Tekan Cek Cookie Sekarang. Banner di bagian atas harus berubah hijau.",
+      gs4t: "Ekspor sebagai JSON", gs4h: "Klik “Export” di bagian bawah, lalu pilih “JSON”. Cookie otomatis tersalin.",
+      gs5t: "Tempel dan Simpan", gs5h: "Tempel (Ctrl+V) di kotak di bawah. Panel langsung memeriksanya, lalu tekan “Simpan Cookie”.",
+      gs6t: "Periksa", gs6h: "Tekan “Cek Cookie Sekarang”. Banner di atas harus berubah hijau.",
       guideWarn: "Jangan Klik Logout di TikTok Laptop Setelah Menyalin, Cookie Akan Ikut Mati. Cukup Tutup Tabnya.",
       guidePrivacy: "Cookie Sama dengan Kunci Akun. Jangan Bagikan ke Orang Lain.",
       ckOk: "{n} Cookie Terbaca · sessionid Ditemukan", ckNoSession: "{n} Cookie Terbaca, tetapi sessionid Tidak Ada. Pastikan Anda Sudah Login di TikTok.",
-      ckBad: "Format Tidak Dikenali", ckFmtJson: "JSON", ckFmtHeader: "Header",
+      ckBad: "Format Tidak Dikenali. Ulangi Langkah 4.", ckFmtJson: "JSON", ckFmtHeader: "Header",
       reload: "Muat Ulang", manageUsers: "Kelola Pengguna", acctCount: "{n} Akun TikTok", acctCount1: "{n} Akun TikTok",
-      confirmNewPassword: "Konfirmasi Password Baru", pwHint: "Minimal 8 Karakter", pwSessionsHint: "Sesi di Perangkat Lain Akan Keluar",
-      savePassword: "Simpan Password", showPassword: "Tampilkan Password", hidePassword: "Sembunyikan Password",
-      pwTooShort: "Password Baru Minimal 8 Karakter", pwRequired: "Semua Kolom Wajib Diisi",
+      confirmNewPassword: "Konfirmasi Kata Sandi Baru", pwHint: "Minimal 8 Karakter", pwSessionsHint: "Sesi di Perangkat Lain Akan Keluar",
+      savePassword: "Simpan Kata Sandi", showPassword: "Tampilkan Kata Sandi", hidePassword: "Sembunyikan Kata Sandi",
+      pwTooShort: "Kata Sandi Baru Minimal 8 Karakter", pwRequired: "Semua Kolom Wajib Diisi",
+      tempPassword: "Kata Sandi Awal",
+      tiktokAccounts: "Akun TikTok",
+      navHomeS: "Beranda",
+      navScheduleS: "Jadwal",
+      navContactsS: "Kontak",
+      navCookieS: "Cookie",
+      navSettingsS: "Pengaturan",
+      goodDays: "Hari Lancar",
+      notSent: "Belum Dikirim",
+      doneSlot: "Selesai {s}/{t}",
+      nextAt: "Berikutnya {time}",
+      pesanLabel: "Pesan:",
+      cookieNotSet: "Cookie TikTok Belum Diatur",
+      bothActive: "Keduanya Aktif",
+      chOff: "{name} Nonaktif",
+      allOff: "Discord & Telegram Nonaktif",
+      eyebrowDefault: "",
+      cookiesEyebrow: "Akun TikTok yang Sedang Dipilih",
+      recommended: "Disarankan",
+      opt1: "Cara 1: Login lewat Browser Server",
+      opt1Sub: "Login Langsung dari Panel, Tanpa Menyalin Apa Pun.",
+      opt2: "Cara 2: Tempel Cookie Manual",
+      opt2Sub: "Gunakan Jika Cara 1 Gagal. Ikuti Langkah Berikut dari Laptop atau PC.",
+      warnTitle: "Jangan Logout.",
+      warnText: "Setelah Menyalin, Jangan Klik Logout di TikTok Laptop, Cookie Akan Ikut Mati. Cukup Tutup Tabnya.",
+      privTitle: "Rahasiakan.",
+      privText: "Cookie Sama dengan Kunci Akun. Jangan Bagikan ke Orang Lain.",
+      pasteLabel: "Tempel Cookie di Sini",
+      webhookDiscord: "URL Webhook Discord",
+      sendTestMsg: "Kirim Pesan Uji",
+      myNotifFoot: "Dikirim untuk Akun TikTok Milik Anda.",
+      adminNotifFoot: "Saluran Global Menerima Notifikasi Akun Semua Pengguna. Pengguna Tetap Menerima Notifikasinya Sendiri.",
+      gChannels: "Discord & Telegram Global",
+      gMessage: "Pesan & Zona Waktu",
+      gWaits: "Waktu Tunggu",
+      adminOnly: "Khusus Admin",
+      adminBadge: "Masuk sebagai Admin",
+      userBadge: "Masuk sebagai Pengguna",
+      secUnit: "{s} Dtk",
+      userMeta: "{n} · {state}",
+      userMetaSelf: "Anda · {n}",
+      stateActive: "Aktif",
+      stateDisabled: "Nonaktif",
+      enableTgDcFirst: "Aktifkan Discord atau Telegram Dulu",
+      testSent: "Pesan Uji Terkirim",
+      delSchedule: "Hapus Jadwal",
+      delContact: "Hapus Kontak",
+      roleGroup: "Peran",
+      promptRenameLabel: "",
+      notifOn: "Notifikasi Aktif",
+      setSheetSave: "Simpan",
+      pwOtherSessions: "Sesi di Perangkat Lain Akan Keluar",
+      delUser: "Hapus Pengguna",
+      timeLeft: "Sisa Waktu",
       noRuns: "Belum Ada Proses", lbClose: "Tutup", lbDownload: "Unduh", lbPrev: "Sebelumnya", lbNext: "Berikutnya",
       lbLatestShot: "Tangkapan Layar Terakhir", reloadScreenshot: "Muat Ulang Tangkapan Layar", fullScreen: "Layar Penuh", lbZoomIn: "Klik untuk Ukuran Asli", lbZoomOut: "Klik untuk Muat Layar", lbViewer: "Penampil Gambar",
     },
@@ -123,8 +177,8 @@
       remoteBrowser: "Server Browser View", sendText: "Send Text", sendTextPh: "Type Then Press Enter",
       tip1: "Click on the Screen to Select a Field", tip2: "Use the Text Field to Paste Passwords", tip3: "Once Login Is Detected, Save the Login Session",
       saveLoginSession: "Save Login Session", cancel: "Cancel", manualCookie: "Paste Cookie Manually", manualCookieHint: "Alternative if Login via Server Browser Fails",
-      cookiePh: "Paste Cookie Here (JSON or Header)", saveCookie: "Save Cookie", deleteCookie: "Delete Cookie",
-      settingsHint: "Configure Messages, Cookies, and Notifications", message: "Message", defaultMessage: "Default Message", timezone: "Time Zone",
+      cookiePh: "[{\"domain\": \".tiktok.com\", \"name\": \"sessionid\", \"value\": \"••••••••\", ...}, ...]", saveCookie: "Save Cookie", deleteCookie: "Delete Cookie",
+      settingsHint: "Manage Notifications, Users and Global Settings", message: "Message", defaultMessage: "Default Message", timezone: "Time Zone",
       keepalive: "Refresh Cookie Automatically", keepaliveHours: "Refresh Interval (Hours)", waits: "Wait Times (Seconds)", pageLoad: "Page Load",
       element: "Element", sendDelay: "Delay Between Sends", proof: "Proof", attachScreenshot: "Attach Screenshot",
       attachScreenshotHint: "Send a Chat Screenshot with the Notification", enableNotif: "Enable Notifications", webhookUrl: "Webhook URL",
@@ -142,7 +196,7 @@
       refreshEvery: "Every {n} Hours", refreshEvery1: "Every {n} Hour", refreshOff: "Off",
       refreshOn: "Keeps the Session Alive", refreshOffSub: "Cookie May Expire",
       notifOff: "Off", notifShot: "With Screenshots", notifNoShot: "Without Screenshots", notifNone: "No Notifications Yet",
-      nAccounts: "{n} Accounts", nAccounts1: "{n} Account", totalContacts: "{n} Contacts in Total",
+      nAccounts: "{n} Accounts", nAccounts1: "{n} Account", totalContacts: "{n} Contacts Total",
       nSchedules: "{n} Schedules", nSchedules1: "{n} Schedule", emptyToday: "No Active Schedules Today",
       noHistory: "No History Yet", noContacts: "No Contacts Yet", noContactsHere: "No Contacts in This Account", noScheds: "No Schedules Yet",
       typeSend: "Send", typeTest: "Test", typeCheck: "Cookie Check", trManual: "Manual", trAuto: "Automatic",
@@ -159,7 +213,7 @@
       cookieBriefBad: "Cookie Invalid", cookieBriefNone: "Cookie Not Set", noNext: "None",
       schedEnabled: "Schedule Enabled", schedMsgPh: "Custom Message (Empty = Default)", sendToAll: "Send to All Contacts", hour: "Hour", minute: "Minute",
       delSched: "Delete Schedule {time}", tzLabel: "Time Zone: {tz}", tzServer: "Server",
-      bannerOk: "Cookie Valid", bannerBad: "Cookie Invalid", bannerNone: "No Cookie Yet", bannerNoneSub: "Login or Paste a Cookie to Start",
+      bannerOk: "Cookie Valid", bannerBad: "Cookie Invalid", bannerNone: "No Cookie Yet", bannerNoneSub: "Choose One of the Options Below So the Panel Can Send Messages.",
       cookieCount: "{n} Cookies", warnNoSession: "Warning: Sessionid Not Found",
       step1: "Open Browser", step2: "Login to TikTok", step3: "Save Session",
       loginOpening: "Opening Browser…", loginWaiting: "Waiting for Login…", loginDetected: "Login Detected. Click Save Login Session",
@@ -185,26 +239,78 @@
       byLabel: "by {name}", wrongLogin: "Wrong Username or Password",
       manualIntro: "The Easiest Way Is Logging In via the Server Browser Above. Use This Method if That Login Fails.",
       gs1t: "Open TikTok on a Laptop or PC", gs1h: "Open tiktok.com in Chrome or Edge and make sure you are logged in to the right TikTok account.", gs1b: "Open TikTok",
-      gs2t: "Install the Cookie-Editor Extension", gs2h: "Install the free Cookie-Editor extension in your browser.", gs2b: "Install Cookie-Editor",
+      gs2t: "Install the Cookie-Editor Extension", gs2h: "A free extension for Chrome, Edge and Firefox. Click the button, then choose “Add to Chrome” or “Get”.", gs2b: "Install Cookie-Editor",
       gs3t: "Open Cookie-Editor on the TikTok Tab", gs3h: "On the tiktok.com tab, click the puzzle (Extensions) icon at the top right, then choose Cookie-Editor.",
-      gs4t: "Export as JSON", gs4h: "Click Export at the bottom, then choose JSON. The cookies are copied automatically.",
-      gs5t: "Paste and Save", gs5h: "Paste (Ctrl+V or long-press then Paste) into the box below, then press Save Cookie.",
-      gs6t: "Verify", gs6h: "Press Check Cookie Now. The banner at the top must turn green.",
+      gs4t: "Export as JSON", gs4h: "Click “Export” at the bottom, then choose “JSON”. The cookies are copied automatically.",
+      gs5t: "Paste and Save", gs5h: "Paste (Ctrl+V) into the box below. The panel checks it right away, then press “Save Cookie”.",
+      gs6t: "Verify", gs6h: "Press “Check Cookie Now”. The banner at the top should turn green.",
       guideWarn: "Do Not Click Logout on the Laptop TikTok After Copying, or the Cookie Will Die. Just Close the Tab.",
       guidePrivacy: "A Cookie Is the Same as an Account Key. Never Share It with Anyone.",
       ckOk: "{n} Cookies Read · sessionid Found", ckOk1: "{n} Cookie Read · sessionid Found", ckNoSession: "{n} Cookies Read, but sessionid Is Missing. Make Sure You Are Logged In to TikTok.", ckNoSession1: "{n} Cookie Read, but sessionid Is Missing. Make Sure You Are Logged In to TikTok.",
-      ckBad: "Format Not Recognized", ckFmtJson: "JSON", ckFmtHeader: "Header",
+      ckBad: "Unrecognised Format. Repeat Step 4.", ckFmtJson: "JSON", ckFmtHeader: "Header",
       reload: "Reload", manageUsers: "Manage Users", acctCount: "{n} TikTok Accounts", acctCount1: "{n} TikTok Account",
       confirmNewPassword: "Confirm New Password", pwHint: "At Least 8 Characters", pwSessionsHint: "Sessions on Other Devices Will Be Signed Out",
       savePassword: "Save Password", showPassword: "Show Password", hidePassword: "Hide Password",
       pwTooShort: "New Password Must Be at Least 8 Characters", pwRequired: "All Fields Are Required",
+      tiktokAccounts: "TikTok Accounts",
+      navHomeS: "Home",
+      navScheduleS: "Schedule",
+      navContactsS: "Contacts",
+      navCookieS: "Cookie",
+      navSettingsS: "Settings",
+      goodDays: "Good Days",
+      notSent: "Not Sent Yet",
+      doneSlot: "Done {s}/{t}",
+      nextAt: "Next at {time}",
+      pesanLabel: "Message:",
+      cookieNotSet: "TikTok Cookie Not Set",
+      bothActive: "Both Active",
+      chOff: "{name} Off",
+      allOff: "Discord & Telegram Off",
+      cookiesEyebrow: "Currently Selected TikTok Account",
+      recommended: "Recommended",
+      opt1: "Option 1: Login via the Server Browser",
+      opt1Sub: "Login Right from the Panel, Nothing to Copy.",
+      opt2: "Option 2: Paste Cookie Manually",
+      opt2Sub: "Use This If Option 1 Fails. Follow These Steps on a Laptop or PC.",
+      warnTitle: "Do Not Log Out.",
+      warnText: "After Copying, Don’t Click Log Out on TikTok on Your Laptop, or the Cookie Dies Too. Just Close the Tab.",
+      privTitle: "Keep It Private.",
+      privText: "A Cookie Is Like Your Account Key. Never Share It.",
+      pasteLabel: "Paste Cookie Here",
+      webhookDiscord: "Discord Webhook URL",
+      sendTestMsg: "Send Test Message",
+      myNotifFoot: "Sent for the TikTok Accounts You Own.",
+      adminNotifFoot: "The Global Channel Receives Notifications for Every User’s Accounts. Users Still Get Their Own.",
+      gChannels: "Global Discord & Telegram",
+      gMessage: "Message & Time Zone",
+      gWaits: "Wait Times",
+      adminOnly: "Admin Only",
+      adminBadge: "Signed In as Admin",
+      userBadge: "Signed In as User",
+      secUnit: "{s} Sec",
+      userMeta: "{n} · {state}",
+      userMetaSelf: "You · {n}",
+      stateActive: "Active",
+      stateDisabled: "Disabled",
+      tempPassword: "Initial Password",
+      enableTgDcFirst: "Enable Discord or Telegram First",
+      testSent: "Test Message Sent",
+      delSchedule: "Delete Schedule",
+      delContact: "Delete Contact",
+      roleGroup: "Role",
+      notifOn: "Notifications On",
+      setSheetSave: "Save",
+      pwOtherSessions: "Sessions on Other Devices Will Be Signed Out",
+      delUser: "Delete User",
+      timeLeft: "Time Left",
       noRuns: "No Runs Yet", lbClose: "Close", lbDownload: "Download", lbPrev: "Previous", lbNext: "Next",
       lbLatestShot: "Latest Screenshot", reloadScreenshot: "Reload Screenshot", fullScreen: "Full Screen", lbZoomIn: "Click for Actual Size", lbZoomOut: "Click to Fit Screen", lbViewer: "Image Viewer",
     },
   };
   const CONNECTORS = {
-    id: new Set(["di", "ke", "dari", "dan", "atau", "yang", "untuk", "dengan", "pada", "per"]),
-    en: new Set(["a", "an", "the", "and", "or", "of", "to", "in", "on", "for", "at", "by", "with"]),
+    id: new Set(["di", "ke", "dari", "dan", "atau", "yang", "untuk", "dengan", "pada", "per", "lewat", "lalu", "agar"]),
+    en: new Set(["a", "an", "the", "and", "or", "of", "to", "in", "on", "for", "at", "by", "with", "via", "as", "from"]),
   };
   const LOCALE = { id: "id-ID", en: "en-US" };
 
@@ -221,6 +327,7 @@
   } catch (e) { /* storage tidak tersedia */ }
 
   const KEEP_WORDS = new Set(["sessionid", "tiktok.com"]);
+  const RAW_KEYS = new Set(["cookiePh"]);
   function titleCase(s) {
     let sentenceStart = true;  // kata pertama dan kata setelah . ! ? selalu berhuruf besar
     return String(s).split(/(\s+)/).map((w, i) => {
@@ -228,7 +335,8 @@
       const first = sentenceStart;
       sentenceStart = /[.!?]$/.test(w);
       if (KEEP_WORDS.has(w.replace(/[.,:;()?!]+$/, "").toLowerCase())) return w;
-      if (!first && CONNECTORS[lang].has(w.toLowerCase())) return w.toLowerCase();
+      const core = w.replace(/^[“"'(\[]+|[”"'),.:;!?\]]+$/g, "").toLowerCase();
+      if (!first && CONNECTORS[lang].has(core)) return w.replace(/[\p{L}]+/u, core);
       return w.replace(/\p{L}/u, (c) => c.toUpperCase());
     }).join("");
   }
@@ -236,6 +344,7 @@
   // Terjemahan + Title Case, lalu isi placeholder {x}
   function t(key, vars) {
     const raw = I18N[lang][key] ?? I18N.id[key] ?? key;
+    if (RAW_KEYS.has(key)) return raw;
     let s = titleCase(raw);
     if (vars) s = s.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? vars[k] : m));
     return s;
@@ -299,6 +408,10 @@
   const setText = (id, text) => { $(id).textContent = text; };
   const pad = (n) => String(n).padStart(2, "0");
   const clamp = (n, a, b) => Math.min(b, Math.max(a, n));
+  // warna avatar deterministik per id (dipakai sama di mana pun id itu tampil)
+  const AV = [["#FF6A00", "#1C1C1E"], ["#0A84FF", "#FFFFFF"], ["#BF5AF2", "#FFFFFF"], ["#30D158", "#0B3D1A"], ["#FF375F", "#FFFFFF"], ["#40C8E0", "#062A33"], ["#FF9F0A", "#1C1C1E"], ["#5E5CE6", "#FFFFFF"]];
+  const avColor = (id) => { let h = 0; for (const ch of String(id || "")) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return AV[h % AV.length]; };
+  function paint(node, id) { const [bg, fg] = avColor(id); node.style.background = bg; node.style.color = fg; return node; }
 
   function toast(msg) {
     const e = $("toast");
@@ -336,6 +449,7 @@
     else if (sec < 3600) s = rtf.format(-Math.round(sec / 60), "minute");
     else if (sec < 86400) s = rtf.format(-Math.round(sec / 3600), "hour");
     else s = rtf.format(-Math.round(sec / 86400), "day");
+    if (lang === "id") s = s.replace(" yang lalu", " lalu");
     return titleCase(s);
   }
 
@@ -433,6 +547,7 @@
     clearInterval(histTimer);
     closeMenu();
     closePwModal(true);
+    closeSetSheet(true);
     me = null;
     renderLoginMode();
   }
@@ -440,9 +555,13 @@
   function applyRole() {
     $("userBtnName").textContent = me.username;
     $("userAvatar").textContent = initial(me.username);
+    paint($("userAvatar"), me.id);
     $("userBtn").title = me.username;
     $("adminArea").classList.toggle("hidden", !isAdmin());
+    $("usersCol").classList.toggle("hidden", !isAdmin());
+    $("settingsGrid").classList.toggle("solo", !isAdmin());
     $("adminNote").classList.toggle("hidden", isAdmin());
+    $("roleBadge").textContent = t(isAdmin() ? "adminBadge" : "userBadge");
   }
 
   async function enter() {
@@ -535,7 +654,7 @@
       if (it.sep) { m.append(el("hr", { role: "separator" })); return; }
       if (it.header) {
         m.append(el("div", { className: "menu-head" }, [
-          el("span", { className: "avatar-sm on", textContent: it.avatar, "aria-hidden": "true" }),
+          paint(el("span", { className: "avatar-sm", textContent: it.avatar, "aria-hidden": "true" }), it.avatarId),
           el("div", { className: "mh-txt" }, [el("div", { className: "mh-name", textContent: it.title }), el("div", { className: "mh-sub", textContent: it.sub })]),
         ]));
         return;
@@ -544,7 +663,7 @@
       if (it.role === "menuitemradio") b.setAttribute("aria-checked", String(!!it.checked));
       if (it.danger) b.classList.add("danger");
       if (it.icon) b.append(icon(it.icon, "m-ico"));
-      if (it.avatar) b.append(el("span", { className: "avatar-sm" + (it.checked ? " on" : ""), textContent: it.avatar, "aria-hidden": "true" }));
+      if (it.avatar) b.append(paint(el("span", { className: "avatar-sm", textContent: it.avatar, "aria-hidden": "true" }), it.avatarId));
       const lab = el("span", { className: "m-label", textContent: it.label });
       if (it.reason) lab.append(el("span", { className: "m-reason", textContent: it.reason }));
       b.append(lab);
@@ -583,7 +702,7 @@
   // menu pengguna
   $("userBtn").addEventListener("click", () => {
     openMenu($("userBtn"), [
-      { header: true, avatar: initial(me.username), title: me.username, sub: `${t(isAdmin() ? "roleAdmin" : "roleUser")} · ${tn("acctCount", accounts.length)}` },
+      { header: true, avatar: initial(me.username), avatarId: me.id, title: me.username, sub: `${t(isAdmin() ? "roleAdmin" : "roleUser")} · ${tn("acctCount", accounts.length)}` },
       { sep: true },
       { label: t("reload"), icon: "i-refresh", onClick: reloadAll },
       { label: t("changePassword"), icon: "i-key", onClick: () => setTimeout(openPwModal, 0) },
@@ -644,12 +763,13 @@
   $("pwCancel").addEventListener("click", () => closePwModal());
   $("pwModal").addEventListener("mousedown", (e) => { if (e.target === $("pwModal")) closePwModal(); });
   document.addEventListener("keydown", (e) => {
-    if ($("pwModal").classList.contains("hidden")) return;
-    if (e.key === "Escape") { e.preventDefault(); closePwModal(); }
+    const modal = [$("pwModal"), $("setSheet")].find((m) => !m.classList.contains("hidden"));
+    if (!modal) return;
+    if (e.key === "Escape") { e.preventDefault(); if (modal === $("pwModal")) closePwModal(); else closeSetSheet(); }
     else if (e.key === "Tab") {
-      const f = [...$("pwModal").querySelectorAll("button:not([disabled]), input")].filter((x) => x.offsetParent !== null);
+      const f = [...modal.querySelectorAll("button:not([disabled]), input")].filter((x) => x.offsetParent !== null);
       const first = f[0], last = f[f.length - 1];
-      if (!$("pwModal").contains(document.activeElement)) { e.preventDefault(); first.focus(); }
+      if (!modal.contains(document.activeElement)) { e.preventDefault(); first.focus(); }
       else if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
       else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
     }
@@ -701,6 +821,8 @@
     }
     const name = accounts.length ? curAccount().name : "-";
     $("acctAvatar").textContent = (name.trim()[0] || "?").toUpperCase();
+    paint($("acctAvatar"), currentId);
+    document.querySelectorAll(".acct-chip").forEach((c) => c.style.setProperty("--dot", avColor(currentId)[0]));
     $("acctBtnName").textContent = name;
     $("acctBtn").title = name;
     document.querySelectorAll(".acct-name-text").forEach((n) => { n.textContent = name; });
@@ -725,7 +847,7 @@
 
   $("acctBtn").addEventListener("click", () => {
     const items = accounts.map((a) => ({
-      label: a.name, role: "menuitemradio", checked: a.id === currentId, avatar: initial(a.name), dot: cookieDot(a.cookies),
+      label: a.name, role: "menuitemradio", checked: a.id === currentId, avatar: initial(a.name), avatarId: a.id, dot: cookieDot(a.cookies),
       onClick: () => { if (a.id !== currentId) switchAccount(a.id); },
     }));
     items.push({ sep: true }, { label: t("manageAccounts"), onClick: () => showTab("accounts") });
@@ -765,7 +887,7 @@
         if (isAdmin()) {
           items.push({ label: t("changeOwner"), onClick: () => setTimeout(() => {
             openMenu(more, users.filter((u) => !u.disabled).map((u) => ({
-              label: u.username, role: "menuitemradio", checked: u.id === a.owner_id, avatar: initial(u.username),
+              label: u.username, role: "menuitemradio", checked: u.id === a.owner_id, avatar: initial(u.username), avatarId: u.id,
               onClick: async () => {
                 if (u.id === a.owner_id) return;
                 try { await api("/accounts/" + a.id, { method: "PUT", body: { owner_id: u.id } }); toast(t("toastOwnerChanged")); await refresh(); await loadUsers(); }
@@ -787,7 +909,7 @@
       const info = [titleLine, el("div", { className: "meta line", textContent: meta })];
       if (isAdmin() && a.owner_name) info.push(el("div", { className: "meta line", textContent: t("ownerLine", { name: a.owner_name }) }));
       box.append(el("div", { className: on ? "current" : "" }, [
-        el("span", { className: "avatar-sm" + (on ? " on" : ""), textContent: initial(a.name), "aria-hidden": "true" }),
+        paint(el("span", { className: "avatar-sm", textContent: initial(a.name), "aria-hidden": "true" }), a.id),
         el("div", { className: "grow" }, info),
         more,
       ]));
@@ -854,10 +976,14 @@
       setText("heroTime", "--:--");
       setText("heroSlot", t("noSchedule"));
       setText("heroMeta", t("noScheduleHint"));
+      $("heroMeta").classList.remove("hidden");
     } else {
       setText("heroTime", n.time);
       setText("heroSlot", `${slotPart(n.time)} · ${recipText(a, n.contacts)}`);
-      setText("heroMeta", n.message || defMsg);
+      const hm = $("heroMeta");
+      hm.replaceChildren();
+      hm.classList.toggle("hidden", !n.message);
+      if (n.message) hm.append(el("span", { textContent: t("pesanLabel") + " " }), el("strong", { className: "msg-q", textContent: `"${n.message}"` }));
     }
 
     // data hari ini
@@ -932,28 +1058,46 @@
       else if (state === "rest") dot.textContent = "zz";
       box.append(el("div", { className: "day" + (isToday ? " today" : "") }, [dot, el("span", { className: "lbl", textContent: titleCase(fmt.format(dayDate(day))) })]));
     }
-    setText("weekStat", `${good}/7`);
+    setText("weekGood", `${good}/7`);
+    setText("weekLbl", " " + t("goodDays"));
   }
+
+  // saluran notifikasi aktif milik pengguna ini (+ global bila admin)
+  function activeChannels() {
+    const on = { Discord: false, Telegram: false };
+    if (myNotif) {
+      on.Discord = on.Discord || (myNotif.discord_enabled && myNotif.discord_webhook_set);
+      on.Telegram = on.Telegram || (myNotif.telegram_enabled && myNotif.telegram_token_set && !!myNotif.telegram_chat_id);
+    }
+    if (isAdmin() && settings) {
+      on.Discord = on.Discord || (settings.discord_enabled && settings.discord_webhook_set);
+      on.Telegram = on.Telegram || (settings.telegram_enabled && settings.telegram_token_set && !!settings.telegram_chat_id);
+    }
+    return on;
+  }
+  const globalChannelNames = () => {
+    const n = [];
+    if (settings && settings.discord_enabled && settings.discord_webhook_set) n.push("Discord");
+    if (settings && settings.telegram_enabled && settings.telegram_token_set && settings.telegram_chat_id) n.push("Telegram");
+    return n.length ? n.join(" & ") : t("notifOff");
+  };
 
   function renderStatusWidgets(a) {
     const c = a.cookies;
-    const bad = c.invalid || !c.present;
     $("cookieIcon").className = "w-icon " + (c.invalid ? "red" : !c.present ? "" : "green");
     setText("cookieValue", t(c.invalid ? "cookieInvalid" : !c.present ? "cookieUnset" : "cookieValid"));
-    setText("cookieSub", c.invalid ? c.invalid : !c.present ? "" : c.last_ok ? t("checkedAgo", { when: relTime(c.last_ok) }) : t("notVerified"));
-    void bad;
+    setText("cookieSub", c.invalid ? c.invalid : !c.present ? t("cookieNotSet") : c.last_ok ? t("checkedAgo", { when: relTime(c.last_ok) }) : t("notVerified"));
     if (settings) {
       const ka = settings.keepalive_enabled;
       setText("refreshValue", ka ? tn("refreshEvery", settings.keepalive_hours) : t("refreshOff"));
-      setText("refreshSub", ka ? t("refreshOn") : t("refreshOffSub"));
-      const names = [];
-      if (settings.discord_enabled && settings.discord_webhook_set) names.push("Discord");
-      if (settings.telegram_enabled && settings.telegram_token_set && settings.telegram_chat_id) names.push("Telegram");
-      setText("notifValue", names.length ? names.join(" & ") : t("notifOff"));
-      setText("notifSub", names.length ? t(settings.notify_screenshot ? "notifShot" : "notifNoShot") : t("notifNone"));
+      setText("refreshSub", ka ? (a.keepalive_next ? t("nextAt", { time: a.keepalive_next }) : t("refreshOn")) : t("refreshOffSub"));
     }
+    const on = activeChannels();
+    const names = Object.keys(on).filter((k) => on[k]);
+    setText("notifValue", names.length ? names.join(" & ") : t("notifOff"));
+    setText("notifSub", names.length === 2 ? t("bothActive") : names.length === 1 ? t("chOff", { name: names[0] === "Discord" ? "Telegram" : "Discord" }) : t("allOff"));
     setText("accountsValue", tn("nAccounts", accounts.length));
-    setText("accountsSub", t("totalContacts", { n: accounts.reduce((s, x) => s + x.contacts, 0) }));
+    setText("accountsSub", t("totalContacts", { n: accounts.reduce((x, y) => x + y.contacts, 0) }));
   }
 
   function evidenceText(ev) {
@@ -974,8 +1118,9 @@
     let detail = "";
     if (ok) detail = evidenceText(res.evidence);
     else if (fail) detail = res.error || "";
-    const time = res && res.sent_at ? res.sent_at.slice(0, 5) : "";
-    return el("div", { className: "crow" }, [dot, el("span", { className: "name", textContent: name }),
+    if (!res) detail = t("notSent");
+    const time = res && res.sent_at ? res.sent_at.slice(0, 8) : "—";
+    return el("div", { className: "crow" + (res ? "" : " pend") }, [dot, el("span", { className: "name", textContent: name }),
       el("span", { className: "detail", textContent: detail }), el("span", { className: "time", textContent: time })]);
   }
 
@@ -991,7 +1136,7 @@
       const head = el("div", { className: "slot-head" }, [
         el("div", {}, [el("span", { className: "slot-time", textContent: s.time }),
           el("span", { className: "muted", textContent: `${slotPart(s.time)} · ${recipText(a, s.contacts)}` })]),
-        badge(status),
+        status === "success" && run ? badge(status, t("doneSlot", { s: run.sent, t: run.total })) : badge(status),
       ]);
       const slot = el("div", { className: "slot" }, [head]);
       const names = s.contacts == null ? contactList : s.contacts;
@@ -1287,22 +1432,24 @@
     ul.replaceChildren();
     if (!contacts.length) ul.append(el("li", { className: "muted", textContent: t("noContacts") }));
     contacts.forEach((c) => {
-      const ren = el("button", { className: "btn plain small", type: "button", textContent: t("rename"), "aria-label": t("renameAria", { name: c }) });
-      const del = el("button", { className: "btn plain small destructive-text", type: "button", textContent: t("del"), "aria-label": t("delAria", { name: c }) });
-      del.addEventListener("click", async () => {
-        try { renderContacts((await apiA("/contacts?name=" + encodeURIComponent(c), { method: "DELETE" })).contacts); await refresh(); }
-        catch (e) { toast(e.message); }
-      });
-      ren.addEventListener("click", async () => {
-        const name = prompt(t("promptRename"), c);
-        if (!name || name.trim() === c) return;
-        try {
-          renderContacts((await apiA("/contacts/rename", { method: "PUT", body: { old: c, new: name } })).contacts);
-          await refresh();
-          renderSchedules(curAccount().schedules);
-        } catch (e) { toast(e.message); }
-      });
-      ul.append(el("li", {}, [el("div", { className: "grow" }, [el("div", { className: "title", textContent: c })]), el("div", { className: "actions" }, [ren, del])]));
+      const more = el("button", { className: "more-btn", type: "button", "aria-haspopup": "menu", "aria-expanded": "false", "aria-label": `${t("moreActions")}: ${c}` }, [icon("i-more")]);
+      more.addEventListener("click", () => openMenu(more, [
+        { label: t("rename"), icon: "i-pencil", onClick: async () => {
+          const name = prompt(t("promptRename"), c);
+          if (!name || name.trim() === c) return;
+          try {
+            renderContacts((await apiA("/contacts/rename", { method: "PUT", body: { old: c, new: name } })).contacts);
+            await refresh();
+            renderSchedules(curAccount().schedules);
+          } catch (e) { toast(e.message); }
+        } },
+        { sep: true },
+        { label: t("delContact"), icon: "i-trash", danger: true, onClick: async () => {
+          try { renderContacts((await apiA("/contacts?name=" + encodeURIComponent(c), { method: "DELETE" })).contacts); await refresh(); }
+          catch (e) { toast(e.message); }
+        } },
+      ], c));
+      ul.append(el("li", {}, [el("div", { className: "grow" }, [el("div", { className: "title", textContent: c })]), more]));
     });
     dashSig = "";
     renderDashboard();
@@ -1416,8 +1563,9 @@
   function setLoginMsg(key, cls, vars) { loginMsg = key ? { key, vars, cls } : null; renderLoginMsg(); }
 
   function setLoginUi(active) {
-    $("remoteIdle").classList.toggle("hidden", active);
+    $("remoteCard").classList.toggle("hidden", !active);
     $("remoteWrap").classList.toggle("hidden", !active);
+    $("btnLoginStart").classList.toggle("hidden", active);
     $("btnLoginSave").classList.toggle("hidden", !active);
     $("btnLoginStop").classList.toggle("hidden", !active);
   }
@@ -1474,6 +1622,8 @@
   });
 
   $("btnLoginStop").addEventListener("click", async () => {
+    clearInterval(loginTimer);
+    loginTimer = null;
     await api("/login/stop", { method: "POST" }).catch(() => {});
     endLogin("loginCancelled");
   });
@@ -1531,7 +1681,7 @@
     const hour = options(24, hh, t("hour")), min = options(60, mm, t("minute"));
     const title = el("div", { className: "title" });
     const meta = el("div", { className: "meta" });
-    const del = el("button", { className: "btn plain small destructive-text", type: "button", textContent: t("del") });
+    const del = el("button", { className: "more-btn", type: "button", "aria-haspopup": "menu", "aria-expanded": "false" }, [icon("i-more")]);
     const msg = el("input", { type: "text", value: sc.message || "", placeholder: t("schedMsgPh"), maxLength: 500, "aria-label": t("schedMsgPh") });
 
     // Penerima: semua kontak akun, atau hanya yang dicentang
@@ -1542,7 +1692,7 @@
       title.textContent = partName(+hour.value);
       meta.textContent = allBox.checked ? t("allContacts", { n: contactList.length })
         : tn("nContacts", contactList.filter((c) => selected.has(c.toLowerCase())).length);
-      del.setAttribute("aria-label", t("delSched", { time: `${hour.value}:${min.value}` }));
+      del.setAttribute("aria-label", `${t("moreActions")}: ${hour.value}:${min.value}`);
     };
     const buildChips = () => {
       chips.replaceChildren();
@@ -1575,7 +1725,9 @@
     row.setContacts = buildChips;
     row.dataset.id = sc.id || "";
     enabled.addEventListener("change", () => row.classList.toggle("off", !enabled.checked));
-    del.addEventListener("click", () => { row.remove(); syncSchedEmpty(); });
+    del.addEventListener("click", () => openMenu(del, [
+      { label: t("delSchedule"), icon: "i-trash", danger: true, onClick: () => { row.remove(); syncSchedEmpty(); } },
+    ], t("moreActions")));
     row.read = () => ({
       id: row.dataset.id || null,
       enabled: enabled.checked,
@@ -1596,7 +1748,7 @@
 
   function renderSchedules(list) {
     $("scheduleList").replaceChildren();
-    list.forEach(addScheduleRow);
+    [...list].sort((x, y) => x.time.localeCompare(y.time)).forEach(addScheduleRow);
     syncSchedEmpty();
   }
   const readSchedules = () => [...$("scheduleList").querySelectorAll(".sched")].map((r) => r.read());
@@ -1619,24 +1771,23 @@
 
   // --------------------------------------------------------------- settings
   async function loadSettings() {
-    const s = await api("/settings");
-    settings = s;
-    $("setMessage").value = s.message;
-    $("setTimezone").value = s.timezone;
-    $("setNotifyShot").checked = s.notify_screenshot;
-    $("setKeepalive").checked = s.keepalive_enabled;
-    $("setKeepaliveHours").value = s.keepalive_hours;
-    $("setPageWait").value = s.page_load_wait;
-    $("setElementWait").value = s.element_wait;
-    $("setSendDelay").value = s.send_delay;
-    $("setTgEnabled").checked = s.telegram_enabled;
-    $("setTgChat").value = s.telegram_chat_id;
+    const s0 = await api("/settings");
+    settings = s0;
+    $("setMessage").value = s0.message;
+    $("setTimezone").value = s0.timezone;
+    $("setNotifyShot").checked = s0.notify_screenshot;
+    $("setKeepalive").checked = s0.keepalive_enabled;
+    $("setKeepaliveHours").value = s0.keepalive_hours;
+    $("setPageWait").value = s0.page_load_wait;
+    $("setElementWait").value = s0.element_wait;
+    $("setSendDelay").value = s0.send_delay;
+    $("setTgEnabled").checked = s0.telegram_enabled;
+    $("setTgChat").value = s0.telegram_chat_id;
     $("setTgToken").value = "";
-    $("setDcEnabled").checked = s.discord_enabled;
+    $("setDcEnabled").checked = s0.discord_enabled;
     $("setDcWebhook").value = "";
-    $("setNotifyAll").checked = s.notify_all_accounts !== false;
+    $("setNotifyAll").checked = s0.notify_all_accounts !== false;
     renderSettingsStates();
-    $("tzLabel").textContent = t("tzLabel", { tz: s.timezone || t("tzServer") });
     renderDashboard();
   }
   function renderSettingsStates() {
@@ -1644,43 +1795,76 @@
     setText("dcWebhookState", settings.discord_webhook_set ? t("saved") : "");
     setText("tgTokenState", settings.telegram_token_set ? t("saved") : "");
     $("tzLabel").textContent = t("tzLabel", { tz: settings.timezone || t("tzServer") });
+    setText("nrChannels", globalChannelNames());
+    setText("nrMessage", settings.timezone);
+    setText("nrCookie", settings.keepalive_enabled ? tn("refreshEvery", settings.keepalive_hours) : t("refreshOff"));
+    setText("nrWaits", `${settings.page_load_wait} · ${settings.element_wait} · ${t("secUnit", { s: settings.send_delay })}`);
   }
+
+  // sheet pengaturan global (satu panel per kelompok)
+  const PANEL_TITLE = { channels: "gChannels", message: "gMessage", cookie: "cookieRefresh", waits: "gWaits" };
+  let setTrigger = null;
+  function openSetSheet(panel, trigger) {
+    setTrigger = trigger;
+    closeMenu(false);
+    document.querySelectorAll(".set-panel").forEach((p) => p.classList.toggle("hidden", p.dataset.panel !== panel));
+    $("settingsForm").dataset.panel = panel;
+    setText("setSheetTitle", t(PANEL_TITLE[panel]));
+    setText("settingsMsg", "");
+    $("setSheet").classList.remove("hidden");
+    document.body.style.overflow = "hidden";
+    const first = document.querySelector(`.set-panel[data-panel="${panel}"] input`);
+    if (first) first.focus();
+  }
+  function closeSetSheet(silent) {
+    if ($("setSheet").classList.contains("hidden")) return;
+    $("setSheet").classList.add("hidden");
+    document.body.style.overflow = "";
+    if (!silent && setTrigger) setTrigger.focus();
+  }
+  document.querySelectorAll(".nav-row[data-panel]").forEach((b) => b.addEventListener("click", () => openSetSheet(b.dataset.panel, b)));
+  $("setCancel").addEventListener("click", () => closeSetSheet());
+  $("setSheet").addEventListener("mousedown", (e) => { if (e.target === $("setSheet")) closeSetSheet(); });
+
+  const panelBody = (panel) => ({
+    channels: () => ({
+      notify_screenshot: $("setNotifyShot").checked,
+      discord_enabled: $("setDcEnabled").checked, discord_webhook: $("setDcWebhook").value.trim(),
+      telegram_enabled: $("setTgEnabled").checked, telegram_token: $("setTgToken").value.trim(), telegram_chat_id: $("setTgChat").value.trim(),
+    }),
+    message: () => ({ message: $("setMessage").value, timezone: $("setTimezone").value.trim() === (settings && settings.timezone_default) ? "" : $("setTimezone").value.trim() }),
+    cookie: () => ({ keepalive_enabled: $("setKeepalive").checked, keepalive_hours: +$("setKeepaliveHours").value }),
+    waits: () => ({ page_load_wait: +$("setPageWait").value, element_wait: +$("setElementWait").value, send_delay: +$("setSendDelay").value }),
+  })[panel]();
+  async function saveGlobal(body) { await api("/settings", { method: "PUT", body }); await loadSettings(); }
+
   $("settingsForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     try {
-      await api("/settings", {
-        method: "PUT",
-        body: {
-          message: $("setMessage").value,
-          timezone: $("setTimezone").value.trim(),
-          notify_screenshot: $("setNotifyShot").checked,
-          keepalive_enabled: $("setKeepalive").checked,
-          keepalive_hours: +$("setKeepaliveHours").value,
-          page_load_wait: +$("setPageWait").value,
-          element_wait: +$("setElementWait").value,
-          send_delay: +$("setSendDelay").value,
-          notify_all_accounts: $("setNotifyAll").checked,
-          discord_enabled: $("setDcEnabled").checked,
-          discord_webhook: $("setDcWebhook").value.trim(),
-          telegram_enabled: $("setTgEnabled").checked,
-          telegram_token: $("setTgToken").value.trim(),
-          telegram_chat_id: $("setTgChat").value.trim(),
-        },
-      });
-      await loadSettings();
-      setText("settingsMsg", "");
+      await saveGlobal(panelBody($("settingsForm").dataset.panel));
       toast(t("toastSettingsSaved"));
+      closeSetSheet();
       await refresh();
     } catch (err) { setText("settingsMsg", err.message); }
   });
-  const testHook = (path) => async () => {
-    try { await api(path, { method: "POST" }); toast(t("toastTestSent")); }
+  $("setNotifyAll").addEventListener("change", async () => {
+    try { await saveGlobal({ notify_all_accounts: $("setNotifyAll").checked }); toast(t("toastSettingsSaved")); }
+    catch (e) { toast(e.message); $("setNotifyAll").checked = !$("setNotifyAll").checked; }
+  });
+  const testHook = (path, save) => async () => {
+    try { if (save) await save(); await api(path, { method: "POST" }); toast(t("toastTestSent")); }
     catch (e) { toast(e.message); }
   };
-  $("btnDcTest").addEventListener("click", testHook("/discord/test"));
-  $("btnTgTest").addEventListener("click", testHook("/telegram/test"));
+  $("btnDcTest").addEventListener("click", testHook("/discord/test", () => saveGlobal(panelBody("channels"))));
+  $("btnTgTest").addEventListener("click", testHook("/telegram/test", () => saveGlobal(panelBody("channels"))));
 
   // ------------------------------------------------- notifikasi pribadi
+  function syncMyFields() {
+    $("myDcFields").classList.toggle("hidden", !$("myDcEnabled").checked);
+    $("myTgFields").classList.toggle("hidden", !$("myTgEnabled").checked);
+  }
+  $("myDcEnabled").addEventListener("change", syncMyFields);
+  $("myTgEnabled").addEventListener("change", syncMyFields);
   async function loadMyNotif() {
     myNotif = await api("/me/notifications");
     $("myDcEnabled").checked = myNotif.discord_enabled;
@@ -1689,39 +1873,49 @@
     $("myShot").checked = myNotif.notify_screenshot;
     $("myDcWebhook").value = "";
     $("myTgToken").value = "";
+    syncMyFields();
     renderMyNotifStates();
+    renderDashboard();
   }
   function renderMyNotifStates() {
     if (!myNotif) return;
-    setText("myDcState", myNotif.discord_webhook_set ? t("saved") : "");
-    setText("myTgState", myNotif.telegram_token_set ? t("saved") : "");
+    setText("myDcState", myNotif.discord_webhook_set ? "· " + t("saved") : "");
+    setText("myTgState", myNotif.telegram_token_set ? "· " + t("saved") : "");
+  }
+  async function saveMyNotif() {
+    await api("/me/notifications", { method: "PUT", body: {
+      discord_enabled: $("myDcEnabled").checked,
+      discord_webhook: $("myDcWebhook").value.trim(),
+      telegram_enabled: $("myTgEnabled").checked,
+      telegram_token: $("myTgToken").value.trim(),
+      telegram_chat_id: $("myTgChat").value.trim(),
+      notify_screenshot: $("myShot").checked,
+    } });
+    await loadMyNotif();
   }
   $("myNotifForm").addEventListener("submit", async (e) => {
     e.preventDefault();
-    try {
-      await api("/me/notifications", { method: "PUT", body: {
-        discord_enabled: $("myDcEnabled").checked,
-        discord_webhook: $("myDcWebhook").value.trim(),
-        telegram_enabled: $("myTgEnabled").checked,
-        telegram_token: $("myTgToken").value.trim(),
-        telegram_chat_id: $("myTgChat").value.trim(),
-        notify_screenshot: $("myShot").checked,
-      } });
-      await loadMyNotif();
-      setText("myNotifMsg", "");
-      toast(t("toastNotifSaved"));
-    } catch (err) { setText("myNotifMsg", err.message); }
+    try { await saveMyNotif(); setText("myNotifMsg", ""); toast(t("toastNotifSaved")); }
+    catch (err) { setText("myNotifMsg", err.message); }
   });
-  $("btnMyDcTest").addEventListener("click", testHook("/me/notifications/test/discord"));
-  $("btnMyTgTest").addEventListener("click", testHook("/me/notifications/test/telegram"));
-
-  function renderMyPwButton() {
-    const b = el("button", { className: "btn tinted", type: "button", textContent: t("changePassword") });
-    b.addEventListener("click", openPwModal);
-    $("myPw").replaceChildren(b);
-  }
+  $("btnMyTest").addEventListener("click", async () => {
+    if (!$("myDcEnabled").checked && !$("myTgEnabled").checked) { toast(t("enableTgDcFirst")); return; }
+    try {
+      await saveMyNotif();
+      if (myNotif.discord_enabled) await api("/me/notifications/test/discord", { method: "POST" });
+      if (myNotif.telegram_enabled) await api("/me/notifications/test/telegram", { method: "POST" });
+      toast(t("toastTestSent"));
+    } catch (e) { toast(e.message); }
+  });
+  $("rowChangePw").addEventListener("click", openPwModal);
+  $("rowLogout").addEventListener("click", logout);
 
   // ------------------------------------------------------ kelola pengguna
+  let newRole = "user";
+  document.querySelectorAll("#newUserRole [data-role]").forEach((b) => b.addEventListener("click", () => {
+    newRole = b.dataset.role;
+    document.querySelectorAll("#newUserRole [data-role]").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+  }));
   async function userAction(u, body, doneKey) {
     try { await api("/users/" + u.id, { method: "PUT", body }); toast(t(doneKey || "toastUserUpdated")); await loadUsers(); }
     catch (e) { toast(e.message); }
@@ -1729,20 +1923,21 @@
   function renderUsers() {
     const box = $("userList");
     box.replaceChildren();
+    setText("usersCount", String(users.length));
     users.forEach((u) => {
       const self = me && u.id === me.id;
       const more = el("button", { className: "more-btn", type: "button", "aria-haspopup": "menu", "aria-expanded": "false", "aria-label": `${t("moreActions")}: ${u.username}` }, [icon("i-more")]);
       more.addEventListener("click", () => openMenu(more, [
-        { label: t("resetPw"), onClick: () => {
+        { label: t("resetPw"), icon: "i-key", onClick: () => {
           const pw = prompt(t("promptNewPw", { name: u.username }));
           if (pw) userAction(u, { password: pw });
         } },
-        { label: t(u.role === "admin" ? "makeUser" : "makeAdmin"), disabled: self, reason: self ? t("yourself") : "", onClick: () => userAction(u, { role: u.role === "admin" ? "user" : "admin" }) },
-        { label: t(u.disabled ? "enable" : "disable"), disabled: self, reason: self ? t("yourself") : "", onClick: () => {
+        { label: t(u.role === "admin" ? "makeUser" : "makeAdmin"), icon: "i-shield", disabled: self, reason: self ? t("yourself") : "", onClick: () => userAction(u, { role: u.role === "admin" ? "user" : "admin" }) },
+        { label: t(u.disabled ? "enable" : "disable"), icon: "i-ban", disabled: self, reason: self ? t("yourself") : "", onClick: () => {
           if (u.disabled || confirm(t("confirmDisable", { name: u.username }))) userAction(u, { disabled: !u.disabled });
         } },
         { sep: true },
-        { label: t("del"), danger: true, disabled: self, reason: self ? t("yourself") : "", onClick: async () => {
+        { label: t("delUser"), icon: "i-trash", danger: true, disabled: self, reason: self ? t("yourself") : "", onClick: async () => {
           if (!confirm(t("confirmDeleteUser", { name: u.username }))) return;
           try { await api("/users/" + u.id, { method: "DELETE" }); toast(t("toastUserDeleted")); await loadUsers(); await refresh(); }
           catch (e) { toast(e.message); }
@@ -1750,11 +1945,11 @@
       ], u.username));
       const line = el("div", { className: "title-line" }, [el("span", { className: "title", textContent: u.username }),
         el("span", { className: "badge " + (u.role === "admin" ? "accent" : "neutral"), textContent: t(u.role === "admin" ? "roleAdmin" : "roleUser") })]);
-      if (u.disabled) line.append(el("span", { className: "badge failed", textContent: t("disabledBadge") }));
-      if (self) line.append(el("span", { className: "badge neutral", textContent: t("you") }));
+      const n = tn("acctCount", u.accounts);
+      const meta = self ? t("userMetaSelf", { n }) : t("userMeta", { n, state: t(u.disabled ? "stateDisabled" : "stateActive") });
       box.append(el("div", {}, [
-        el("span", { className: "avatar-sm" + (u.role === "admin" ? " on" : ""), textContent: initial(u.username), "aria-hidden": "true" }),
-        el("div", { className: "grow" }, [line, el("div", { className: "meta line", textContent: tn("nAccounts", u.accounts) })]),
+        paint(el("span", { className: "avatar-sm", textContent: initial(u.username), "aria-hidden": "true" }), u.id),
+        el("div", { className: "grow" }, [line, el("div", { className: "meta line", textContent: meta })]),
         more,
       ]));
     });
@@ -1762,7 +1957,7 @@
   $("btnAddUser").addEventListener("click", async () => {
     $("userErr").textContent = "";
     try {
-      await api("/users", { method: "POST", body: { username: $("newUserName").value, password: $("newUserPass").value, role: $("newUserRole").value } });
+      await api("/users", { method: "POST", body: { username: $("newUserName").value, password: $("newUserPass").value, role: newRole } });
       $("newUserName").value = $("newUserPass").value = "";
       toast(t("toastUserAdded"));
       await loadUsers();
@@ -1782,7 +1977,8 @@
     renderMyNotifStates();
     renderCookieCheck();
     renderUsers();
-    renderMyPwButton();
+    syncMyFields();
+    if (me) applyRole();
     updateEyes();
     const b = $("runBadge");
     if (b.dataset.status) b.textContent = statusLabel(b.dataset.status);

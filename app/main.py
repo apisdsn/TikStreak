@@ -3,6 +3,7 @@ import os
 import re
 from datetime import datetime
 import secrets
+import time
 import uuid
 import threading
 from typing import List, Optional
@@ -60,11 +61,11 @@ def resolve_account(user, account_id):
     accs = visible_accounts(user)
     if not account_id:
         if not accs:
-            raise HTTPException(404, "Akun tidak ditemukan")
+            raise HTTPException(404, "Akun Tidak Ditemukan")
         return accs[0]
     found = next((a for a in accs if a["id"] == account_id), None)
     if not found:
-        raise HTTPException(404, "Akun tidak ditemukan")
+        raise HTTPException(404, "Akun Tidak Ditemukan")
     return found
 
 
@@ -134,6 +135,7 @@ def public_settings():
     token = s.pop("telegram_token")
     s["telegram_token_set"] = bool(token)
     s["discord_webhook_set"] = bool(s.pop("discord_webhook"))
+    s["timezone_default"] = config.DEFAULT_TZ
     s["timezone"] = s["timezone"] or config.DEFAULT_TZ
     return s
 
@@ -155,6 +157,16 @@ def health():
     return {"status": "ok"}
 
 
+def keepalive_next(aid):
+    """Jam (HH:MM, waktu server) pengecekan cookie otomatis berikutnya, atau None."""
+    s = get_settings()
+    st = stores(aid)
+    if not s["keepalive_enabled"] or not st.cookies.read():
+        return None
+    ts = max(st.meta.read().get("last_check", 0) + s["keepalive_hours"] * 3600, time.time())
+    return datetime.fromtimestamp(ts).strftime("%H:%M")
+
+
 def account_view(acc, user=None):
     st = stores(acc["id"])
     extra = {}
@@ -170,6 +182,7 @@ def account_view(acc, user=None):
         "schedules": acc["schedules"],
         "next_run": runner.next_run_at(acc["id"]),
         "next": runner.next_schedule(acc["id"]),
+        "keepalive_next": keepalive_next(acc["id"]),
     }
 
 
@@ -208,19 +221,19 @@ def write_settings(body: SettingsIn):
         try:
             ZoneInfo(data["timezone"])
         except Exception:
-            raise HTTPException(400, "Timezone tidak dikenal")
+            raise HTTPException(400, "Timezone Tidak Dikenal")
     if "message" in data and not data["message"].strip():
-        raise HTTPException(400, "Pesan tidak boleh kosong")
+        raise HTTPException(400, "Pesan Tidak Boleh Kosong")
     if "keepalive_hours" in data and not 1 <= data["keepalive_hours"] <= 72:
-        raise HTTPException(400, "keepalive_hours harus 1-72")
+        raise HTTPException(400, "Interval Penyegaran Harus 1-72 Jam")
     for k in ("page_load_wait", "element_wait", "send_delay"):
         if k in data and not 0 <= data[k] <= 60:
-            raise HTTPException(400, f"{k} harus 0-60 detik")
+            raise HTTPException(400, f"{k} Harus 0-60 Detik")
     for k in ("telegram_token", "discord_webhook"):
         if data.get(k) == "":
             data.pop(k)
     if "discord_webhook" in data and data["discord_webhook"] != "-" and not DISCORD_RE.match(data["discord_webhook"]):
-        raise HTTPException(400, "URL webhook Discord tidak valid")
+        raise HTTPException(400, "URL Webhook Discord Tidak Valid")
     if data.get("discord_webhook") == "-":  # hapus webhook
         data["discord_webhook"] = ""
     merged = {**get_settings(), **data}
@@ -246,21 +259,21 @@ def discord_test():
 
 def clean_schedules(items):
     if len(items) > 8:
-        raise HTTPException(400, "Maksimal 8 jadwal per akun")
+        raise HTTPException(400, "Maksimal 8 Jadwal per Akun")
     clean, seen = [], set()
     for x in items:
         x = x.model_dump()
         if not re.fullmatch(r"([01]\d|2[0-3]):[0-5]\d", x["time"]):
-            raise HTTPException(400, "Format jam harus HH:MM")
+            raise HTTPException(400, "Format Jam Harus HH:MM")
         if len(x["message"]) > 500:
-            raise HTTPException(400, "Pesan jadwal maksimal 500 karakter")
+            raise HTTPException(400, "Pesan Jadwal Maksimal 500 Karakter")
         sid = x["id"] if x.get("id") and x["id"] not in seen else uuid.uuid4().hex[:6]
         seen.add(sid)
         contacts = x.get("contacts")
         if contacts is not None:
             contacts = list(dict.fromkeys(c.strip() for c in contacts if c.strip()))[:200]
             if not contacts:
-                raise HTTPException(400, f"Jadwal {x['time']}: pilih minimal satu kontak atau pilih semua kontak")
+                raise HTTPException(400, f"Jadwal {x['time']}: Pilih Minimal Satu Kontak atau Pilih Semua Kontak")
         clean.append({"id": sid, "enabled": bool(x["enabled"]), "time": x["time"],
                       "message": x["message"].strip(), "contacts": contacts})
     return clean
@@ -269,10 +282,10 @@ def clean_schedules(items):
 def clean_name(name, owner_id, exclude_id=None):
     name = (name or "").strip()
     if not 1 <= len(name) <= 40:
-        raise HTTPException(400, "Nama akun 1-40 karakter")
+        raise HTTPException(400, "Nama Akun 1-40 Karakter")
     taken = {a["name"].lower() for a in list_accounts() if a.get("owner_id") == owner_id and a["id"] != exclude_id}
     if name.lower() in taken:
-        raise HTTPException(400, "Nama akun sudah dipakai")
+        raise HTTPException(400, "Nama Akun Sudah Dipakai")
     return name
 
 
@@ -285,9 +298,9 @@ def accounts(user=Depends(current_user)):
 def add_account(body: AccountIn, user=Depends(current_user)):
     owner = owner_for_new(user)
     if len(list_accounts()) >= 10:
-        raise HTTPException(400, "Maksimal 10 akun")
+        raise HTTPException(400, "Maksimal 10 Akun")
     if user["role"] == "user" and sum(1 for a in list_accounts() if a.get("owner_id") == owner) >= 5:
-        raise HTTPException(400, "Maksimal 5 akun per pengguna")
+        raise HTTPException(400, "Maksimal 5 Akun per Pengguna")
     acc = create_account(clean_name(body.name, owner), owner)
     return account_view(acc, user)
 
@@ -297,10 +310,10 @@ def update_account(aid: str, body: AccountIn, user=Depends(current_user)):
     acc = resolve_account(user, aid)
     if body.owner_id is not None and body.owner_id != acc.get("owner_id"):
         if not is_admin(user):
-            raise HTTPException(403, "Hanya admin yang boleh memindahkan pemilik akun")
+            raise HTTPException(403, "Hanya Admin yang Boleh Memindahkan Pemilik Akun")
         new_owner = get_user(body.owner_id)
         if not new_owner or new_owner.get("disabled"):
-            raise HTTPException(400, "Pemilik baru tidak valid")
+            raise HTTPException(400, "Pemilik Baru Tidak Valid")
         old = acc.get("owner_id")
         acc["owner_id"] = new_owner["id"]
         save_account(acc)
@@ -322,9 +335,9 @@ def remove_account(aid: str, user=Depends(current_user)):
     acc = resolve_account(user, aid)
     mine = [a for a in list_accounts() if a.get("owner_id") == acc.get("owner_id")]
     if len(list_accounts()) <= 1 or (acc.get("owner_id") and len(mine) <= 1):
-        raise HTTPException(400, "Minimal harus ada satu akun")
+        raise HTTPException(400, "Minimal Harus Ada Satu Akun")
     if runner.current and runner.current["status"] == "running" and runner.current["account"]["id"] == aid:
-        raise HTTPException(409, "Akun sedang dipakai proses yang berjalan")
+        raise HTTPException(409, "Akun Sedang Dipakai Proses yang Berjalan")
     if login_session.active and login_session.account_id == aid:
         login_session.stop()
     delete_account(aid)
@@ -349,7 +362,7 @@ def add_contacts(body: ContactsIn, acc=Depends(acct)):
             current.append(n)
             added.append(n)
     if not added:
-        raise HTTPException(400, "Tidak ada kontak baru (kosong atau sudah ada)")
+        raise HTTPException(400, "Tidak Ada Kontak Baru (Kosong atau Sudah Ada)")
     contacts_store.write(current)
     return {"contacts": current, "added": added}
 
@@ -359,11 +372,11 @@ def rename_contact_api(body: RenameIn, acc=Depends(acct)):
     old, new = body.old.strip(), body.new.strip()
     current = stores(acc["id"]).contacts.read()
     if old.lower() not in {c.lower() for c in current}:
-        raise HTTPException(404, "Kontak tidak ditemukan")
+        raise HTTPException(404, "Kontak Tidak Ditemukan")
     if not new or len(new) > 100:
-        raise HTTPException(400, "Nama baru 1-100 karakter")
+        raise HTTPException(400, "Nama Baru 1-100 Karakter")
     if new.lower() != old.lower() and new.lower() in {c.lower() for c in current}:
-        raise HTTPException(409, "Nama baru sudah ada di daftar kontak")
+        raise HTTPException(409, "Nama Baru Sudah Ada di Daftar Kontak")
     rename_contact(acc["id"], old, new)
     return {"contacts": stores(acc["id"]).contacts.read()}
 
@@ -374,7 +387,7 @@ def delete_contact(name: str = Query(...), acc=Depends(acct)):
     current = contacts_store.read()
     new = [c for c in current if c.lower() != name.lower()]
     if len(new) == len(current):
-        raise HTTPException(404, "Kontak tidak ditemukan")
+        raise HTTPException(404, "Kontak Tidak Ditemukan")
     contacts_store.write(new)
     # Lepaskan kontak yang dihapus dari jadwal yang memilih kontak tertentu
     for sched in acc["schedules"]:
@@ -436,19 +449,19 @@ def _login_call(fn, *a):
     except RuntimeError as e:
         raise HTTPException(400, str(e))
     except Exception as e:
-        raise HTTPException(500, f"Browser error: {e}")
+        raise HTTPException(500, f"Browser Error: {e}")
 
 
 def _login_guard(user):
     """Sesi login remote hanya boleh dipakai pemiliknya atau admin."""
     if login_session.active and not (is_admin(user) or login_session.owner_id == user["id"]):
-        raise HTTPException(403, "Sesi login sedang dipakai pengguna lain")
+        raise HTTPException(403, "Sesi Login Sedang Dipakai Pengguna Lain")
 
 
 @app.post("/api/login/start")
 def login_start(acc=Depends(acct), user=Depends(current_user)):
     if runner.current and runner.current["status"] == "running":
-        raise HTTPException(409, "Tunggu proses yang sedang berjalan selesai")
+        raise HTTPException(409, "Tunggu Proses yang Sedang Berjalan Selesai")
     _login_guard(user)
     was_active = login_session.active
     _login_call(login_session.start, acc["id"])
@@ -498,13 +511,13 @@ def login_stop(user=Depends(current_user)):
 def run(body: RunIn, user=Depends(current_user)):
     acc = resolve_account(user, body.account)
     if body.mode not in ("send", "test", "check"):
-        raise HTTPException(400, "mode harus send, test, atau check")
+        raise HTTPException(400, "Mode Harus Send, Test, atau Check")
     if login_session.active:
-        raise HTTPException(409, "Tutup sesi login di tab Cookie dulu")
+        raise HTTPException(409, "Tutup Sesi Login di Tab Cookie Dulu")
     try:
         r = runner.start(acc["id"], body.mode, body.message.strip() if body.message else None, by=user["username"])
     except Busy:
-        raise HTTPException(409, "Masih ada proses yang berjalan")
+        raise HTTPException(409, "Masih Ada Proses yang Berjalan")
     return run_view(r)
 
 
@@ -512,7 +525,7 @@ def run(body: RunIn, user=Depends(current_user)):
 def stop(user=Depends(current_user)):
     cur = runner.current
     if cur and cur["status"] == "running" and not can_access(user, get_account(cur["account"]["id"]) or {}):
-        raise HTTPException(403, "Proses ini bukan milik Anda")
+        raise HTTPException(403, "Proses Ini Bukan Milik Anda")
     runner.stop()
     return {"ok": True}
 
@@ -531,7 +544,7 @@ def current(since: int = 0, user=Depends(current_user)):
 def run_screenshot(user=Depends(current_user)):
     from .bot import SHOT_META_PATH, SHOT_PATH
     if not os.path.exists(SHOT_PATH):
-        raise HTTPException(404, "Belum ada screenshot")
+        raise HTTPException(404, "Belum Ada Screenshot")
     if not is_admin(user):
         try:
             with open(SHOT_META_PATH, "r", encoding="utf-8") as f:
@@ -539,7 +552,7 @@ def run_screenshot(user=Depends(current_user)):
         except Exception:  # noqa: BLE001
             aid = None
         if not aid or aid not in accessible_ids(user):
-            raise HTTPException(404, "Belum ada screenshot")
+            raise HTTPException(404, "Belum Ada Screenshot")
     return FileResponse(SHOT_PATH, media_type="image/jpeg", headers={"Cache-Control": "no-store"})
 
 
@@ -547,14 +560,14 @@ def run_screenshot(user=Depends(current_user)):
 def proof(run_id: str, name: str, user=Depends(current_user)):
     from .runner import PROOFS_DIR
     if not re.fullmatch(r"[0-9a-f]{8}", run_id) or not re.fullmatch(r"\d+\.jpg", name):
-        raise HTTPException(404, "Tidak ditemukan")
+        raise HTTPException(404, "Tidak Ditemukan")
     if not is_admin(user):
         r = next((x for x in history_store.read() if x.get("id") == run_id), None)
         if not run_accessible_user(user, r):
-            raise HTTPException(404, "Tidak ditemukan")
+            raise HTTPException(404, "Tidak Ditemukan")
     path = os.path.join(PROOFS_DIR, run_id, name)
     if not os.path.exists(path):
-        raise HTTPException(404, "Bukti sudah dihapus")
+        raise HTTPException(404, "Bukti Sudah Dihapus")
     return FileResponse(path, media_type="image/jpeg")
 
 

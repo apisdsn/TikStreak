@@ -41,12 +41,12 @@ class LoginSession:
         with self._lock:
             if self.page:
                 if self.account_id != account_id:
-                    raise RuntimeError("Sesi login untuk akun lain masih terbuka. Batalkan dulu.")
+                    raise RuntimeError("Sesi Login untuk Akun Lain Masih Terbuka. Batalkan Dulu.")
                 self.last_used = time.time()
                 return
             self.account_id = account_id
             if not os.path.exists(config.BROWSER_PATH):
-                raise RuntimeError(f"Browser tidak ditemukan di {config.BROWSER_PATH}")
+                raise RuntimeError(f"Browser Tidak Ditemukan di {config.BROWSER_PATH}")
             self.last_used = time.time()
             opts = ChromiumOptions()
             opts.set_browser_path(config.BROWSER_PATH)
@@ -92,7 +92,7 @@ class LoginSession:
 
     def _need(self):
         if not self.page:
-            raise RuntimeError("Sesi login belum dimulai")
+            raise RuntimeError("Sesi Login Belum Dimulai")
         self.last_used = time.time()
 
     def input(self, ev):
@@ -140,7 +140,7 @@ class LoginSession:
             raw = self.page.cookies(all_domains=True, all_info=True)
             cookies = from_browser(raw)
             if not any(c["name"] == "sessionid" for c in cookies):
-                raise RuntimeError("Belum login: cookie sessionid belum ada")
+                raise RuntimeError("Belum Login: Cookie sessionid Belum Ada")
             stores(self.account_id).cookies.write(cookies)
             return len(cookies)
 

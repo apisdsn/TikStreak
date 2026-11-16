@@ -7,14 +7,14 @@ KEEP = ("name", "value", "domain", "path", "secure", "httpOnly")
 def parse_cookies(raw):
     raw = (raw or "").strip()
     if not raw:
-        raise ValueError("Cookie kosong")
+        raise ValueError("Cookie Kosong")
 
     items = None
     if raw[0] in "[{":
         try:
             data = json.loads(raw)
         except json.JSONDecodeError as e:
-            raise ValueError(f"JSON tidak valid: {e}") from e
+            raise ValueError(f"JSON Tidak Valid: {e}") from e
         if isinstance(data, dict):
             data = data.get("cookies", [data])
         items = data
@@ -37,7 +37,7 @@ def parse_cookies(raw):
         cookies.append(out)
 
     if not cookies:
-        raise ValueError("Tidak ada cookie yang dapat dibaca")
+        raise ValueError("Tidak Ada Cookie yang Dapat Dibaca")
     return cookies
 
 

@@ -33,12 +33,23 @@
       <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M3 3l18 18M10.6 6.1A8.9 8.9 0 0112 6c6 0 9.5 6 9.5 6a16 16 0 01-3.2 3.8M6.5 7.6A15.7 15.7 0 002.5 12S6 18 12 18c1.3 0 2.5-.3 3.5-.8M9.9 9.9a2.8 2.8 0 003.2 3.2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></symbol>
       <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6L7 7M17 17l1.4 1.4M18.4 5.6L17 7M7 17l-1.4 1.4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></symbol>
       <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M3 12h18M12 3c2.8 2.7 4 5.7 4 9s-1.2 6.3-4 9c-2.8-2.7-4-5.7-4-9s1.2-6.3 4-9z" fill="none" stroke="currentColor" stroke-width="1.9"/></symbol>
+      <symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 4l9 15.5H3z M12 10v4.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="17.2" r="1" fill="currentColor"/></symbol>
+      <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M8 10.5V8a4 4 0 018 0v2.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></symbol>
+      <symbol id="i-ext" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v4.5a1.5 1.5 0 01-1.5 1.5h-11A1.5 1.5 0 014 18.5v-11A1.5 1.5 0 015.5 6H10" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l7.5 3v5.5c0 4.6-3.1 8-7.5 9.5-4.4-1.5-7.5-4.9-7.5-9.5V6z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></symbol>
+      <symbol id="i-ban" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M6 6l12 12" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></symbol>
+      <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4.5 7h15M9.5 7V4.5h5V7M6.5 7l.8 12.2a1.5 1.5 0 001.5 1.3h6.4a1.5 1.5 0 001.5-1.3L17.5 7M10 11v6M14 11v6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M12 7.5V12l3 2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></symbol>
+      <symbol id="i-msg" viewBox="0 0 24 24"><path d="M4 5.5h16v11H9l-5 4z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></symbol>
+      <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M4 20l1-4L16.5 4.5a2 2 0 013 3L8 19z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></symbol>
       <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     </defs>
   </svg>
 
   <div id="login" class="login hidden">
-    <svg class="login-watermark" aria-hidden="true"><use href="#i-logo"/></svg>
+    <div class="login-glow" aria-hidden="true"></div>
+    <svg class="login-watermark" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M13 2.5C13.6 6 18.5 8.8 18.5 15A6.5 6.5 0 0 1 5.5 15C5.5 11.2 7.6 8.6 9.4 7.2C9.4 9.2 10.3 10.4 11.2 10.9C11 7.8 11.6 4.8 13 2.5Z" stroke-width="1.05"/><path d="M12 15L10.09 13.9" stroke-width="1.05"/><path d="M12 15L14.68 13.45" stroke-width="0.9"/><circle cx="12" cy="15" r=".7" fill="currentColor" stroke="none"/></svg>
+    <div class="login-brand" aria-hidden="true"><svg class="logo"><use href="#i-logo"/></svg><strong data-i18n="brand"></strong></div>
     <div class="login-tools">
       <button type="button" id="loginLang" class="tool-btn"><svg aria-hidden="true"><use href="#i-globe"/></svg><span id="loginLangCode">ID</span></button>
       <button type="button" id="loginTheme" class="tool-btn icon" data-i18n-aria="toggleTheme" data-i18n-title="toggleTheme"><svg aria-hidden="true"><use href="#i-moon"/></svg></button>
@@ -61,11 +72,11 @@
       <div class="topbar-in">
         <div class="brand"><svg class="logo" aria-hidden="true"><use href="#i-logo"/></svg><strong data-i18n="brand"></strong></div>
         <nav id="tabs" class="tabs" data-i18n-aria="navLabel">
-          <button type="button" data-tab="dashboard" class="active"><svg aria-hidden="true"><use href="#i-home"/></svg><span data-i18n="navDashboard"></span></button>
-          <button type="button" data-tab="accounts"><svg aria-hidden="true"><use href="#i-cal"/></svg><span data-i18n="navAccounts"></span></button>
-          <button type="button" data-tab="contacts"><svg aria-hidden="true"><use href="#i-people"/></svg><span data-i18n="navContacts"></span></button>
-          <button type="button" data-tab="cookies"><svg aria-hidden="true"><use href="#i-key"/></svg><span data-i18n="navCookies"></span></button>
-          <button type="button" data-tab="settings"><svg aria-hidden="true"><use href="#i-gear"/></svg><span data-i18n="navSettings"></span></button>
+          <button type="button" data-tab="dashboard" class="active"><svg aria-hidden="true"><use href="#i-home"/></svg><span class="lbl-long" data-i18n="navDashboard"></span><span class="lbl-short" data-i18n="navHomeS"></span></button>
+          <button type="button" data-tab="accounts"><svg aria-hidden="true"><use href="#i-cal"/></svg><span class="lbl-long" data-i18n="navAccounts"></span><span class="lbl-short" data-i18n="navScheduleS"></span></button>
+          <button type="button" data-tab="contacts"><svg aria-hidden="true"><use href="#i-people"/></svg><span class="lbl-long" data-i18n="navContacts"></span><span class="lbl-short" data-i18n="navContactsS"></span></button>
+          <button type="button" data-tab="cookies"><svg aria-hidden="true"><use href="#i-key"/></svg><span class="lbl-long" data-i18n="navCookies"></span><span class="lbl-short" data-i18n="navCookieS"></span></button>
+          <button type="button" data-tab="settings"><svg aria-hidden="true"><use href="#i-gear"/></svg><span class="lbl-long" data-i18n="navSettings"></span><span class="lbl-short" data-i18n="navSettingsS"></span></button>
         </nav>
         <div class="spacer"></div>
         <div class="segmented" role="group" data-i18n-aria="language">
@@ -107,7 +118,8 @@
               <svg class="ring" viewBox="0 0 148 148" role="img" id="ringSvg">
                 <circle cx="74" cy="74" r="60" fill="none" class="ring-bg" stroke-width="16"/>
                 <circle id="ringFg" cx="74" cy="74" r="60" fill="none" class="ring-fg blue" stroke-width="16" stroke-linecap="round" stroke-dasharray="377" stroke-dashoffset="377" transform="rotate(-90 74 74)"/>
-                <text id="ringText" x="74" y="80" text-anchor="middle" class="ring-text">--</text>
+                <text id="ringText" x="74" y="76" text-anchor="middle" class="ring-text">--</text>
+                <text id="ringCap" x="74" y="98" text-anchor="middle" class="ring-cap" data-i18n="timeLeft"></text>
               </svg>
             </div>
             <div class="next-actions">
@@ -147,7 +159,7 @@
           <article class="widget w-2x1" id="wWeek">
             <div class="w-head between">
               <div class="w-head"><span class="w-icon orange"><svg><use href="#i-flame"/></svg></span><h2 data-i18n="last7Days"></h2></div>
-              <span class="w-stat" id="weekStat"></span>
+              <span class="w-stat" id="weekStat"><b id="weekGood"></b><span class="wk-lbl" id="weekLbl"></span></span>
             </div>
             <div class="week" id="weekDays"></div>
           </article>
@@ -206,10 +218,11 @@
         <div class="two-col wide-right">
           <div class="stack">
             <div class="group">
-              <div class="group-head"><h2 data-i18n="accounts"></h2><span class="badge" id="accountsCount"></span></div>
+              <div class="group-head"><div class="gh-left"><h2 data-i18n="tiktokAccounts"></h2><span class="badge" id="accountsCount"></span></div></div>
               <div class="inset-list" id="accountList"></div>
             </div>
             <div class="group">
+              <h2 data-i18n="addAccount"></h2>
               <label for="newAccountName" data-i18n="newAccountName"></label>
               <input id="newAccountName" type="text" maxlength="40" data-i18n-ph="newAccountPh">
               <button id="btnAddAccount" class="btn primary block" type="button" data-i18n="addAccount"></button>
@@ -240,7 +253,7 @@
             <p id="contactsErr" class="error" role="alert"></p>
           </div>
           <div class="group">
-            <div class="group-head"><h2 data-i18n="contactList"></h2><span id="contactsCount" class="badge"></span></div>
+            <div class="group-head"><div class="gh-left"><h2 data-i18n="contactList"></h2><span id="contactsCount" class="badge"></span></div></div>
             <ul id="contactsList" class="inset-list"></ul>
           </div>
         </div>
@@ -249,20 +262,21 @@
       <!-- Cookies -->
       <section id="tab-cookies" class="hidden">
         <div class="page-head">
-          <div><p class="eyebrow" data-i18n="cookiesHint"></p><h1 data-i18n="navCookies"></h1></div>
+          <div><p class="eyebrow" data-i18n="cookiesEyebrow"></p><h1 data-i18n="navCookies"></h1></div>
           <div class="head-right"><span class="pill acct-chip"><span class="acct-name-text"></span></span><button id="btnCheckCookies" class="btn tinted" type="button" data-i18n="checkCookieNow"></button></div>
         </div>
         <div class="banner" id="cookieBanner"></div>
 
         <div class="group">
-          <div class="group-head"><h2 data-i18n="reLogin"></h2><span class="muted small-text" data-i18n="idleNote"></span></div>
-          <ol class="steps" id="loginSteps"></ol>
-          <div class="two-col wide-left">
-            <div>
-              <div id="remoteIdle" class="remote-idle">
-                <p class="muted" data-i18n="remoteHint"></p>
-                <button id="btnLoginStart" class="btn primary" type="button" data-i18n="startLogin"></button>
-              </div>
+          <div class="opt-row">
+            <span class="chip-rec" data-i18n="recommended"></span>
+            <div class="grow"><strong data-i18n="opt1"></strong><br><span class="muted small-text" data-i18n="opt1Sub"></span></div>
+            <button id="btnLoginStart" class="btn primary" type="button" data-i18n="startLogin"></button>
+          </div>
+          <p id="cookieErr" class="error" role="alert"></p>
+          <div id="remoteCard" class="hidden">
+            <ol class="steps" id="loginSteps"></ol>
+            <div class="two-col wide-left">
               <div id="remoteWrap" class="remote hidden">
                 <div class="remote-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">tiktok.com/login</span></div>
                 <img id="remoteView" data-i18n-alt="remoteBrowser" tabindex="0" draggable="false">
@@ -271,139 +285,139 @@
                   <input id="remoteText" type="text" data-i18n-ph="sendTextPh">
                 </div>
               </div>
-            </div>
-            <div class="stack">
-              <div class="note" id="loginStateBox"><strong id="loginState"></strong></div>
-              <ul class="tips">
-                <li data-i18n="tip1"></li>
-                <li data-i18n="tip2"></li>
-                <li data-i18n="tip3"></li>
-              </ul>
-              <button id="btnLoginSave" class="btn primary block hidden" type="button" data-i18n="saveLoginSession"></button>
-              <button id="btnLoginStop" class="btn destructive block hidden" type="button" data-i18n="cancel"></button>
+              <div class="stack">
+                <div class="note" id="loginStateBox"><strong id="loginState"></strong></div>
+                <ul class="tips">
+                  <li data-i18n="tip1"></li>
+                  <li data-i18n="tip2"></li>
+                  <li data-i18n="tip3"></li>
+                </ul>
+                <button id="btnLoginSave" class="btn primary block hidden" type="button" data-i18n="saveLoginSession"></button>
+                <button id="btnLoginStop" class="btn destructive block hidden" type="button" data-i18n="cancel"></button>
+              </div>
             </div>
           </div>
-          <p id="cookieErr" class="error" role="alert"></p>
         </div>
 
         <details class="group" id="manualCookie">
-          <summary><span><strong data-i18n="manualCookie"></strong><br><span class="muted small-text" data-i18n="manualCookieHint"></span></span><svg class="chev" aria-hidden="true"><use href="#i-chev"/></svg></summary>
-          <p class="muted guide-intro" data-i18n="manualIntro"></p>
+          <summary><span><strong data-i18n="opt2"></strong><br><span class="muted small-text" data-i18n="opt2Sub"></span></span><svg class="chev" aria-hidden="true"><use href="#i-chev"/></svg></summary>
           <ol class="guide">
-            <li class="gstep"><span class="n">1</span><div class="gtxt"><strong data-i18n="gs1t"></strong><span class="muted" data-i18n="gs1h"></span></div><a class="btn tinted small" href="https://www.tiktok.com" target="_blank" rel="noopener noreferrer" data-i18n="gs1b"></a></li>
-            <li class="gstep"><span class="n">2</span><div class="gtxt"><strong data-i18n="gs2t"></strong><span class="muted" data-i18n="gs2h"></span></div><a class="btn tinted small" href="https://cookie-editor.com" target="_blank" rel="noopener noreferrer" data-i18n="gs2b"></a></li>
+            <li class="gstep"><span class="n">1</span><div class="gtxt"><strong data-i18n="gs1t"></strong><span class="muted" data-i18n="gs1h"></span></div><a class="btn tinted small" href="https://www.tiktok.com" target="_blank" rel="noopener noreferrer"><span data-i18n="gs1b"></span><svg aria-hidden="true"><use href="#i-ext"/></svg></a></li>
+            <li class="gstep"><span class="n">2</span><div class="gtxt"><strong data-i18n="gs2t"></strong><span class="muted" data-i18n="gs2h"></span></div><a class="btn tinted small" href="https://cookie-editor.com" target="_blank" rel="noopener noreferrer"><span data-i18n="gs2b"></span><svg aria-hidden="true"><use href="#i-ext"/></svg></a></li>
             <li class="gstep"><span class="n">3</span><div class="gtxt"><strong data-i18n="gs3t"></strong><span class="muted" data-i18n="gs3h"></span></div></li>
             <li class="gstep"><span class="n">4</span><div class="gtxt"><strong data-i18n="gs4t"></strong><span class="muted" data-i18n="gs4h"></span></div></li>
             <li class="gstep"><span class="n">5</span><div class="gtxt"><strong data-i18n="gs5t"></strong><span class="muted" data-i18n="gs5h"></span></div></li>
             <li class="gstep"><span class="n">6</span><div class="gtxt"><strong data-i18n="gs6t"></strong><span class="muted" data-i18n="gs6h"></span></div></li>
           </ol>
-          <p class="note warn" data-i18n="guideWarn"></p>
-          <p class="note" data-i18n="guidePrivacy"></p>
-          <textarea id="cookieInput" rows="6" data-i18n-ph="cookiePh" data-i18n-aria="manualCookie" spellcheck="false" autocomplete="off"></textarea>
+          <div class="notes">
+            <p class="note warn"><svg aria-hidden="true"><use href="#i-warn"/></svg><span><b data-i18n="warnTitle"></b> <span data-i18n="warnText"></span></span></p>
+            <p class="note"><svg aria-hidden="true"><use href="#i-lock"/></svg><span><b data-i18n="privTitle"></b> <span data-i18n="privText"></span></span></p>
+          </div>
+          <label for="cookieInput" data-i18n="pasteLabel"></label>
+          <textarea id="cookieInput" rows="2" data-i18n-ph="cookiePh" spellcheck="false" autocomplete="off"></textarea>
           <p id="cookieCheck" class="cookie-check" role="status"></p>
           <div class="row">
             <button id="btnSaveCookies" class="btn primary" type="button" data-i18n="saveCookie" disabled></button>
-            <button id="btnClearCookies" class="btn destructive" type="button" data-i18n="deleteCookie"></button>
+            <button id="btnClearCookies" class="btn plain destructive-text" type="button" data-i18n="deleteCookie"></button>
           </div>
         </details>
       </section>
 
       <!-- Settings -->
       <section id="tab-settings" class="hidden">
-        <div class="page-head"><div><p class="eyebrow" data-i18n="settingsHint"></p><h1 data-i18n="navSettings"></h1></div></div>
-        <div class="settings">
-          <h3 class="list-title" data-i18n="myNotifs"></h3>
-          <form id="myNotifForm">
-            <div class="inset-list form">
-              <label class="cell switch-cell"><span data-i18n="discordNotif"></span><input id="myDcEnabled" type="checkbox" class="switch" role="switch"></label>
-              <div class="cell"><label for="myDcWebhook"><span data-i18n="webhookUrl"></span> <span id="myDcState" class="muted"></span></label><input id="myDcWebhook" type="password" placeholder="https://discord.com/api/webhooks/..." autocomplete="off"></div>
-              <div class="cell"><button id="btnMyDcTest" class="btn plain" type="button" data-i18n="testDiscord"></button></div>
-              <label class="cell switch-cell"><span data-i18n="telegramNotif"></span><input id="myTgEnabled" type="checkbox" class="switch" role="switch"></label>
-              <div class="cell"><label for="myTgToken"><span data-i18n="botToken"></span> <span id="myTgState" class="muted"></span></label><input id="myTgToken" type="password" data-i18n-ph="keepEmptyPh" autocomplete="off"></div>
-              <div class="cell"><label for="myTgChat" data-i18n="chatId"></label><input id="myTgChat" type="text"></div>
-              <div class="cell"><button id="btnMyTgTest" class="btn plain" type="button" data-i18n="testTelegram"></button></div>
-              <label class="cell switch-cell"><span data-i18n="attachScreenshot"></span><input id="myShot" type="checkbox" class="switch" role="switch"></label>
+        <div class="page-head"><div><p class="eyebrow" data-i18n="settingsHint"></p><h1 data-i18n="navSettings"></h1></div><span class="badge accent big" id="roleBadge"></span></div>
+        <div class="settings-grid" id="settingsGrid">
+          <div class="stack" id="settingsLeft">
+            <div>
+              <h3 class="list-title" data-i18n="myNotifs"></h3>
+              <form id="myNotifForm">
+                <div class="inset-list form">
+                  <label class="cell switch-cell"><span>Discord</span><input id="myDcEnabled" type="checkbox" class="switch" role="switch"></label>
+                  <div class="cell" id="myDcFields"><label for="myDcWebhook"><span data-i18n="webhookDiscord"></span> <span id="myDcState" class="muted"></span></label><input id="myDcWebhook" type="password" placeholder="https://discord.com/api/webhooks/..." autocomplete="off"></div>
+                  <label class="cell switch-cell"><span>Telegram</span><input id="myTgEnabled" type="checkbox" class="switch" role="switch"></label>
+                  <div class="cell" id="myTgFields">
+                    <label for="myTgToken"><span data-i18n="botToken"></span> <span id="myTgState" class="muted"></span></label><input id="myTgToken" type="password" data-i18n-ph="keepEmptyPh" autocomplete="off">
+                    <label for="myTgChat" data-i18n="chatId" class="mt"></label><input id="myTgChat" type="text">
+                  </div>
+                  <label class="cell switch-cell"><span data-i18n="attachScreenshot"></span><input id="myShot" type="checkbox" class="switch" role="switch"></label>
+                  <div class="cell cell-actions"><button id="btnMyTest" class="btn tinted" type="button" data-i18n="sendTestMsg"></button><button class="btn primary" type="submit" data-i18n="save"></button></div>
+                </div>
+                <p class="list-foot" data-i18n="myNotifFoot"></p>
+                <p id="myNotifMsg" class="error" role="alert"></p>
+              </form>
             </div>
-            <p class="list-foot" data-i18n="myNotifsHint"></p>
-            <div class="savebar"><span id="myNotifMsg" class="muted"></span><button class="btn primary" type="submit" data-i18n="save"></button></div>
-          </form>
 
-          <h3 class="list-title" data-i18n="myAccount"></h3>
-          <div class="inset-list form"><div class="cell" id="myPw"></div></div>
+            <div id="adminArea" class="hidden">
+              <h3 class="list-title" data-i18n="adminNotifs"></h3>
+              <div class="inset-list form">
+                <label class="cell switch-cell"><span data-i18n="notifyAll"></span><input id="setNotifyAll" type="checkbox" class="switch" role="switch"></label>
+                <button type="button" class="nav-row" data-panel="channels"><span class="nr-ico" style="background:#BF5AF2"><svg aria-hidden="true"><use href="#i-bell"/></svg></span><span class="nr-label" data-i18n="gChannels"></span><span class="nr-val" id="nrChannels"></span><svg class="nr-chev" aria-hidden="true"><use href="#i-chev"/></svg></button>
+                <button type="button" class="nav-row" data-panel="message"><span class="nr-ico" style="background:#0A84FF"><svg aria-hidden="true"><use href="#i-msg"/></svg></span><span class="nr-label" data-i18n="gMessage"></span><span class="nr-val" id="nrMessage"></span><svg class="nr-chev" aria-hidden="true"><use href="#i-chev"/></svg></button>
+                <button type="button" class="nav-row" data-panel="cookie"><span class="nr-ico" style="background:#40C8E0"><svg aria-hidden="true"><use href="#i-refresh"/></svg></span><span class="nr-label" data-i18n="cookieRefresh"></span><span class="nr-val" id="nrCookie"></span><svg class="nr-chev" aria-hidden="true"><use href="#i-chev"/></svg></button>
+                <button type="button" class="nav-row" data-panel="waits"><span class="nr-ico" style="background:#FF9F0A"><svg aria-hidden="true"><use href="#i-clock"/></svg></span><span class="nr-label" data-i18n="gWaits"></span><span class="nr-val" id="nrWaits"></span><svg class="nr-chev" aria-hidden="true"><use href="#i-chev"/></svg></button>
+              </div>
+              <p class="list-foot" data-i18n="adminNotifFoot"></p>
+            </div>
+            <p id="adminNote" class="list-foot hidden" data-i18n="adminOnlyNote"></p>
 
-          <p id="adminNote" class="list-foot hidden" data-i18n="adminOnlyNote"></p>
-        </div>
-
-        <div id="adminArea" class="settings hidden">
-        <form id="settingsForm" class="settings">
-          <h3 class="list-title" data-i18n="message"></h3>
-          <div class="inset-list form">
-            <div class="cell"><label for="setMessage" data-i18n="defaultMessage"></label><input id="setMessage" type="text" required></div>
-            <div class="cell"><label for="setTimezone" data-i18n="timezone"></label><input id="setTimezone" type="text" placeholder="Asia/Jakarta"></div>
+            <div>
+              <h3 class="list-title" data-i18n="myAccount"></h3>
+              <div class="inset-list">
+                <button type="button" class="nav-row link" id="rowChangePw"><span class="nr-label" data-i18n="changePassword"></span></button>
+                <button type="button" class="nav-row danger" id="rowLogout"><span class="nr-label" data-i18n="signOut"></span></button>
+              </div>
+            </div>
           </div>
 
-          <h3 class="list-title" data-i18n="cookie"></h3>
-          <div class="inset-list form">
-            <label class="cell switch-cell"><span data-i18n="keepalive"></span><input id="setKeepalive" type="checkbox" class="switch" role="switch"></label>
-            <div class="cell"><label for="setKeepaliveHours" data-i18n="keepaliveHours"></label><input id="setKeepaliveHours" type="number" min="1" max="72"></div>
-          </div>
-
-          <h3 class="list-title" data-i18n="waits"></h3>
-          <div class="inset-list form">
-            <div class="cell"><label for="setPageWait" data-i18n="pageLoad"></label><input id="setPageWait" type="number" min="0" max="60"></div>
-            <div class="cell"><label for="setElementWait" data-i18n="element"></label><input id="setElementWait" type="number" min="0" max="60"></div>
-            <div class="cell"><label for="setSendDelay" data-i18n="sendDelay"></label><input id="setSendDelay" type="number" min="0" max="60"></div>
-          </div>
-
-          <h3 class="list-title" data-i18n="proof"></h3>
-          <div class="inset-list form">
-            <label class="cell switch-cell"><span data-i18n="attachScreenshot"></span><input id="setNotifyShot" type="checkbox" class="switch" role="switch"></label>
-          </div>
-          <p class="list-foot" data-i18n="attachScreenshotHint"></p>
-
-          <h3 class="list-title" data-i18n="adminNotifs"></h3>
-          <div class="inset-list form">
-            <label class="cell switch-cell"><span data-i18n="notifyAll"></span><input id="setNotifyAll" type="checkbox" class="switch" role="switch"></label>
-          </div>
-          <p class="list-foot" data-i18n="notifyAllHint"></p>
-
-          <h3 class="list-title">Discord</h3>
-          <div class="inset-list form">
-            <label class="cell switch-cell"><span data-i18n="enableNotif"></span><input id="setDcEnabled" type="checkbox" class="switch" role="switch"></label>
-            <div class="cell"><label for="setDcWebhook"><span data-i18n="webhookUrl"></span> <span id="dcWebhookState" class="muted"></span></label><input id="setDcWebhook" type="password" placeholder="https://discord.com/api/webhooks/..." autocomplete="off"></div>
-            <div class="cell"><button id="btnDcTest" class="btn plain" type="button" data-i18n="testDiscord"></button></div>
-          </div>
-
-          <h3 class="list-title">Telegram</h3>
-          <div class="inset-list form">
-            <label class="cell switch-cell"><span data-i18n="enableNotif"></span><input id="setTgEnabled" type="checkbox" class="switch" role="switch"></label>
-            <div class="cell"><label for="setTgToken"><span data-i18n="botToken"></span> <span id="tgTokenState" class="muted"></span></label><input id="setTgToken" type="password" data-i18n-ph="keepEmptyPh" autocomplete="off"></div>
-            <div class="cell"><label for="setTgChat" data-i18n="chatId"></label><input id="setTgChat" type="text"></div>
-            <div class="cell"><button id="btnTgTest" class="btn plain" type="button" data-i18n="testTelegram"></button></div>
-          </div>
-
-          <div class="savebar">
-            <span id="settingsMsg" class="muted"></span>
-            <button class="btn primary" type="submit" data-i18n="save"></button>
-          </div>
-        </form>
-
-          <h3 class="list-title" id="usersHeading" tabindex="-1" data-i18n="users"></h3>
-          <div class="inset-list" id="userList"></div>
-          <div class="group">
-            <h2 data-i18n="addUser"></h2>
-            <label for="newUserName" data-i18n="username"></label>
-            <input id="newUserName" type="text" autocomplete="off" autocapitalize="none" spellcheck="false">
-            <label for="newUserPass" data-i18n="password"></label>
-            <input id="newUserPass" type="password" autocomplete="new-password">
-            <label for="newUserRole" data-i18n="role"></label>
-            <select id="newUserRole"><option value="user" data-i18n="roleUser"></option><option value="admin" data-i18n="roleAdmin"></option></select>
-            <button id="btnAddUser" class="btn primary block" type="button" data-i18n="addUser"></button>
-            <p id="userErr" class="error" role="alert"></p>
+          <div id="usersCol" class="hidden">
+            <div class="group">
+              <div class="group-head"><div class="gh-left"><h2 id="usersHeading" tabindex="-1" data-i18n="users"></h2><span class="badge" id="usersCount"></span></div><span class="muted small-text" data-i18n="adminOnly"></span></div>
+              <div class="inset-list" id="userList"></div>
+              <h2 class="sub-h" data-i18n="addUser"></h2>
+              <div class="grid2">
+                <div><label for="newUserName" data-i18n="username"></label><input id="newUserName" type="text" autocomplete="off" autocapitalize="none" spellcheck="false"></div>
+                <div><label for="newUserPass" data-i18n="tempPassword"></label><input id="newUserPass" type="password" autocomplete="new-password"></div>
+              </div>
+              <div class="row-between">
+                <div class="segmented" role="group" data-i18n-aria="role" id="newUserRole"><button type="button" data-role="user" aria-pressed="true" data-i18n="roleUser"></button><button type="button" data-role="admin" aria-pressed="false" data-i18n="roleAdmin"></button></div>
+                <button id="btnAddUser" class="btn primary" type="button" data-i18n="addUser"></button>
+              </div>
+              <p id="userErr" class="error" role="alert"></p>
+            </div>
           </div>
         </div>
       </section>
     </main>
+  </div>
+  <div id="setSheet" class="overlay center bottom hidden">
+    <form id="settingsForm" class="sheet sheet-card modal" role="dialog" aria-modal="true" aria-labelledby="setSheetTitle" novalidate>
+      <h2 id="setSheetTitle"></h2>
+      <div class="set-panel" data-panel="channels">
+        <label class="cell-row"><span>Discord</span><input id="setDcEnabled" type="checkbox" class="switch" role="switch"></label>
+        <div class="field"><label for="setDcWebhook"><span data-i18n="webhookDiscord"></span> <span id="dcWebhookState" class="muted"></span></label><input id="setDcWebhook" type="password" placeholder="https://discord.com/api/webhooks/..." autocomplete="off"></div>
+        <button id="btnDcTest" class="btn tinted" type="button" data-i18n="testDiscord"></button>
+        <label class="cell-row"><span>Telegram</span><input id="setTgEnabled" type="checkbox" class="switch" role="switch"></label>
+        <div class="field"><label for="setTgToken"><span data-i18n="botToken"></span> <span id="tgTokenState" class="muted"></span></label><input id="setTgToken" type="password" data-i18n-ph="keepEmptyPh" autocomplete="off"></div>
+        <div class="field"><label for="setTgChat" data-i18n="chatId"></label><input id="setTgChat" type="text"></div>
+        <button id="btnTgTest" class="btn tinted" type="button" data-i18n="testTelegram"></button>
+        <label class="cell-row"><span data-i18n="attachScreenshot"></span><input id="setNotifyShot" type="checkbox" class="switch" role="switch"></label>
+      </div>
+      <div class="set-panel" data-panel="message">
+        <div class="field"><label for="setMessage" data-i18n="defaultMessage"></label><input id="setMessage" type="text"></div>
+        <div class="field"><label for="setTimezone" data-i18n="timezone"></label><input id="setTimezone" type="text" placeholder="Asia/Jakarta"></div>
+      </div>
+      <div class="set-panel" data-panel="cookie">
+        <label class="cell-row"><span data-i18n="keepalive"></span><input id="setKeepalive" type="checkbox" class="switch" role="switch"></label>
+        <div class="field"><label for="setKeepaliveHours" data-i18n="keepaliveHours"></label><input id="setKeepaliveHours" type="number" min="1" max="72"></div>
+      </div>
+      <div class="set-panel" data-panel="waits">
+        <div class="field"><label for="setPageWait" data-i18n="pageLoad"></label><input id="setPageWait" type="number" min="0" max="60"></div>
+        <div class="field"><label for="setElementWait" data-i18n="element"></label><input id="setElementWait" type="number" min="0" max="60"></div>
+        <div class="field"><label for="setSendDelay" data-i18n="sendDelay"></label><input id="setSendDelay" type="number" min="0" max="60"></div>
+      </div>
+      <p id="settingsMsg" class="error" role="alert"></p>
+      <div class="modal-actions"><button type="button" id="setCancel" class="btn" data-i18n="cancel"></button><button type="submit" class="btn primary" data-i18n="save"></button></div>
+    </form>
   </div>
   <div id="pwModal" class="overlay center hidden">
     <form id="pwForm" class="sheet sheet-card modal" role="dialog" aria-modal="true" aria-labelledby="pwTitle" novalidate>

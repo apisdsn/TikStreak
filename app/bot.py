@@ -135,7 +135,7 @@ class StreakBot:
     # ---------------------------------------------------------------- browser
     def _create_browser(self):
         if not os.path.exists(config.BROWSER_PATH):
-            raise RuntimeError(f"Browser tidak ditemukan di {config.BROWSER_PATH}")
+            raise RuntimeError(f"Browser Tidak Ditemukan di {config.BROWSER_PATH}")
         opts = ChromiumOptions()
         opts.set_browser_path(config.BROWSER_PATH)
         opts.set_user_data_path(tempfile.mkdtemp(prefix="chromium-"))
@@ -154,40 +154,40 @@ class StreakBot:
             opts.set_argument("--headless=new")
         opts.set_user_agent(config.USER_AGENT)
         self.page = ChromiumPage(opts)
-        self.log("Browser siap")
+        self.log("Browser Siap")
 
     def _load_cookies(self):
         cookies = self.cookies_store.read()
         if not cookies:
-            raise CookieInvalid("Cookie TikTok belum diatur")
+            raise CookieInvalid("Cookie TikTok Belum Diatur")
         self.page.get(config.TIKTOK_URL)
         self._sleep(2)
         for c in cookies:
             try:
                 self.page.set.cookies(c)
             except Exception as e:  # noqa: BLE001
-                self.log(f"Cookie dilewati ({c.get('name')}): {e}", "debug")
-        self.log(f"{len(cookies)} cookie dimuat")
+                self.log(f"Cookie Dilewati ({c.get('name')}): {e}", "debug")
+        self.log(f"{len(cookies)} Cookie Dimuat")
 
     def _verify_login(self):
         self.page.get(config.TIKTOK_MESSAGES_URL)
         self._sleep(self.s["page_load_wait"])
         url = self.page.url or ""
         if "login" in url:
-            raise CookieInvalid("Cookie kedaluwarsa atau tidak valid (diarahkan ke halaman login)")
+            raise CookieInvalid("Cookie Kedaluwarsa atau Tidak Valid (Diarahkan ke Halaman Login)")
         if "messages" not in url:
-            raise RuntimeError(f"URL tidak terduga: {url}")
+            raise RuntimeError(f"URL Tidak Terduga: {url}")
         names = {c.get("name") for c in self.page.cookies(all_domains=True)}
         if "sessionid" not in names:
-            raise CookieInvalid("Cookie sessionid ditolak TikTok (sesi sudah tidak berlaku)")
+            raise CookieInvalid("Cookie sessionid Ditolak TikTok (Sesi Sudah Tidak Berlaku)")
         try:
             login_btn = self.page.ele('css:[data-e2e="top-login-button"]', timeout=1)
         except Exception:  # noqa: BLE001
             login_btn = None
         if login_btn:
-            raise CookieInvalid("TikTok menampilkan tombol Log in (sesi tidak berlaku)")
+            raise CookieInvalid("TikTok Menampilkan Tombol Log In (Sesi Tidak Berlaku)")
         self.logged_in = True
-        self.log("Login terverifikasi")
+        self.log("Login Terverifikasi")
         self._save_cookies()
         self._dismiss_popups()
 
@@ -198,9 +198,9 @@ class StreakBot:
             if any(c["name"] == "sessionid" for c in fresh):
                 self.cookies_store.write(fresh)
                 self.cookies_saved = True
-                self.log(f"Cookie diperbarui ({len(fresh)})")
+                self.log(f"Cookie Diperbarui ({len(fresh)})")
         except Exception as e:  # noqa: BLE001
-            self.log(f"Gagal menyimpan cookie terbaru: {e}", "warning")
+            self.log(f"Gagal Menyimpan Cookie Terbaru: {e}", "warning")
 
     def _dismiss_popups(self):
         self._sleep(2)
@@ -215,12 +215,12 @@ class StreakBot:
                 btn = self.page.ele(sel, timeout=1)
                 if btn:
                     btn.click()
-                    self.log("Popup ditutup")
+                    self.log("Popup Ditutup")
                     self._sleep(1)
                     return
             except Exception:  # noqa: BLE001
                 continue
-        self.log("Popup terdeteksi tetapi tombol tutup tidak ditemukan", "warning")
+        self.log("Popup Terdeteksi Tetapi Tombol Tutup Tidak Ditemukan", "warning")
 
     # ---------------------------------------------------------------- contact
     def _find_contact_legacy(self, name):
@@ -447,13 +447,13 @@ class StreakBot:
             self._sleep(self.s["page_load_wait"])
             found = self._locate(name, conv_id)
         if not found:
-            raise RuntimeError("Kontak tidak ditemukan di daftar pesan")
+            raise RuntimeError("Kontak Tidak Ditemukan di Daftar Pesan")
 
         el, nick, cid = found["el"], found["nick"], found.get("id")
         evidence = {}
         if nick.strip().lower() != name.strip().lower():
             evidence["renamed_to"] = nick
-            self.log(f"{name}: nama berubah menjadi '{nick}' (dikenali lewat ID percakapan)", "warning")
+            self.log(f"{name}: Nama Berubah Menjadi '{nick}' (Dikenali lewat ID Percakapan)", "warning")
         self._remember(name, cid)
         if self.test_mode:
             return evidence
@@ -467,16 +467,16 @@ class StreakBot:
         # Pastikan chat yang terbuka memang milik penerima
         header, uid = self._chat_header()
         if header is not None and nick.strip().lower() not in header.lower():
-            raise RuntimeError(f"Chat yang terbuka milik '{header}', bukan '{nick}'. Pesan tidak dikirim")
+            raise RuntimeError(f"Chat yang Terbuka Milik '{header}', Bukan '{nick}'. Pesan Tidak Dikirim")
         if header is None:
-            self.log("Header chat tidak terbaca, penerima tidak bisa diverifikasi", "warning")
+            self.log("Header Chat Tidak Terbaca, Penerima Tidak Bisa Diverifikasi", "warning")
         evidence["chat"] = header
         if uid:
             evidence["uid"] = uid
 
         box = self._find_input()
         if not box:
-            raise RuntimeError("Kolom pesan tidak ditemukan")
+            raise RuntimeError("Kolom Pesan Tidak Ditemukan")
         before = self._count_text(self.message)
         box.click()
         self._sleep(0.5)
@@ -485,14 +485,14 @@ class StreakBot:
         self.page.run_cdp("Input.insertText", text=self.message)
         self._sleep(0.7)
         if self._input_text() == "":
-            raise RuntimeError("Teks tidak masuk ke kolom pesan")
+            raise RuntimeError("Teks Tidak Masuk ke Kolom Pesan")
 
         self._press_enter()
         sent = self._wait_sent(before)
         if not sent and self._click_send_button():
             sent = self._wait_sent(before)
         if not sent:
-            raise RuntimeError("Pesan tidak terverifikasi terkirim (cek screenshot)")
+            raise RuntimeError("Pesan Tidak Terverifikasi Terkirim (Cek Screenshot)")
 
         evidence["bubble"] = self._last_bubble()
         evidence["count"] = [before, self._count_text(self.message)]
@@ -506,7 +506,7 @@ class StreakBot:
         results = []
         try:
             if not contacts and not self.check_only:
-                raise RuntimeError("Daftar kontak kosong")
+                raise RuntimeError("Daftar Kontak Kosong")
             self._create_browser()
             self._load_cookies()
             self._verify_login()
@@ -519,7 +519,7 @@ class StreakBot:
                 ok, err, evidence = False, None, None
                 for attempt in range(1, 4):
                     try:
-                        self.log(f"{'[TEST] ' if self.test_mode else ''}Memproses {name} (percobaan {attempt}/3)")
+                        self.log(f"{'[TEST] ' if self.test_mode else ''}Memproses {name} (Percobaan {attempt}/3)")
                         evidence = self._send_to(name)
                         ok = True
                         break
@@ -533,7 +533,7 @@ class StreakBot:
                     self.log(f"{name}: {'ditemukan' if self.test_mode else 'terkirim'}")
                 else:
                     shown = ", ".join(self._visible_nicknames()) or "-"
-                    self.log(f"Nickname terlihat di halaman: {shown}", "info")
+                    self.log(f"Nickname Terlihat di Halaman: {shown}", "info")
                 results.append({
                     "contact": name, "ok": ok, "error": None if ok else err,
                     "sent_at": datetime.now().strftime("%H:%M:%S") if ok and not self.test_mode else None,
@@ -550,7 +550,7 @@ class StreakBot:
                     self.page.quit()
                 except Exception:  # noqa: BLE001
                     pass
-                self.log("Browser ditutup")
+                self.log("Browser Ditutup")
 
         sent = sum(1 for r in results if r["ok"])
         total = len(contacts)

@@ -83,7 +83,7 @@ class Runner:
         settings = get_settings()
         log = self._log_fn(run)
         mode = run["mode"]
-        log({"test": "Mode uji (tidak mengirim pesan)", "check": "Cek & perbarui cookie"}.get(mode, "Mulai mengirim streak"))
+        log({"test": "Mode Uji (Tidak Mengirim Pesan)", "check": "Cek & Perbarui Cookie"}.get(mode, "Mulai Mengirim Streak"))
         bot = None
         st = stores(run["account"]["id"])
         try:
@@ -92,7 +92,7 @@ class Runner:
                 wanted = {c.lower() for c in run["only"]}
                 contacts = [c for c in contacts if c.lower() in wanted]
                 if not contacts:
-                    raise RuntimeError("Tidak ada kontak terpilih untuk jadwal ini (mungkin sudah dihapus)")
+                    raise RuntimeError("Tidak Ada Kontak Terpilih untuk Jadwal Ini (Mungkin Sudah Dihapus)")
             bot = StreakBot(settings, log, self._cancel, st.cookies, test_mode=(mode == "test"),
                             message=message, check_only=(mode == "check"),
                             proof_dir=os.path.join(PROOFS_DIR, run["id"]), convs_store=st.convs,
@@ -103,11 +103,11 @@ class Runner:
                 new = (r.get("evidence") or {}).get("renamed_to")
                 if new:
                     rename_contact(run["account"]["id"], r["contact"], new)
-                    log(f"Kontak diperbarui otomatis: {r['contact']} → {new}")
-            log("Cookie valid" if mode == "check" else f"Selesai: {res['sent']}/{res['total']}")
+                    log(f"Kontak Diperbarui Otomatis: {r['contact']} → {new}")
+            log("Cookie Valid" if mode == "check" else f"Selesai: {res['sent']}/{res['total']}")
         except Cancelled:
             run["status"] = "cancelled"
-            log("Dihentikan oleh pengguna", "warning")
+            log("Dihentikan Oleh Pengguna", "warning")
         except CookieInvalid as e:
             run["status"] = "failed"
             run["error"] = str(e)

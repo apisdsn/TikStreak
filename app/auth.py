@@ -57,13 +57,13 @@ def _dummy_user():
 
 def check_password_rules(password):
     if not isinstance(password, str) or not 8 <= len(password) <= 128:
-        raise HTTPException(400, "Password harus 8-128 karakter")
+        raise HTTPException(400, "Kata Sandi Harus 8-128 Karakter")
 
 
 def clean_username(name):
     name = (name or "").strip().lower()
     if not USERNAME_RE.match(name):
-        raise HTTPException(400, "Username 3-32 karakter: huruf kecil, angka, titik, garis bawah, atau strip")
+        raise HTTPException(400, "Nama Pengguna 3-32 Karakter: Huruf Kecil, Angka, Titik, Garis Bawah, atau Strip")
     return name
 
 
@@ -178,7 +178,7 @@ def throttle_check(keys):
     with _tlock:
         for k in keys:
             if _locked.get(k, 0) > now:
-                raise HTTPException(429, "Terlalu banyak percobaan gagal. Coba lagi beberapa menit lagi.")
+                raise HTTPException(429, "Terlalu Banyak Percobaan Gagal. Coba Lagi Beberapa Menit Lagi.")
 
 
 def throttle_fail(keys):
@@ -214,7 +214,7 @@ def csrf_ok(request):
 
 def require_csrf(request):
     if not csrf_ok(request):
-        raise HTTPException(403, "Permintaan ditolak (CSRF)")
+        raise HTTPException(403, "Permintaan Ditolak (CSRF)")
 
 
 # ---------------------------------------------------------------- dependency
@@ -225,10 +225,10 @@ def current_user(request: Request, x_api_key: Optional[str] = Header(None)):
     if x_api_key:
         if config.API_KEY and secrets.compare_digest(x_api_key, config.API_KEY):
             return API_USER
-        raise HTTPException(401, "Access key salah atau tidak ada")
+        raise HTTPException(401, "Kunci API Salah atau Tidak Ada")
     user = user_from_token(request.cookies.get(COOKIE))
     if not user:
-        raise HTTPException(401, "Belum masuk")
+        raise HTTPException(401, "Belum Masuk")
     if request.method not in ("GET", "HEAD", "OPTIONS"):
         require_csrf(request)
     return user
@@ -236,7 +236,7 @@ def current_user(request: Request, x_api_key: Optional[str] = Header(None)):
 
 def require_admin(user=Depends(current_user)):
     if user["role"] != "admin":
-        raise HTTPException(403, "Hanya admin yang boleh melakukan ini")
+        raise HTTPException(403, "Hanya Admin yang Boleh Melakukan Ini")
     return user
 
 
@@ -319,10 +319,10 @@ def auth_setup(body: SetupIn, request: Request, response: Response):
     throttle_check(keys)
     with _lock:
         if list_users():
-            raise HTTPException(409, "Panel sudah disiapkan")
+            raise HTTPException(409, "Panel Sudah Disiapkan")
         if not config.API_KEY or not secrets.compare_digest(body.api_key, config.API_KEY):
             throttle_fail(keys)
-            raise HTTPException(401, "API key salah")
+            raise HTTPException(401, "Kunci API Salah")
         username = clean_username(body.username)
         check_password_rules(body.password)
         user = make_user(username, body.password, "admin")
@@ -346,7 +346,7 @@ def auth_login(body: LoginIn, request: Request, response: Response):
     ok = verify_password(user or _dummy_user(), body.password) and user is not None and not user.get("disabled")
     if not ok:
         throttle_fail(keys)
-        raise HTTPException(401, "Username atau password salah")
+        raise HTTPException(401, "Nama Pengguna atau Kata Sandi Salah")
     throttle_ok(keys)
     if user["role"] == "user":
         ensure_default_account(user["id"])
@@ -367,12 +367,12 @@ def auth_logout(request: Request, response: Response):
 @router.post("/api/auth/password")
 def auth_password(body: PasswordIn, user=Depends(current_user)):
     if user.get("synthetic"):
-        raise HTTPException(400, "Tidak tersedia untuk akses API key")
+        raise HTTPException(400, "Tidak Tersedia untuk Akses Kunci API")
     keys = [f"pw:{user['id']}"]
     throttle_check(keys)
     if not verify_password(user, body.current):
         throttle_fail(keys)
-        raise HTTPException(400, "Password saat ini salah")
+        raise HTTPException(400, "Kata Sandi Saat Ini Salah")
     check_password_rules(body.new)
     with _lock:
         users = list_users()
@@ -399,12 +399,12 @@ def users_list(user=Depends(require_admin)):
 @router.post("/api/users")
 def users_create(body: UserIn, user=Depends(require_admin)):
     if body.role not in ("admin", "user"):
-        raise HTTPException(400, "Role harus admin atau user")
+        raise HTTPException(400, "Peran Harus Admin atau Pengguna")
     username = clean_username(body.username)
     check_password_rules(body.password)
     with _lock:
         if find_by_username(username):
-            raise HTTPException(400, "Username sudah dipakai")
+            raise HTTPException(400, "Nama Pengguna Sudah Dipakai")
         new = make_user(username, body.password, body.role)
         users_store.write(list_users() + [new])
     ensure_default_account(new["id"])
@@ -417,15 +417,15 @@ def users_update(uid: str, body: UserUpdate, user=Depends(require_admin)):
         users = list_users()
         target = next((u for u in users if u["id"] == uid), None)
         if not target:
-            raise HTTPException(404, "Pengguna tidak ditemukan")
+            raise HTTPException(404, "Pengguna Tidak Ditemukan")
         was_active_admin = target["role"] == "admin" and not target.get("disabled")
         new_role = body.role if body.role is not None else target["role"]
         new_disabled = body.disabled if body.disabled is not None else bool(target.get("disabled"))
         if new_role not in ("admin", "user"):
-            raise HTTPException(400, "Role harus admin atau user")
+            raise HTTPException(400, "Peran Harus Admin atau Pengguna")
         if was_active_admin and not (new_role == "admin" and not new_disabled):
             if len(active_admins()) <= 1:
-                raise HTTPException(400, "Tidak bisa mengubah admin aktif terakhir")
+                raise HTTPException(400, "Tidak Bisa Mengubah Admin Aktif Terakhir")
         kill = False
         if body.password is not None:
             check_password_rules(body.password)
@@ -451,17 +451,17 @@ def users_delete(uid: str, reassign_to: Optional[str] = None, user=Depends(requi
         users = list_users()
         target = next((u for u in users if u["id"] == uid), None)
         if not target:
-            raise HTTPException(404, "Pengguna tidak ditemukan")
+            raise HTTPException(404, "Pengguna Tidak Ditemukan")
         if uid == user["id"]:
-            raise HTTPException(400, "Tidak bisa menghapus diri sendiri")
+            raise HTTPException(400, "Tidak Bisa Menghapus Diri Sendiri")
         if target["role"] == "admin" and not target.get("disabled") and len(active_admins()) <= 1:
-            raise HTTPException(400, "Tidak bisa menghapus admin aktif terakhir")
+            raise HTTPException(400, "Tidak Bisa Menghapus Admin Aktif Terakhir")
         dest_id = reassign_to or (user["id"] if not user.get("synthetic") else None)
         dest = get_user(dest_id) if dest_id else None
         if dest is None and user.get("synthetic"):
             dest = active_admins()[0] if active_admins() else None
         if not dest or dest.get("disabled") or dest["role"] != "admin" or dest["id"] == uid:
-            raise HTTPException(400, "Tujuan pemindahan akun harus admin aktif lain")
+            raise HTTPException(400, "Tujuan Pemindahan Akun Harus Admin Aktif Lain")
         for acc in list_accounts():
             if acc.get("owner_id") == uid:
                 acc["owner_id"] = dest["id"]
@@ -492,7 +492,7 @@ def user_notify(u):
 
 def _real_user(user):
     if user.get("synthetic"):
-        raise HTTPException(400, "Tidak tersedia untuk akses API key")
+        raise HTTPException(400, "Tidak Tersedia untuk Akses Kunci API")
     return user
 
 
@@ -517,12 +517,12 @@ def my_notifications_put(body: NotifyIn, user=Depends(current_user)):
         if data.get(k) == "":
             data.pop(k)
     if "discord_webhook" in data and data["discord_webhook"] != "-" and not DISCORD_RE.match(data["discord_webhook"]):
-        raise HTTPException(400, "URL webhook Discord tidak valid")
+        raise HTTPException(400, "URL Webhook Discord Tidak Valid")
     if data.get("discord_webhook") == "-":
         data["discord_webhook"] = ""
     for k in ("telegram_chat_id", "telegram_token"):
         if k in data and len(data[k]) > 200:
-            raise HTTPException(400, f"{k} terlalu panjang")
+            raise HTTPException(400, f"{k} Terlalu Panjang")
     with _lock:
         users = list_users()
         for u in users:
