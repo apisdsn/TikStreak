@@ -1,5 +1,6 @@
 """Otomasi pengiriman pesan streak TikTok lewat browser (DrissionPage)."""
 import base64
+import json
 import os
 import re
 import tempfile
@@ -13,6 +14,7 @@ from . import config
 from .cookies import from_browser
 
 SHOT_PATH = os.path.join(config.DATA_DIR, "last_run.jpg")
+SHOT_META_PATH = os.path.join(config.DATA_DIR, "last_run.json")
 
 # Selector lama (cadangan bila atribut data-e2e daftar chat berubah)
 LEGACY_NICKNAME_SELECTORS = [
@@ -104,7 +106,7 @@ def xpath_literal(s):
 
 
 class StreakBot:
-    def __init__(self, settings, log, cancel_event, cookies_store, test_mode=False, message=None, check_only=False, proof_dir=None, convs_store=None):
+    def __init__(self, settings, log, cancel_event, cookies_store, test_mode=False, message=None, check_only=False, proof_dir=None, convs_store=None, account_id=None):
         self.s = settings
         self.cookies_store = cookies_store
         self.log = log
@@ -114,6 +116,7 @@ class StreakBot:
         self.check_only = check_only
         self.proof_dir = proof_dir
         self.convs = convs_store
+        self.account_id = account_id
         self.page = None
         self.logged_in = False
         self.cookies_saved = False
@@ -419,6 +422,8 @@ class StreakBot:
             r = self.page.run_cdp("Page.captureScreenshot", format="jpeg", quality=70)
             with open(SHOT_PATH, "wb") as f:
                 f.write(base64.b64decode(r["data"]))
+            with open(SHOT_META_PATH, "w", encoding="utf-8") as f:
+                json.dump({"account_id": self.account_id}, f)
         except Exception:  # noqa: BLE001
             pass
 

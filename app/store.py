@@ -16,6 +16,7 @@ DEFAULT_SETTINGS = {
     "discord_enabled": False,
     "discord_webhook": "",
     "notify_screenshot": False,
+    "notify_all_accounts": True,
     "keepalive_enabled": True,
     "keepalive_hours": 12,
     "page_load_wait": 5,
@@ -115,8 +116,8 @@ def save_account(acc):
     accounts_store.write(accs)
 
 
-def create_account(name):
-    acc = {"id": uuid.uuid4().hex[:6], "name": name, "schedules": []}
+def create_account(name, owner_id=None):
+    acc = {"id": uuid.uuid4().hex[:6], "name": name, "owner_id": owner_id, "schedules": []}
     save_account(acc)
     return acc
 

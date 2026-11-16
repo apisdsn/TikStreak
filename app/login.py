@@ -28,6 +28,7 @@ class LoginSession:
     def __init__(self):
         self.page = None
         self.account_id = None
+        self.owner_id = None
         self.last_used = 0
         self._lock = threading.RLock()
         threading.Thread(target=self._reaper, daemon=True).start()

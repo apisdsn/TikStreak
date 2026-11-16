@@ -1,3 +1,4 @@
+import json
 import os
 import re
 from datetime import datetime
@@ -13,6 +14,17 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from . import config
+from .auth import (
+    accessible_ids,
+    can_access,
+    current_user,
+    is_admin,
+    owner_for_new,
+    public_user,
+    require_admin,
+    router as auth_router,
+    visible_accounts,
+)
 from .cookies import parse_cookies, summary
 from .login import login_session
 from .notify import DISCORD_RE, send_discord, send_telegram
@@ -30,28 +42,35 @@ from .store import (
     settings_store,
     stores,
 )
+from .auth import get_user
 
 if not config.API_KEY:
     raise SystemExit("API_KEY belum diatur. Isi API_KEY pada file .env")
 
 app = FastAPI(title="TikTok Streak Panel", docs_url=None, redoc_url=None, openapi_url=None)
+app.include_router(auth_router)
 STATIC = os.path.join(os.path.dirname(__file__), "static")
 
 
-def auth(x_api_key: Optional[str] = Header(None)):
-    if not x_api_key or not secrets.compare_digest(x_api_key, config.API_KEY):
-        raise HTTPException(401, "Access key salah atau tidak ada")
+auth = current_user
 
 
-def acct(account: Optional[str] = Query(None)):
-    """Akun yang dipilih lewat ?account=ID (default: akun pertama)."""
-    accs = list_accounts()
-    if not account:
+def resolve_account(user, account_id):
+    """Akun milik/diizinkan untuk pemanggil; 404 bila tidak ada atau bukan haknya."""
+    accs = visible_accounts(user)
+    if not account_id:
+        if not accs:
+            raise HTTPException(404, "Akun tidak ditemukan")
         return accs[0]
-    found = next((a for a in accs if a["id"] == account), None)
+    found = next((a for a in accs if a["id"] == account_id), None)
     if not found:
         raise HTTPException(404, "Akun tidak ditemukan")
     return found
+
+
+def acct(account: Optional[str] = Query(None), user=Depends(current_user)):
+    """Akun yang dipilih lewat ?account=ID (default: akun pertama yang boleh diakses)."""
+    return resolve_account(user, account)
 
 
 @app.on_event("startup")
@@ -77,6 +96,7 @@ class SettingsIn(BaseModel):
     discord_enabled: Optional[bool] = None
     discord_webhook: Optional[str] = None
     notify_screenshot: Optional[bool] = None
+    notify_all_accounts: Optional[bool] = None
     keepalive_enabled: Optional[bool] = None
     keepalive_hours: Optional[int] = None
     page_load_wait: Optional[int] = None
@@ -86,6 +106,7 @@ class SettingsIn(BaseModel):
 
 class AccountIn(BaseModel):
     name: Optional[str] = None
+    owner_id: Optional[str] = None
     schedules: Optional[List[ScheduleIn]] = None
 
 
@@ -120,7 +141,7 @@ def public_settings():
 def run_view(run, with_logs=False):
     if not run:
         return None
-    keys = ("id", "account", "mode", "trigger", "label", "status", "started_at", "finished_at", "sent", "total", "error")
+    keys = ("id", "account", "mode", "trigger", "by", "label", "status", "started_at", "finished_at", "sent", "total", "error")
     out = {k: run.get(k) for k in keys}
     out["results"] = run.get("results", [])
     if with_logs:
@@ -134,9 +155,14 @@ def health():
     return {"status": "ok"}
 
 
-def account_view(acc):
+def account_view(acc, user=None):
     st = stores(acc["id"])
+    extra = {}
+    if user is not None and is_admin(user):
+        owner = get_user(acc.get("owner_id")) if acc.get("owner_id") else None
+        extra = {"owner_id": acc.get("owner_id"), "owner_name": owner["username"] if owner else None}
     return {
+        **extra,
         "id": acc["id"],
         "name": acc["name"],
         "contacts": len(st.contacts.read()),
@@ -147,26 +173,35 @@ def account_view(acc):
     }
 
 
-@app.get("/api/status", dependencies=[Depends(auth)])
-def status():
-    hist = history_store.read()
+def _login_visible(user):
+    return login_session.active and (is_admin(user) or login_session.owner_id == user["id"])
+
+
+@app.get("/api/status")
+def status(user=Depends(current_user)):
+    ids = accessible_ids(user)
+    hist = [r for r in history_store.read() if is_admin(user) or (r.get("account") or {}).get("id") in ids]
     cur = runner.current
+    running = bool(cur and cur["status"] == "running")
+    cur_ok = bool(cur) and (is_admin(user) or cur["account"]["id"] in ids)
     return {
-        "running": bool(cur and cur["status"] == "running"),
-        "current": run_view(cur),
+        "running": running,
+        "foreign_busy": running and not cur_ok,
+        "current": run_view(cur) if cur_ok else None,
         "last_run": run_view(hist[0]) if hist else None,
-        "accounts": [account_view(a) for a in list_accounts()],
-        "login": login_session.account_id,
+        "accounts": [account_view(a, user) for a in visible_accounts(user)],
+        "login": login_session.account_id if _login_visible(user) else None,
         "server_now": datetime.now().isoformat(timespec="seconds"),
+        "user": public_user(user),
     }
 
 
-@app.get("/api/settings", dependencies=[Depends(auth)])
+@app.get("/api/settings", dependencies=[Depends(current_user)])
 def read_settings():
     return public_settings()
 
 
-@app.put("/api/settings", dependencies=[Depends(auth)])
+@app.put("/api/settings", dependencies=[Depends(require_admin)])
 def write_settings(body: SettingsIn):
     data = {k: v for k, v in body.model_dump().items() if v is not None}
     if data.get("timezone"):
@@ -193,7 +228,7 @@ def write_settings(body: SettingsIn):
     return public_settings()
 
 
-@app.post("/api/telegram/test", dependencies=[Depends(auth)])
+@app.post("/api/telegram/test", dependencies=[Depends(require_admin)])
 def telegram_test():
     ok, err = send_telegram(get_settings(), "✅ Tes notifikasi dari TikTok Streak Panel")
     if not ok:
@@ -201,7 +236,7 @@ def telegram_test():
     return {"ok": True}
 
 
-@app.post("/api/discord/test", dependencies=[Depends(auth)])
+@app.post("/api/discord/test", dependencies=[Depends(require_admin)])
 def discord_test():
     ok, err = send_discord(get_settings(), "✅ Tes notifikasi dari TikTok Streak Panel")
     if not ok:
@@ -231,46 +266,62 @@ def clean_schedules(items):
     return clean
 
 
-def clean_name(name):
+def clean_name(name, owner_id, exclude_id=None):
     name = (name or "").strip()
     if not 1 <= len(name) <= 40:
         raise HTTPException(400, "Nama akun 1-40 karakter")
-    if name.lower() in {a["name"].lower() for a in list_accounts()}:
+    taken = {a["name"].lower() for a in list_accounts() if a.get("owner_id") == owner_id and a["id"] != exclude_id}
+    if name.lower() in taken:
         raise HTTPException(400, "Nama akun sudah dipakai")
     return name
 
 
-@app.get("/api/accounts", dependencies=[Depends(auth)])
-def accounts():
-    return {"accounts": [account_view(a) for a in list_accounts()]}
+@app.get("/api/accounts")
+def accounts(user=Depends(current_user)):
+    return {"accounts": [account_view(a, user) for a in visible_accounts(user)]}
 
 
-@app.post("/api/accounts", dependencies=[Depends(auth)])
-def add_account(body: AccountIn):
+@app.post("/api/accounts")
+def add_account(body: AccountIn, user=Depends(current_user)):
+    owner = owner_for_new(user)
     if len(list_accounts()) >= 10:
         raise HTTPException(400, "Maksimal 10 akun")
-    acc = create_account(clean_name(body.name))
-    return account_view(acc)
+    if user["role"] == "user" and sum(1 for a in list_accounts() if a.get("owner_id") == owner) >= 5:
+        raise HTTPException(400, "Maksimal 5 akun per pengguna")
+    acc = create_account(clean_name(body.name, owner), owner)
+    return account_view(acc, user)
 
 
-@app.put("/api/accounts/{aid}", dependencies=[Depends(auth)])
-def update_account(aid: str, body: AccountIn):
-    acc = get_account(aid)
-    if not acc:
-        raise HTTPException(404, "Akun tidak ditemukan")
+@app.put("/api/accounts/{aid}")
+def update_account(aid: str, body: AccountIn, user=Depends(current_user)):
+    acc = resolve_account(user, aid)
+    if body.owner_id is not None and body.owner_id != acc.get("owner_id"):
+        if not is_admin(user):
+            raise HTTPException(403, "Hanya admin yang boleh memindahkan pemilik akun")
+        new_owner = get_user(body.owner_id)
+        if not new_owner or new_owner.get("disabled"):
+            raise HTTPException(400, "Pemilik baru tidak valid")
+        old = acc.get("owner_id")
+        acc["owner_id"] = new_owner["id"]
+        save_account(acc)
+        if old:
+            from .auth import ensure_default_account
+            old_user = get_user(old)
+            if old_user and old_user["role"] == "user" and not old_user.get("disabled"):
+                ensure_default_account(old)
     if body.name is not None and body.name.strip() != acc["name"]:
-        acc["name"] = clean_name(body.name)
+        acc["name"] = clean_name(body.name, acc.get("owner_id"), aid)
     if body.schedules is not None:
         acc["schedules"] = clean_schedules(body.schedules)
     save_account(acc)
-    return account_view(acc)
+    return account_view(acc, user)
 
 
-@app.delete("/api/accounts/{aid}", dependencies=[Depends(auth)])
-def remove_account(aid: str):
-    if not get_account(aid):
-        raise HTTPException(404, "Akun tidak ditemukan")
-    if len(list_accounts()) <= 1:
+@app.delete("/api/accounts/{aid}")
+def remove_account(aid: str, user=Depends(current_user)):
+    acc = resolve_account(user, aid)
+    mine = [a for a in list_accounts() if a.get("owner_id") == acc.get("owner_id")]
+    if len(list_accounts()) <= 1 or (acc.get("owner_id") and len(mine) <= 1):
         raise HTTPException(400, "Minimal harus ada satu akun")
     if runner.current and runner.current["status"] == "running" and runner.current["account"]["id"] == aid:
         raise HTTPException(409, "Akun sedang dipakai proses yang berjalan")
@@ -280,12 +331,12 @@ def remove_account(aid: str):
     return {"ok": True}
 
 
-@app.get("/api/contacts", dependencies=[Depends(auth)])
+@app.get("/api/contacts", dependencies=[Depends(current_user)])
 def list_contacts(acc=Depends(acct)):
     return {"contacts": stores(acc["id"]).contacts.read()}
 
 
-@app.post("/api/contacts", dependencies=[Depends(auth)])
+@app.post("/api/contacts", dependencies=[Depends(current_user)])
 def add_contacts(body: ContactsIn, acc=Depends(acct)):
     contacts_store = stores(acc["id"]).contacts
     current = contacts_store.read()
@@ -303,7 +354,7 @@ def add_contacts(body: ContactsIn, acc=Depends(acct)):
     return {"contacts": current, "added": added}
 
 
-@app.put("/api/contacts/rename", dependencies=[Depends(auth)])
+@app.put("/api/contacts/rename", dependencies=[Depends(current_user)])
 def rename_contact_api(body: RenameIn, acc=Depends(acct)):
     old, new = body.old.strip(), body.new.strip()
     current = stores(acc["id"]).contacts.read()
@@ -317,7 +368,7 @@ def rename_contact_api(body: RenameIn, acc=Depends(acct)):
     return {"contacts": stores(acc["id"]).contacts.read()}
 
 
-@app.delete("/api/contacts", dependencies=[Depends(auth)])
+@app.delete("/api/contacts", dependencies=[Depends(current_user)])
 def delete_contact(name: str = Query(...), acc=Depends(acct)):
     contacts_store = stores(acc["id"]).contacts
     current = contacts_store.read()
@@ -347,12 +398,12 @@ def reset_cookie_meta(aid):
     meta_store.write(meta)
 
 
-@app.get("/api/cookies", dependencies=[Depends(auth)])
+@app.get("/api/cookies", dependencies=[Depends(current_user)])
 def cookie_status(acc=Depends(acct)):
     return cookie_view(acc["id"])
 
 
-@app.put("/api/cookies", dependencies=[Depends(auth)])
+@app.put("/api/cookies", dependencies=[Depends(current_user)])
 def set_cookies(body: CookiesIn, acc=Depends(acct)):
     try:
         cookies = parse_cookies(body.raw)
@@ -363,7 +414,7 @@ def set_cookies(body: CookiesIn, acc=Depends(acct)):
     return cookie_view(acc["id"])
 
 
-@app.delete("/api/cookies", dependencies=[Depends(auth)])
+@app.delete("/api/cookies", dependencies=[Depends(current_user)])
 def clear_cookies(acc=Depends(acct)):
     stores(acc["id"]).cookies.delete()
     return cookie_view(acc["id"])
@@ -388,33 +439,47 @@ def _login_call(fn, *a):
         raise HTTPException(500, f"Browser error: {e}")
 
 
-@app.post("/api/login/start", dependencies=[Depends(auth)])
-def login_start(acc=Depends(acct)):
+def _login_guard(user):
+    """Sesi login remote hanya boleh dipakai pemiliknya atau admin."""
+    if login_session.active and not (is_admin(user) or login_session.owner_id == user["id"]):
+        raise HTTPException(403, "Sesi login sedang dipakai pengguna lain")
+
+
+@app.post("/api/login/start")
+def login_start(acc=Depends(acct), user=Depends(current_user)):
     if runner.current and runner.current["status"] == "running":
         raise HTTPException(409, "Tunggu proses yang sedang berjalan selesai")
+    _login_guard(user)
+    was_active = login_session.active
     _login_call(login_session.start, acc["id"])
+    if not was_active:
+        login_session.owner_id = user["id"]
     return {"ok": True}
 
 
-@app.get("/api/login/status", dependencies=[Depends(auth)])
-def login_status():
+@app.get("/api/login/status")
+def login_status(user=Depends(current_user)):
+    _login_guard(user)
     return _login_call(login_session.status)
 
 
-@app.get("/api/login/frame", dependencies=[Depends(auth)])
-def login_frame():
+@app.get("/api/login/frame")
+def login_frame(user=Depends(current_user)):
+    _login_guard(user)
     return Response(_login_call(login_session.frame), media_type="image/jpeg",
                     headers={"Cache-Control": "no-store"})
 
 
-@app.post("/api/login/input", dependencies=[Depends(auth)])
-def login_input(body: LoginInput):
+@app.post("/api/login/input")
+def login_input(body: LoginInput, user=Depends(current_user)):
+    _login_guard(user)
     _login_call(login_session.input, body.model_dump())
     return {"ok": True}
 
 
-@app.post("/api/login/save", dependencies=[Depends(auth)])
-def login_save():
+@app.post("/api/login/save")
+def login_save(user=Depends(current_user)):
+    _login_guard(user)
     aid = login_session.account_id
     n = _login_call(login_session.save)
     login_session.stop()
@@ -422,68 +487,95 @@ def login_save():
     return {"saved": n, **cookie_view(aid)}
 
 
-@app.post("/api/login/stop", dependencies=[Depends(auth)])
-def login_stop():
+@app.post("/api/login/stop")
+def login_stop(user=Depends(current_user)):
+    _login_guard(user)
     login_session.stop()
     return {"ok": True}
 
 
-@app.post("/api/run", dependencies=[Depends(auth)])
-def run(body: RunIn):
-    acc = acct(body.account)
+@app.post("/api/run")
+def run(body: RunIn, user=Depends(current_user)):
+    acc = resolve_account(user, body.account)
     if body.mode not in ("send", "test", "check"):
         raise HTTPException(400, "mode harus send, test, atau check")
     if login_session.active:
         raise HTTPException(409, "Tutup sesi login di tab Cookie dulu")
     try:
-        r = runner.start(acc["id"], body.mode, body.message.strip() if body.message else None)
+        r = runner.start(acc["id"], body.mode, body.message.strip() if body.message else None, by=user["username"])
     except Busy:
         raise HTTPException(409, "Masih ada proses yang berjalan")
     return run_view(r)
 
 
-@app.post("/api/run/stop", dependencies=[Depends(auth)])
-def stop():
+@app.post("/api/run/stop")
+def stop(user=Depends(current_user)):
+    cur = runner.current
+    if cur and cur["status"] == "running" and not can_access(user, get_account(cur["account"]["id"]) or {}):
+        raise HTTPException(403, "Proses ini bukan milik Anda")
     runner.stop()
     return {"ok": True}
 
 
-@app.get("/api/run/current", dependencies=[Depends(auth)])
-def current(since: int = 0):
+@app.get("/api/run/current")
+def current(since: int = 0, user=Depends(current_user)):
     cur = runner.current
-    if not cur:
-        return {"run": None, "logs": [], "next": 0}
+    running = bool(cur and cur["status"] == "running")
+    if not cur or not (is_admin(user) or cur["account"]["id"] in accessible_ids(user)):
+        return {"run": None, "logs": [], "next": 0, "running": running}
     logs = cur["logs"]
-    return {"run": run_view(cur), "logs": logs[since:], "next": len(logs)}
+    return {"run": run_view(cur), "logs": logs[since:], "next": len(logs), "running": running}
 
 
-@app.get("/api/run/screenshot", dependencies=[Depends(auth)])
-def run_screenshot():
-    from .bot import SHOT_PATH
+@app.get("/api/run/screenshot")
+def run_screenshot(user=Depends(current_user)):
+    from .bot import SHOT_META_PATH, SHOT_PATH
     if not os.path.exists(SHOT_PATH):
         raise HTTPException(404, "Belum ada screenshot")
+    if not is_admin(user):
+        try:
+            with open(SHOT_META_PATH, "r", encoding="utf-8") as f:
+                aid = json.load(f).get("account_id")
+        except Exception:  # noqa: BLE001
+            aid = None
+        if not aid or aid not in accessible_ids(user):
+            raise HTTPException(404, "Belum ada screenshot")
     return FileResponse(SHOT_PATH, media_type="image/jpeg", headers={"Cache-Control": "no-store"})
 
 
-@app.get("/api/proof/{run_id}/{name}", dependencies=[Depends(auth)])
-def proof(run_id: str, name: str):
+@app.get("/api/proof/{run_id}/{name}")
+def proof(run_id: str, name: str, user=Depends(current_user)):
     from .runner import PROOFS_DIR
     if not re.fullmatch(r"[0-9a-f]{8}", run_id) or not re.fullmatch(r"\d+\.jpg", name):
         raise HTTPException(404, "Tidak ditemukan")
+    if not is_admin(user):
+        r = next((x for x in history_store.read() if x.get("id") == run_id), None)
+        if not run_accessible_user(user, r):
+            raise HTTPException(404, "Tidak ditemukan")
     path = os.path.join(PROOFS_DIR, run_id, name)
     if not os.path.exists(path):
         raise HTTPException(404, "Bukti sudah dihapus")
     return FileResponse(path, media_type="image/jpeg")
 
 
-@app.get("/api/history", dependencies=[Depends(auth)])
-def history():
-    return {"runs": [{**run_view(r), "logs": r.get("logs", [])} for r in history_store.read()]}
+def run_accessible_user(user, run):
+    return bool(run) and (run.get("account") or {}).get("id") in accessible_ids(user)
 
 
-@app.delete("/api/history", dependencies=[Depends(auth)])
-def clear_history():
-    history_store.write([])
+@app.get("/api/history")
+def history(user=Depends(current_user)):
+    ids = accessible_ids(user)
+    return {"runs": [{**run_view(r), "logs": r.get("logs", [])} for r in history_store.read()
+                     if is_admin(user) or (r.get("account") or {}).get("id") in ids]}
+
+
+@app.delete("/api/history")
+def clear_history(user=Depends(current_user)):
+    if is_admin(user):
+        history_store.write([])
+    else:
+        ids = accessible_ids(user)
+        history_store.write([r for r in history_store.read() if (r.get("account") or {}).get("id") not in ids])
     return {"ok": True}
 
 

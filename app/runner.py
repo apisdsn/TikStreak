@@ -39,7 +39,7 @@ class Runner:
         self._cancel = threading.Event()
 
     # ------------------------------------------------------------- run control
-    def start(self, account_id, mode="send", message=None, trigger="manual", label=None, contacts=None):
+    def start(self, account_id, mode="send", message=None, trigger="manual", label=None, contacts=None, by=None):
         acc = get_account(account_id)
         if not acc:
             raise KeyError(account_id)
@@ -51,6 +51,7 @@ class Runner:
                 "account": {"id": acc["id"], "name": acc["name"]},
                 "mode": mode,
                 "trigger": trigger,
+                "by": by if trigger == "manual" else "system",
                 "label": label,
                 "status": "running",
                 "started_at": datetime.now().isoformat(timespec="seconds"),
@@ -94,7 +95,8 @@ class Runner:
                     raise RuntimeError("Tidak ada kontak terpilih untuk jadwal ini (mungkin sudah dihapus)")
             bot = StreakBot(settings, log, self._cancel, st.cookies, test_mode=(mode == "test"),
                             message=message, check_only=(mode == "check"),
-                            proof_dir=os.path.join(PROOFS_DIR, run["id"]), convs_store=st.convs)
+                            proof_dir=os.path.join(PROOFS_DIR, run["id"]), convs_store=st.convs,
+                            account_id=run["account"]["id"])
             res = bot.run(contacts)
             run.update(res)
             for r in res["results"]:  # kontak yang berganti nama dikenali lewat ID percakapan
@@ -144,8 +146,42 @@ class Runner:
                 if d not in keep:
                     shutil.rmtree(os.path.join(PROOFS_DIR, d), ignore_errors=True)
 
+    def _targets(self, settings, run):
+        """Kanal penerima: pribadi pemilik akun, lalu global admin. Tidak ada kanal yang dipakai dua kali."""
+        from .auth import get_user, user_notify
+        acc = get_account(run["account"]["id"])
+        owner = get_user(acc.get("owner_id")) if acc and acc.get("owner_id") else None
+        owner_active = bool(owner) and not owner.get("disabled")
+        out, used = [], set()
+
+        def add(cfg):
+            c = dict(cfg)
+            if c.get("discord_enabled"):
+                key = ("d", c.get("discord_webhook"))
+                if not c.get("discord_webhook") or key in used:
+                    c["discord_enabled"] = False
+                else:
+                    used.add(key)
+            if c.get("telegram_enabled"):
+                key = ("t", c.get("telegram_token"), c.get("telegram_chat_id"))
+                if not c.get("telegram_token") or not c.get("telegram_chat_id") or key in used:
+                    c["telegram_enabled"] = False
+                else:
+                    used.add(key)
+            if c.get("discord_enabled") or c.get("telegram_enabled"):
+                out.append(c)
+
+        if owner_active:
+            add(user_notify(owner))
+        if settings.get("notify_all_accounts", True) or not owner or owner["role"] == "admin":
+            add(settings)
+        return out
+
     def _notify(self, settings, run):
         if run["mode"] == "test" or run["status"] == "cancelled":
+            return
+        targets = self._targets(settings, run)
+        if not targets:
             return
         who = f"[{run['account']['name']}] " if len(list_accounts()) > 1 else ""
         if run.get("cookie_invalid"):
@@ -155,14 +191,16 @@ class Runner:
                 return
             meta["last_alert"] = time.time()
             meta_store.write(meta)
-            notify(settings, f"🔐 {who}Cookie TikTok tidak valid", [
-                run["error"],
-                "Buka panel → tab Cookie → login ulang.",
-            ])
+            for t in targets:
+                notify(t, f"🔐 {who}Cookie TikTok tidak valid", [
+                    run["error"],
+                    "Buka panel → tab Cookie → login ulang.",
+                ])
             return
         if run["mode"] == "check":
             if run["status"] == "failed":
-                notify(settings, f"⚠️ {who}Cek cookie gagal", [run.get("error") or "Kesalahan tidak diketahui"])
+                for t in targets:
+                    notify(t, f"⚠️ {who}Cek cookie gagal", [run.get("error") or "Kesalahan tidak diketahui"])
             return
         icon = {"success": "✅", "partial": "⚠️", "failed": "❌"}.get(run["status"], "ℹ️")
         lines = [f"{run['sent']}/{run['total']} terkirim · {self._span(run)}"]
@@ -172,22 +210,23 @@ class Runner:
             lines.append(f"Pesan: \"{run.get('message') or settings['message']}\"")
         if run.get("error"):
             lines.append(run["error"])
-        files = []
+        proofs = []
         for r in run["results"]:
             if r["ok"]:
                 lines.append(f"✅ {r['contact']} — {r.get('sent_at') or 'ok'}{self._evidence(r.get('evidence'))}")
             else:
                 lines.append(f"❌ {r['contact']} — {r.get('error') or 'gagal'}")
-            if r.get("proof") and settings.get("notify_screenshot"):
+            if r.get("proof"):
                 path = os.path.join(PROOFS_DIR, run["id"], r["proof"])
                 try:
                     with open(path, "rb") as f:
-                        files.append((f"{r['contact']} {r.get('sent_at') or ''}".strip(), f.read()))
+                        proofs.append((f"{r['contact']} {r.get('sent_at') or ''}".strip(), f.read()))
                 except OSError:
                     pass
-        if files:
-            lines.append("Bukti: screenshot chat terlampir")
-        notify(settings, f"{icon} {who}Streak {run['status']}", lines, files)
+        for t in targets:  # lampiran mengikuti pengaturan saluran penerima
+            files = proofs if t.get("notify_screenshot") else []
+            tl = lines + (["Bukti: screenshot chat terlampir"] if files else [])
+            notify(t, f"{icon} {who}Streak {run['status']}", tl, files)
 
     @staticmethod
     def _evidence(ev):
