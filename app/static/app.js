@@ -1,9 +1,16 @@
 (() => {
   const $ = (id) => document.getElementById(id);
   const NS = "http://www.w3.org/2000/svg";
-  const ACCT_KEY = "streak_panel_account";
-  const LANG_KEY = "streak_panel_lang";
-  const THEME_KEY = "streak_panel_theme";
+  const ACCT_KEY = "bara_account";
+  const LANG_KEY = "bara_lang";
+  const THEME_KEY = "bara_theme";
+  // pindahkan kunci localStorage lama (streak_panel_*) ke kunci baru; hapus yang lama
+  try {
+    [["bara_account", "streak_panel_account"], ["bara_lang", "streak_panel_lang"], ["bara_theme", "streak_panel_theme"]].forEach(([nk, ok]) => {
+      if (localStorage.getItem(nk) === null && localStorage.getItem(ok) !== null) localStorage.setItem(nk, localStorage.getItem(ok));
+      localStorage.removeItem(ok);
+    });
+  } catch (e) { /* storage tidak tersedia */ }
 
   // ------------------------------------------------------------------ i18n
   // Semua teks UI memakai Title Case (konektor selain kata pertama tetap huruf kecil)
@@ -380,7 +387,7 @@
     const res = await fetch("/api" + path, {
       credentials: "same-origin",
       method: opts.method || "GET",
-      headers: { "X-Requested-With": "streak-panel", ...(opts.body ? { "Content-Type": "application/json" } : {}) },
+      headers: { "X-Requested-With": "bara", ...(opts.body ? { "Content-Type": "application/json" } : {}) },
       body: opts.body ? JSON.stringify(opts.body) : undefined,
     });
     if (res.status === 401 && !path.startsWith("/auth/")) { showLogin(); throw new Error("Unauthorized"); }

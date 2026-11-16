@@ -10,3 +10,6 @@ panel.example.com {
 	}
 	reverse_proxy 127.0.0.1:8001
 }
+
+# Varian bila Caddy berjalan sebagai container pada jaringan Docker yang sama dengan service "bara":
+#   reverse_proxy bara:8000

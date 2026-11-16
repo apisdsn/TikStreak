@@ -34,8 +34,10 @@ from .store import (
 
 ITERATIONS = 600_000
 SESSION_TTL = 7 * 24 * 3600
-COOKIE = "sp_session"
-CSRF_HEADER = "streak-panel"
+COOKIE = "bara_session"
+LEGACY_COOKIE = "sp_session"  # TODO: hapus setelah semua sesi lama berpindah ke bara_session
+CSRF_HEADER = "bara"
+LEGACY_CSRF_HEADER = "streak-panel"  # TODO: hapus setelah semua browser memakai JS terbaru
 MAX_FAILS = 5
 FAIL_WINDOW = 15 * 60
 LOCK_TIME = 15 * 60
@@ -200,7 +202,7 @@ def throttle_ok(keys):
 
 # ---------------------------------------------------------------------- CSRF
 def csrf_ok(request):
-    if request.headers.get("x-requested-with") != CSRF_HEADER:
+    if request.headers.get("x-requested-with") not in (CSRF_HEADER, LEGACY_CSRF_HEADER):
         return False
     origin = request.headers.get("origin")
     if origin:
@@ -225,16 +227,26 @@ def api_key_user():
     return {**admins[0], "synthetic": True, "session": None} if admins else API_USER
 
 
-def current_user(request: Request, x_api_key: Optional[str] = Header(None)):
+def session_token(request):
+    """Token sesi dari cookie baru, atau cookie lama (sp_session) saat masa transisi."""
+    return request.cookies.get(COOKIE) or request.cookies.get(LEGACY_COOKIE)
+
+
+def current_user(request: Request, response: Response, x_api_key: Optional[str] = Header(None)):
     if x_api_key:
         if config.API_KEY and secrets.compare_digest(x_api_key, config.API_KEY):
             return api_key_user()
         raise HTTPException(401, "Kunci API Salah atau Tidak Ada")
-    user = user_from_token(request.cookies.get(COOKIE))
+    token = session_token(request)
+    user = user_from_token(token)
     if not user:
         raise HTTPException(401, "Belum Masuk")
     if request.method not in ("GET", "HEAD", "OPTIONS"):
         require_csrf(request)
+    if not request.cookies.get(COOKIE) and request.cookies.get(LEGACY_COOKIE):
+        # pindahkan sesi lama ke nama cookie baru tanpa memaksa login ulang
+        set_cookie(request, response, token)
+        response.delete_cookie(LEGACY_COOKIE, path="/")
     return user
 
 
@@ -300,7 +312,7 @@ class UserUpdate(BaseModel):
 
 
 def _optional_user(request):
-    return user_from_token(request.cookies.get(COOKIE))
+    return user_from_token(session_token(request))
 
 
 @router.get("/api/auth/state")
@@ -355,10 +367,11 @@ def auth_login(body: LoginIn, request: Request, response: Response):
 @router.post("/api/auth/logout")
 def auth_logout(request: Request, response: Response):
     require_csrf(request)
-    token = request.cookies.get(COOKIE)
-    if token:
-        drop_session(token)
+    for name in (COOKIE, LEGACY_COOKIE):
+        if request.cookies.get(name):
+            drop_session(request.cookies[name])
     response.delete_cookie(COOKIE, path="/")
+    response.delete_cookie(LEGACY_COOKIE, path="/")
     return {"ok": True}
 
 

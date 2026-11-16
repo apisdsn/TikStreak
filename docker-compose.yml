@@ -1,7 +1,7 @@
 services:
-  streak-panel:
+  bara:
     build: .
-    container_name: streak-panel
+    container_name: bara
     restart: unless-stopped
     ports:
       - "${BIND_ADDRESS:-127.0.0.1}:${PORT:-8000}:8000"

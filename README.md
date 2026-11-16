@@ -26,8 +26,8 @@ Buka `http://localhost:8000`. Saat pertama kali, panel meminta Anda membuat **ad
 
 - **admin**: melihat dan mengelola semua akun TikTok, pengaturan global, dan pengguna (tambah, reset password, ubah peran, nonaktifkan, hapus).
 - **user**: hanya melihat dan mengelola akun TikTok miliknya sendiri. Setiap pengguna punya notifikasi pribadi (Discord/Telegram) di tab Pengaturan; admin juga bisa menerima notifikasi semua akun lewat saluran global (`Terima Notifikasi Semua Akun`).
-- Sesi memakai cookie `sp_session` (HttpOnly, SameSite=Strict, berlaku 7 hari). Login dibatasi: 5 kali gagal dalam 15 menit mengunci selama 15 menit.
-- Setiap request tulis dari browser wajib menyertakan header `X-Requested-With: streak-panel` (sudah otomatis oleh UI).
+- Sesi memakai cookie `bara_session` (HttpOnly, SameSite=Strict, berlaku 7 hari). Login dibatasi: 5 kali gagal dalam 15 menit mengunci selama 15 menit.
+- Setiap request tulis dari browser wajib menyertakan header `X-Requested-With: bara` (sudah otomatis oleh UI).
 - Data lama (akun tanpa pemilik) otomatis menjadi milik admin pertama saat setup.
 
 ### Akses privat di VPS (tanpa ekspose ke internet)
@@ -72,6 +72,14 @@ Cara memasang panel di VPS dengan domain sendiri dan HTTPS otomatis lewat [Caddy
    }
    ```
 6. **Muat ulang Caddy**: `sudo systemctl reload caddy`.
+
+   **Caddy di Docker (jaringan bersama)**: bila Caddy juga berjalan sebagai container, gabungkan keduanya ke satu jaringan Docker (mis. `proxy`), tidak perlu publish port panel, lalu arahkan Caddy ke nama service:
+
+   ```caddyfile
+   panel.example.com {
+   	reverse_proxy bara:8000
+   }
+   ```
 7. Buka `https://panel.example.com`, lalu buat admin pertama (isi `API_KEY`, username, dan password).
 
 Karena panel bisa diakses publik, pakai `API_KEY` yang panjang dan acak (`openssl rand -hex 24`) serta password admin yang kuat.
@@ -115,8 +123,8 @@ Semua data ada di satu file SQLite (`/data/streak.db`) plus `secret.key` (atau e
 Backup database yang konsisten (aman saat panel berjalan):
 
 ```bash
-docker compose exec streak-panel python -c "import sqlite3; s=sqlite3.connect('/data/streak.db'); d=sqlite3.connect('/data/backup.db'); s.backup(d); d.close()"
-docker compose cp streak-panel:/data/backup.db ./streak-backup.db
+docker compose exec bara python -c "import sqlite3; s=sqlite3.connect('/data/streak.db'); d=sqlite3.connect('/data/backup.db'); s.backup(d); d.close()"
+docker compose cp bara:/data/backup.db ./streak-backup.db
 ```
 
 Atau dengan CLI: `sqlite3 /data/streak.db ".backup '/data/backup.db'"`.
