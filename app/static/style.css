@@ -518,7 +518,10 @@ td.num { font-variant-numeric: tabular-nums; }
 }
 
 /* logo tanpa kotak */
-.logo { width: 28px; height: 28px; color: #FF6A00; flex: none; }
+:root { --logo-flame: #FF6A00; --logo-hands: #1C1C1E; --logo-accent: #FF6A00; }
+:root[data-theme="dark"] { --logo-flame: #FF8A33; --logo-hands: #FFFFFF; --logo-accent: #FF8A33; }
+.logo { width: 28px; height: 28px; flex: none; }
+.logo.nosec { --logo-sec-op: 0; }
 .logo.big { width: 64px; height: 64px; }
 
 /* panduan cookie manual */
