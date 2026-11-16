@@ -16,7 +16,21 @@ from pydantic import BaseModel
 
 from . import config
 from .notify import DISCORD_RE, send_discord, send_telegram
-from .store import JsonStore, create_account, list_accounts, save_account
+from .store import (
+    create_account,
+    list_accounts,
+    save_account,
+    session_del,
+    session_get,
+    session_put,
+    sessions_del_user,
+    user_by_name,
+    user_delete,
+    user_get,
+    user_save,
+    users_all,
+    users_count,
+)
 
 ITERATIONS = 600_000
 SESSION_TTL = 7 * 24 * 3600
@@ -27,8 +41,6 @@ FAIL_WINDOW = 15 * 60
 LOCK_TIME = 15 * 60
 USERNAME_RE = re.compile(r"^[a-z0-9._-]{3,32}$")
 
-users_store = JsonStore("users.json", [])
-sessions_store = JsonStore("sessions.json", {})
 _lock = threading.RLock()
 
 router = APIRouter()
@@ -74,16 +86,15 @@ def now_iso():
 
 
 def list_users():
-    return users_store.read()
+    return users_all()
 
 
 def get_user(uid):
-    return next((u for u in list_users() if u["id"] == uid), None)
+    return user_get(uid)
 
 
 def find_by_username(name):
-    name = (name or "").strip().lower()
-    return next((u for u in list_users() if u["username"] == name), None)
+    return user_by_name(name)
 
 
 def active_admins():
@@ -117,39 +128,25 @@ def _hash_token(token):
     return hashlib.sha256(token.encode()).hexdigest()
 
 
-def _purge(sessions):
-    now = time.time()
-    return {k: v for k, v in sessions.items() if v["expires"] > now}
-
-
 def create_session(user_id):
     token = secrets.token_urlsafe(32)
-    with _lock:
-        sessions = _purge(sessions_store.read())
-        sessions[_hash_token(token)] = {"user_id": user_id, "created": time.time(), "expires": time.time() + SESSION_TTL}
-        sessions_store.write(sessions)
+    session_put(_hash_token(token), user_id, time.time(), time.time() + SESSION_TTL)
     return token
 
 
 def drop_session(token):
-    with _lock:
-        sessions = _purge(sessions_store.read())
-        sessions.pop(_hash_token(token), None)
-        sessions_store.write(sessions)
+    session_del(_hash_token(token))
 
 
 def invalidate_user_sessions(user_id, keep_hash=None):
-    with _lock:
-        sessions = _purge(sessions_store.read())
-        sessions = {k: v for k, v in sessions.items() if v["user_id"] != user_id or k == keep_hash}
-        sessions_store.write(sessions)
+    sessions_del_user(user_id, keep_hash)
 
 
 def user_from_token(token):
     if not token:
         return None
     h = _hash_token(token)
-    s = sessions_store.read().get(h)
+    s = session_get(h)
     if not s or s["expires"] <= time.time():
         return None
     u = get_user(s["user_id"])
@@ -320,7 +317,7 @@ def auth_setup(body: SetupIn, request: Request, response: Response):
     keys = [f"setup:{request.client.host if request.client else '?'}"]
     throttle_check(keys)
     with _lock:
-        if list_users():
+        if users_count():
             raise HTTPException(409, "Panel Sudah Disiapkan")
         if not config.API_KEY or not secrets.compare_digest(body.api_key, config.API_KEY):
             throttle_fail(keys)
@@ -328,7 +325,7 @@ def auth_setup(body: SetupIn, request: Request, response: Response):
         username = clean_username(body.username)
         check_password_rules(body.password)
         user = make_user(username, body.password, "admin")
-        users_store.write([user])
+        user_save(user)
         for acc in list_accounts():  # migrasi: akun lama tanpa pemilik jadi milik admin pertama
             if not acc.get("owner_id"):
                 acc["owner_id"] = user["id"]
@@ -376,12 +373,10 @@ def auth_password(body: PasswordIn, user=Depends(current_user)):
         raise HTTPException(400, "Kata Sandi Saat Ini Salah")
     check_password_rules(body.new)
     with _lock:
-        users = list_users()
-        for u in users:
-            if u["id"] == user["id"]:
-                u.update(hash_password(body.new))
-                u["pw_changed_at"] = now_iso()
-        users_store.write(users)
+        u = get_user(user["id"])
+        u.update(hash_password(body.new))
+        u["pw_changed_at"] = now_iso()
+        user_save(u)
     invalidate_user_sessions(user["id"], keep_hash=user["session"])
     return {"ok": True}
 
@@ -407,7 +402,7 @@ def users_create(body: UserIn, user=Depends(require_admin)):
         if find_by_username(username):
             raise HTTPException(400, "Nama Pengguna Sudah Dipakai")
         new = make_user(username, body.password, body.role)
-        users_store.write(list_users() + [new])
+        user_save(new)
     ensure_default_account(new["id"])
     return user_view(new)
 
@@ -415,8 +410,7 @@ def users_create(body: UserIn, user=Depends(require_admin)):
 @router.put("/api/users/{uid}")
 def users_update(uid: str, body: UserUpdate, user=Depends(require_admin)):
     with _lock:
-        users = list_users()
-        target = next((u for u in users if u["id"] == uid), None)
+        target = get_user(uid)
         if not target:
             raise HTTPException(404, "Pengguna Tidak Ditemukan")
         was_active_admin = target["role"] == "admin" and not target.get("disabled")
@@ -437,7 +431,7 @@ def users_update(uid: str, body: UserUpdate, user=Depends(require_admin)):
             kill = True
         target["role"] = new_role
         target["disabled"] = new_disabled
-        users_store.write(users)
+        user_save(target)
     if kill:
         invalidate_user_sessions(uid)
         _stop_login_of(uid)
@@ -453,8 +447,7 @@ def users_delete(uid: str, user=Depends(require_admin)):
     from .runner import runner
     from .store import delete_account
     with _lock:
-        users = list_users()
-        target = next((u for u in users if u["id"] == uid), None)
+        target = get_user(uid)
         if not target:
             raise HTTPException(404, "Pengguna Tidak Ditemukan")
         if uid == user["id"]:
@@ -465,7 +458,7 @@ def users_delete(uid: str, user=Depends(require_admin)):
         cur = runner.current
         if cur and cur["status"] == "running" and cur["account"]["id"] in {a["id"] for a in owned}:
             raise HTTPException(409, "Akun Pengguna Ini Sedang Dipakai Proses yang Berjalan")
-        users_store.write([u for u in users if u["id"] != uid])
+        user_delete(uid)
     _stop_login_of(uid)
     ids = {a["id"] for a in owned}
     for aid in ids:
@@ -477,14 +470,8 @@ def users_delete(uid: str, user=Depends(require_admin)):
 
 def _purge_runs(account_ids):
     """Hapus riwayat dan bukti dari akun yang dihapus."""
-    import shutil
-    from .runner import PROOFS_DIR
-    from .store import history_store
-    hist = history_store.read()
-    gone = [r for r in hist if (r.get("account") or {}).get("id") in account_ids]
-    history_store.write([r for r in hist if r not in gone])
-    for r in gone:
-        shutil.rmtree(os.path.join(PROOFS_DIR, r.get("id", "-")), ignore_errors=True)
+    from .store import delete_runs
+    delete_runs(account_ids=list(account_ids))
 
 
 # ------------------------------------------------------ notifikasi pribadi
@@ -539,12 +526,10 @@ def my_notifications_put(body: NotifyIn, user=Depends(current_user)):
         if k in data and len(data[k]) > 200:
             raise HTTPException(400, f"{k} Terlalu Panjang")
     with _lock:
-        users = list_users()
-        for u in users:
-            if u["id"] == user["id"]:
-                u["notify"] = {**user_notify(u), **data}
-                result = notify_view(u["notify"])
-        users_store.write(users)
+        u = get_user(user["id"])
+        u["notify"] = {**user_notify(u), **data}
+        user_save(u)
+        result = notify_view(u["notify"])
     return result
 
 

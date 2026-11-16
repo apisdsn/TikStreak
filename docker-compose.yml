@@ -10,6 +10,12 @@ services:
       TZ: ${TZ:-Asia/Jakarta}
       TRUST_PROXY: ${TRUST_PROXY:-0}
       FORWARDED_ALLOW_IPS: ${FORWARDED_ALLOW_IPS:-*}
+      SECRET_KEY: ${SECRET_KEY:-}
+      HISTORY_DAYS: ${HISTORY_DAYS:-90}
+      HISTORY_PER_ACCOUNT: ${HISTORY_PER_ACCOUNT:-1000}
+      MAX_ACCOUNTS: ${MAX_ACCOUNTS:-100}
+      MAX_ACCOUNTS_PER_USER: ${MAX_ACCOUNTS_PER_USER:-5}
+      MAX_ACCOUNTS_PER_ADMIN: ${MAX_ACCOUNTS_PER_ADMIN:-10}
     volumes:
       - streak-data:/data
     shm_size: "1gb"

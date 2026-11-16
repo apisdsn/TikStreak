@@ -35,11 +35,15 @@ from .store import (
     delete_account,
     get_account,
     get_settings,
-    history_store,
+    count_accounts,
+    delete_runs,
+    get_run,
+    last_run as store_last_run,
+    query_runs,
+    save_settings,
     list_accounts,
     rename_contact,
     save_account,
-    settings_store,
     stores,
 )
 
@@ -184,7 +188,7 @@ def _login_visible(user):
 @app.get("/api/status")
 def status(user=Depends(current_user)):
     ids = accessible_ids(user)
-    hist = [r for r in history_store.read() if (r.get("account") or {}).get("id") in ids]
+    last = store_last_run(user["id"])
     cur = runner.current
     running = bool(cur and cur["status"] == "running")
     cur_ok = bool(cur) and cur["account"]["id"] in ids
@@ -192,7 +196,7 @@ def status(user=Depends(current_user)):
         "running": running,
         "foreign_busy": running and not cur_ok,
         "current": run_view(cur) if cur_ok else None,
-        "last_run": run_view(hist[0]) if hist else None,
+        "last_run": run_view(last, with_logs=True) if last else None,
         "accounts": [account_view(a, user) for a in visible_accounts(user)],
         "login": login_session.account_id if _login_visible(user) else None,
         "server_now": datetime.now().isoformat(timespec="seconds"),
@@ -228,7 +232,7 @@ def write_settings(body: SettingsIn):
     if data.get("discord_webhook") == "-":  # hapus webhook
         data["discord_webhook"] = ""
     merged = {**get_settings(), **data}
-    settings_store.write({k: merged[k] for k in DEFAULT_SETTINGS})
+    save_settings({k: merged[k] for k in DEFAULT_SETTINGS})
     return public_settings()
 
 
@@ -288,12 +292,12 @@ def accounts(user=Depends(current_user)):
 @app.post("/api/accounts")
 def add_account(body: AccountIn, user=Depends(current_user)):
     owner = owner_for_new(user)
-    if len(list_accounts()) >= 10:
-        raise HTTPException(400, "Maksimal 10 Akun")
-    cap = 10 if user["role"] == "admin" else 5
+    if count_accounts() >= config.MAX_ACCOUNTS:
+        raise HTTPException(400, f"Maksimal {config.MAX_ACCOUNTS} Akun")
+    cap = config.MAX_ACCOUNTS_PER_ADMIN if user["role"] == "admin" else config.MAX_ACCOUNTS_PER_USER
     if owner is None:
         raise HTTPException(400, "Belum Ada Admin: Selesaikan Setup Dulu")
-    if sum(1 for a in list_accounts() if a.get("owner_id") == owner) >= cap:
+    if count_accounts(owner) >= cap:
         raise HTTPException(400, f"Maksimal {cap} Akun per Pengguna")
     acc = create_account(clean_name(body.name, owner), owner)
     return account_view(acc, user)
@@ -321,6 +325,7 @@ def remove_account(aid: str, user=Depends(current_user)):
     if login_session.active and login_session.account_id == aid:
         login_session.stop()
     delete_account(aid)
+    delete_runs(account_ids=[aid])
     return {"ok": True}
 
 
@@ -549,7 +554,7 @@ def proof(run_id: str, name: str, user=Depends(current_user)):
     from .runner import PROOFS_DIR
     if not re.fullmatch(r"[0-9a-f]{8}", run_id) or not re.fullmatch(r"\d+\.jpg", name):
         raise HTTPException(404, "Tidak Ditemukan")
-    r = next((x for x in history_store.read() if x.get("id") == run_id), None)
+    r = get_run(run_id)
     if not run_accessible_user(user, r):
         raise HTTPException(404, "Tidak Ditemukan")
     path = os.path.join(PROOFS_DIR, run_id, name)
@@ -564,15 +569,13 @@ def run_accessible_user(user, run):
 
 @app.get("/api/history")
 def history(user=Depends(current_user)):
-    ids = accessible_ids(user)
-    return {"runs": [{**run_view(r), "logs": r.get("logs", [])} for r in history_store.read()
-                     if (r.get("account") or {}).get("id") in ids]}
+    items, _ = query_runs(user["id"], page=1, page_size=50)
+    return {"runs": [{**run_view(r), "logs": r.get("logs", [])} for r in items]}
 
 
 @app.delete("/api/history")
 def clear_history(user=Depends(current_user)):
-    ids = accessible_ids(user)
-    history_store.write([r for r in history_store.read() if (r.get("account") or {}).get("id") not in ids])
+    delete_runs(owner_id=user["id"])
     return {"ok": True}
 
 

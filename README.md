@@ -108,6 +108,23 @@ curl -H "X-API-Key: $API_KEY" http://localhost:8000/api/status
 | POST | `/api/auth/setup`, `/api/auth/login`, `/api/auth/logout`, `/api/auth/password` | Autentikasi |
 | GET / DELETE | `/api/history` | Riwayat |
 
+## Backup
+
+Semua data ada di satu file SQLite (`/data/streak.db`) plus `secret.key` (atau env `SECRET_KEY`) dan folder `proofs/`. Cookie dan rahasia notifikasi dienkripsi; **tanpa kunci yang sama cookie tidak bisa dibaca**, jadi simpan `SECRET_KEY` (atau `secret.key`) bersama backup database.
+
+Backup database yang konsisten (aman saat panel berjalan):
+
+```bash
+docker compose exec streak-panel python -c "import sqlite3; s=sqlite3.connect('/data/streak.db'); d=sqlite3.connect('/data/backup.db'); s.backup(d); d.close()"
+docker compose cp streak-panel:/data/backup.db ./streak-backup.db
+```
+
+Atau dengan CLI: `sqlite3 /data/streak.db ".backup '/data/backup.db'"`.
+
+## Upgrade dari Versi JSON
+
+Saat pertama kali dijalankan, panel otomatis memigrasikan file JSON lama (pengguna, sesi, pengaturan, akun, cookie, kontak, jadwal, riwayat) ke SQLite dalam satu transaksi. File lama tidak dihapus: dipindahkan ke `/data/backup-json-<waktu>/`. Folder `proofs/` tetap di tempatnya. Migrasi aman dijalankan berulang.
+
 ## Catatan
 
 - Taruh di belakang HTTPS (reverse proxy) bila diakses lewat internet. Gunakan password pengguna dan `API_KEY` yang kuat.

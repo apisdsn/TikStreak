@@ -8,6 +8,26 @@ BROWSER_PATH = os.getenv("BROWSER_PATH", "/usr/bin/chromium")
 USER_AGENT = os.getenv("USER_AGENT", "")
 # Hanya untuk pengujian: halaman awal sesi login remote
 LOGIN_START_URL = os.getenv("LOGIN_START_URL", "")
+SECRET_KEY = os.getenv("SECRET_KEY", "")
+
+
+def _int(name, default, lo=None, hi=None):
+    try:
+        v = int(os.getenv(name, default))
+    except ValueError:
+        v = default
+    if lo is not None:
+        v = max(lo, v)
+    if hi is not None:
+        v = min(hi, v)
+    return v
+
+
+HISTORY_DAYS = _int("HISTORY_DAYS", 90, 1)
+HISTORY_PER_ACCOUNT = _int("HISTORY_PER_ACCOUNT", 1000, 10)
+MAX_ACCOUNTS = _int("MAX_ACCOUNTS", 100, 1)
+MAX_ACCOUNTS_PER_USER = _int("MAX_ACCOUNTS_PER_USER", 5, 1)
+MAX_ACCOUNTS_PER_ADMIN = _int("MAX_ACCOUNTS_PER_ADMIN", 10, 1)
 TRUST_PROXY = os.getenv("TRUST_PROXY", "0").lower() in ("1", "true", "yes")
 HEADLESS = os.getenv("HEADLESS", "true").lower() == "true"
 

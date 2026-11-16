@@ -12,9 +12,8 @@ from .config import DATA_DIR
 from .bot import Cancelled, CookieInvalid, StreakBot
 from .login import login_session
 from .notify import notify
-from .store import get_account, get_settings, history_store, list_accounts, rename_contact, stores
+from .store import get_account, get_settings, insert_run, list_accounts, rename_contact, stores
 
-MAX_HISTORY = 50
 MAX_LOG_LINES = 500
 PROOFS_DIR = os.path.join(DATA_DIR, "proofs")
 CATCHUP_SECONDS = 3 * 3600
@@ -49,6 +48,7 @@ class Runner:
             run = {
                 "id": uuid.uuid4().hex[:8],
                 "account": {"id": acc["id"], "name": acc["name"]},
+                "owner_id": acc.get("owner_id"),
                 "mode": mode,
                 "trigger": trigger,
                 "by": by if trigger == "manual" else "system",
@@ -136,15 +136,7 @@ class Runner:
         meta_store.write(meta)
 
     def _save_history(self, run):
-        hist = history_store.read()
-        hist.insert(0, {k: v for k, v in run.items()})
-        hist = hist[:MAX_HISTORY]
-        history_store.write(hist)
-        keep = {h["id"] for h in hist}
-        if os.path.isdir(PROOFS_DIR):
-            for d in os.listdir(PROOFS_DIR):
-                if d not in keep:
-                    shutil.rmtree(os.path.join(PROOFS_DIR, d), ignore_errors=True)
+        insert_run(run)  # retensi per akun (HISTORY_DAYS / HISTORY_PER_ACCOUNT) diterapkan di sini
 
     def _targets(self, settings, run):
         """Kanal penerima: pribadi pemilik akun, plus global bila pemiliknya admin. Tidak ada kanal yang dipakai dua kali."""
