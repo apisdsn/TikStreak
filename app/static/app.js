@@ -51,7 +51,7 @@
       nSchedules: "{n} Jadwal", nSchedules1: "{n} Jadwal", emptyToday: "Belum Ada Jadwal Aktif Hari Ini",
       noHistory: "Belum Ada Riwayat", noContacts: "Belum Ada Kontak", noContactsHere: "Belum Ada Kontak di Akun Ini", noScheds: "Belum Ada Jadwal",
       typeSend: "Kirim", typeTest: "Uji", typeCheck: "Cek Cookie", trManual: "Manual", trAuto: "Otomatis",
-      clickForLog: "Klik untuk Melihat Log", durMin: "{m}m {s}d", durSec: "{s}d",
+      clickForLog: "Klik untuk Melihat Log", durMin: "{m} Mnt {s} Dtk", durSec: "{s} Dtk",
       confirmSend: "Kirim Pesan Streak ke Semua Kontak Akun {name} Sekarang?", confirmClear: "Hapus Semua Riwayat?",
       confirmDeleteAccount: "Hapus Akun \"{name}\" beserta Cookie, Kontak, dan Jadwalnya?", confirmClearCookies: "Hapus Cookie Tersimpan?",
       promptAccountName: "Nama Akun:", promptRename: "Nama Baru untuk Kontak Ini (Persis seperti di Daftar Pesan TikTok):",

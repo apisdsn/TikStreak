@@ -348,6 +348,7 @@ td.num { font-variant-numeric: tabular-nums; }
 }
 @media (max-width: 720px) {
   h1 { font-size: 30px; }
+  .topbar { backdrop-filter: none; -webkit-backdrop-filter: none; background: var(--bg); }
   .topbar-in { padding: 10px 16px; }
   main { padding: 20px 16px 110px; }
   .tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 15; border-radius: 0; padding: 6px 4px calc(6px + env(safe-area-inset-bottom)); background: var(--topbar); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); border-top: 1px solid var(--line); justify-content: space-around; }
