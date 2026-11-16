@@ -357,6 +357,29 @@ td.num { font-variant-numeric: tabular-nums; }
   .topbar-in .spacer { flex: 1 1 0; min-width: 0; }
 }
 
+/* tab ringkas: label tab tidak aktif disembunyikan secara visual (tetap terbaca screen reader) */
+@media (min-width: 721px) {
+  .topbar-in { max-width: 1440px; }
+}
+.acct-pill { max-width: 100%; }
+.acct-pill select { max-width: 150px; text-overflow: ellipsis; }
+@media (min-width: 721px) and (max-width: 1479px) {
+  .tabs button:not(.active) span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .tabs button:not(.active) { padding: 0 12px; }
+}
+@media (min-width: 721px) and (max-width: 1000px) {
+  .brand strong { display: none; }
+  .topbar-in { gap: 10px 8px; }
+}
+@media (min-width: 721px) and (max-width: 880px) {
+  .topbar-in { padding: 10px 14px; }
+  .acct-pill select { max-width: 96px; }
+  .segmented button { min-width: 34px; padding: 0 8px; }
+  .tabs button:not(.active) { padding: 0 9px; }
+  .tabs button.active { padding: 0 10px; }
+  #logout { padding: 0 4px; }
+}
+
 /* ------------------------------------------------------------------ responsive */
 @media (max-width: 1000px) {
   .widgets { grid-template-columns: repeat(2, minmax(0, 1fr)); }

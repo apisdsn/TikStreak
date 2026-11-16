@@ -305,7 +305,13 @@
     try { localStorage.setItem(THEME_KEY, theme); } catch (e) { /* abaikan */ }
   });
 
+  const TAB_KEYS = { dashboard: "navDashboard", accounts: "navAccounts", contacts: "navContacts", cookies: "navCookies", settings: "navSettings" };
   function applyStaticI18n() {
+    document.querySelectorAll("#tabs [data-tab]").forEach((b) => {
+      const label = t(TAB_KEYS[b.dataset.tab]);
+      b.setAttribute("aria-label", label);
+      b.title = label;
+    });
     const map = { i18n: (n, v) => { n.textContent = v; }, "i18n-ph": (n, v) => { n.placeholder = v; },
       "i18n-aria": (n, v) => n.setAttribute("aria-label", v), "i18n-title": (n, v) => { n.title = v; },
       "i18n-alt": (n, v) => { n.alt = v; } };
