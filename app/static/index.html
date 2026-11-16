@@ -129,6 +129,7 @@
                 <button id="btnTest" class="btn tinted" type="button" data-i18n="dryRun"></button>
                 <button id="btnStop" class="btn destructive hidden" type="button" data-i18n="stop"></button>
               </div>
+              <div id="queueBox" class="queue-box hidden" aria-live="polite"></div>
               <p id="runErr" class="error" role="alert"></p>
             </div>
           </article>
@@ -201,14 +202,24 @@
           </div>
         </div>
 
-        <div class="group">
+        <div class="group" id="historyGroup">
           <div class="group-head"><h2 data-i18n="history"></h2><button id="clearHistory" class="btn plain small destructive-text" type="button" data-i18n="clearHistory"></button></div>
-          <div class="table-wrap">
+          <div class="hist-filters"><div class="fchips" id="fMode" role="group"></div><select id="fStatus" class="compact-select"></select></div>
+          <div class="table-wrap hist-table">
             <table>
               <thead><tr><th data-i18n="colTime"></th><th data-i18n="colAccount"></th><th data-i18n="colType"></th><th data-i18n="colResult"></th><th data-i18n="colDuration"></th><th data-i18n="colStatus"></th></tr></thead>
               <tbody id="historyBody"></tbody>
             </table>
           </div>
+          <nav class="pager hidden" id="pager">
+            <span id="pagerInfo" class="pager-info" aria-live="polite"></span>
+            <div class="pager-ctl">
+              <button id="pgPrev" class="icon-btn pg-arrow" type="button"><svg aria-hidden="true" style="transform:scaleX(-1)"><use href="#i-chev"/></svg></button>
+              <div id="pgNums" class="pg-nums"></div>
+              <button id="pgNext" class="icon-btn pg-arrow" type="button"><svg aria-hidden="true"><use href="#i-chev"/></svg></button>
+              <select id="pgSize" class="compact-select"></select>
+            </div>
+          </nav>
         </div>
       </section>
 
@@ -266,6 +277,7 @@
           <div class="head-right"><span class="pill acct-chip"><span class="acct-name-text"></span></span><button id="btnCheckCookies" class="btn tinted" type="button" data-i18n="checkCookieNow"></button></div>
         </div>
         <div class="banner" id="cookieBanner"></div>
+        <div id="cookieQueue" class="queue-box hidden" aria-live="polite"></div>
 
         <div class="group">
           <div class="opt-row">
@@ -363,6 +375,9 @@
                 <button type="button" class="nav-row" data-panel="waits"><span class="nr-ico" style="background:#FF9F0A"><svg aria-hidden="true"><use href="#i-clock"/></svg></span><span class="nr-label" data-i18n="gWaits"></span><span class="nr-val" id="nrWaits"></span><svg class="nr-chev" aria-hidden="true"><use href="#i-chev"/></svg></button>
               </div>
               <p class="list-foot" data-i18n="adminNotifFoot"></p>
+              <h3 class="list-title" data-i18n="queueAdmin"></h3>
+              <div class="inset-list" id="queueAdminList"></div>
+              <p class="list-foot" data-i18n="queueAdminFoot"></p>
             </div>
             <p id="adminNote" class="list-foot hidden" data-i18n="adminOnlyNote"></p>
 

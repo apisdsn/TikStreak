@@ -114,7 +114,9 @@ curl -H "X-API-Key: $API_KEY" http://localhost:8000/api/status
 | GET / PUT | `/api/me/notifications` | Notifikasi pribadi pengguna |
 | GET / POST / PUT / DELETE | `/api/users` | Kelola pengguna (admin) |
 | POST | `/api/auth/setup`, `/api/auth/login`, `/api/auth/logout`, `/api/auth/password` | Autentikasi |
-| GET / DELETE | `/api/history` | Riwayat |
+| GET | `/api/history?account=<id\|all>&page=1&page_size=20&mode=&status=` | Riwayat berhalaman milik Anda: `{items,total,page,page_size}`; `page_size` 10, 20, atau 50 |
+| DELETE | `/api/history` | Hapus riwayat milik Anda sendiri |
+| GET | `/api/dashboard?account=<id>` | Statistik dasbor (hari ini, 7 hari, hari beruntun) lewat query terarah |
 
 ## Kapasitas & Antrean
 

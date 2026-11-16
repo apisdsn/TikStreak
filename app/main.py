@@ -1,7 +1,7 @@
 import json
 import os
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 import secrets
 import time
 import uuid
@@ -40,8 +40,11 @@ from .store import (
     delete_runs,
     get_run,
     last_run as store_last_run,
+    day_stats,
     query_runs,
+    runs_since,
     save_settings,
+    send_days,
     list_accounts,
     rename_contact,
     save_account,
@@ -588,10 +591,38 @@ def run_accessible_user(user, run):
     return bool(run) and (run.get("account") or {}).get("id") in accessible_ids(user)
 
 
+HISTORY_MODES = ("send", "check", "test")
+HISTORY_STATUS = ("success", "partial", "failed", "expired", "cancelled", "running")
+
+
 @app.get("/api/history")
-def history(user=Depends(current_user)):
-    items, _ = query_runs(user["id"], page=1, page_size=50)
-    return {"runs": [{**run_view(r), "logs": r.get("logs", [])} for r in items]}
+def history(account: str = Query("all"), page: int = Query(1, ge=1), page_size: int = Query(20), mode: Optional[str] = Query(None),
+            status: Optional[str] = Query(None), user=Depends(current_user)):
+    """Riwayat milik pengguna ini (terbaru dulu) dengan paginasi dan filter."""
+    if page_size not in (10, 20, 50):
+        raise HTTPException(400, "Ukuran Halaman Harus 10, 20, atau 50")
+    if mode and mode not in HISTORY_MODES:
+        raise HTTPException(400, "Mode Tidak Dikenal")
+    if status and status not in HISTORY_STATUS:
+        raise HTTPException(400, "Status Tidak Dikenal")
+    acc_id = None
+    if account != "all":
+        acc_id = resolve_account(user, account)["id"]
+    items, total = query_runs(user["id"], acc_id, page, page_size, mode, status)
+    return {"items": [{**run_view(r), "logs": r.get("logs", [])} for r in items], "total": total, "page": page, "page_size": page_size}
+
+
+@app.get("/api/dashboard")
+def dashboard(acc=Depends(acct), user=Depends(current_user)):
+    """Statistik dashboard lewat query terarah (bukan dari daftar riwayat berhalaman)."""
+    today = datetime.now().date()
+    d = today.isoformat()
+    return {
+        "today": d,
+        "runs_today": [run_view(r) for r in runs_since(acc["id"], d + "T00:00:00")],
+        "send_days": send_days(acc["id"], (today - timedelta(days=400)).isoformat()),
+        "week": day_stats(acc["id"], (today - timedelta(days=6)).isoformat()),
+    }
 
 
 @app.delete("/api/history")

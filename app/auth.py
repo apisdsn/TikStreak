@@ -14,7 +14,7 @@ from urllib.parse import urlparse
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
 from pydantic import BaseModel
 
-from . import config
+from . import config, db
 from .notify import DISCORD_RE, send_discord, send_telegram
 from .store import (
     create_account,
@@ -341,6 +341,8 @@ def auth_setup(body: SetupIn, request: Request, response: Response):
             if not acc.get("owner_id"):
                 acc["owner_id"] = user["id"]
                 save_account(acc)
+        # riwayat lama (tanpa pemilik) ikut menjadi milik admin pertama agar tetap tampil
+        db.x("UPDATE runs SET owner_id=? WHERE owner_id IS NULL", (user["id"],))
         ensure_default_account(user["id"])
     throttle_ok(keys)
     set_cookie(request, response, create_session(user["id"]))

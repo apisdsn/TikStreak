@@ -44,6 +44,14 @@
       saved: "(Tersimpan)", ready: "Siap", busyAcct: "Berjalan: {name}", busy: "Berjalan",
       st_running: "Berjalan", st_success: "Berhasil", st_partial: "Sebagian", st_failed: "Gagal", st_cancelled: "Dihentikan",
       st_missed: "Terlewat", st_pending: "Menunggu",
+      st_expired: "Terlewat", queued: "Dalam Antrean", queuePos: "Posisi {n}", queueEta: "Perkiraan {time}", runningState: "Sedang Berjalan",
+      cancelJob: "Batalkan", toastJobCancelled: "Antrean Dibatalkan", queueLoad: "{n} Dalam Antrean",
+      showing: "Menampilkan {a}–{b} dari {n}", showingNone: "Tidak Ada Data", fAll: "Semua", fSend: "Kirim", fCheck: "Cek Cookie", statusAll: "Semua Status",
+      filterMode: "Filter Jenis", filterStatus: "Filter Status", pageSizeLbl: "Baris per Halaman", perPage: "{n} per Halaman", prevPage: "Halaman Sebelumnya",
+      nextPage: "Halaman Berikutnya", pageN: "Halaman {n}", noHistoryFiltered: "Tidak Ada Riwayat yang Cocok", pagination: "Navigasi Halaman",
+      queueAdmin: "Antrean Browser", qWorkers: "Pekerja Browser", qQueued: "Dalam Antrean", qRunning: "Sedang Berjalan", qLoad: "Beban per Jam",
+      qLogin: "Sesi Login", queueAdminFoot: "Hanya Hitungan, Tanpa Nama atau Isi Akun", qNoLoad: "Belum Ada Jadwal Aktif",
+      busyHint: "Jam Ini Ramai, Pilih Jam Lain agar Lebih Cepat",
       noSchedule: "Belum Ada Jadwal Aktif", noScheduleHint: "Tambahkan Jadwal di Tab Akun & Jadwal",
       allContacts: "Semua Kontak ({n})", nContacts: "{n} Kontak", nContacts1: "{n} Kontak",
       partMorning: "Pagi", partNoon: "Siang", partAfternoon: "Sore", partNight: "Malam",
@@ -58,7 +66,7 @@
       noHistory: "Belum Ada Riwayat", noContacts: "Belum Ada Kontak", noContactsHere: "Belum Ada Kontak di Akun Ini", noScheds: "Belum Ada Jadwal",
       typeSend: "Kirim", typeTest: "Uji", typeCheck: "Cek Cookie", trManual: "Manual", trAuto: "Otomatis",
       clickForLog: "Klik untuk Melihat Log", durMin: "{m} Mnt {s} Dtk", durSec: "{s} Dtk",
-      confirmSend: "Kirim Pesan Streak ke Semua Kontak Akun {name} Sekarang?", confirmClear: "Hapus Semua Riwayat?",
+      confirmSend: "Kirim Pesan Streak ke Semua Kontak Akun {name} Sekarang?", confirmClear: "Hapus Semua Riwayat Anda?",
       confirmDeleteAccount: "Hapus Akun \"{name}\" beserta Cookie, Kontak, dan Jadwalnya?", confirmClearCookies: "Hapus Cookie Tersimpan?",
       promptAccountName: "Nama Akun:", promptRename: "Nama Baru untuk Kontak Ini (Persis seperti di Daftar Pesan TikTok):",
       toastStopping: "Menghentikan…", toastChecking: "Mengecek Cookie… Lihat Log di Dashboard", toastCookieSaved: "Cookie Disimpan",
@@ -196,6 +204,14 @@
       saved: "(Saved)", ready: "Ready", busyAcct: "Running: {name}", busy: "Running",
       st_running: "Running", st_success: "Success", st_partial: "Partial", st_failed: "Failed", st_cancelled: "Stopped",
       st_missed: "Missed", st_pending: "Pending",
+      st_expired: "Missed", queued: "Queued", queuePos: "Position {n}", queueEta: "Estimated {time}", runningState: "In Progress",
+      cancelJob: "Cancel", toastJobCancelled: "Job Cancelled", queueLoad: "{n} Queued",
+      showing: "Showing {a}–{b} of {n}", showingNone: "No Data", fAll: "All", fSend: "Send", fCheck: "Check Cookie", statusAll: "All Statuses",
+      filterMode: "Filter Type", filterStatus: "Filter Status", pageSizeLbl: "Rows per Page", perPage: "{n} per Page", prevPage: "Previous Page",
+      nextPage: "Next Page", pageN: "Page {n}", noHistoryFiltered: "No Matching History", pagination: "Page Navigation",
+      queueAdmin: "Browser Queue", qWorkers: "Browser Workers", qQueued: "Queued", qRunning: "In Progress", qLoad: "Load per Hour",
+      qLogin: "Login Sessions", queueAdminFoot: "Counts Only, No Account Names or Contents", qNoLoad: "No Active Schedules Yet",
+      busyHint: "This Time Is Busy, Pick Another Time for Faster Delivery",
       noSchedule: "No Active Schedule", noScheduleHint: "Add One in the Accounts & Schedules Tab",
       allContacts: "All Contacts ({n})", nContacts: "{n} Contacts", nContacts1: "{n} Contact",
       partMorning: "Morning", partNoon: "Noon", partAfternoon: "Afternoon", partNight: "Night",
@@ -210,7 +226,7 @@
       noHistory: "No History Yet", noContacts: "No Contacts Yet", noContactsHere: "No Contacts in This Account", noScheds: "No Schedules Yet",
       typeSend: "Send", typeTest: "Test", typeCheck: "Cookie Check", trManual: "Manual", trAuto: "Automatic",
       clickForLog: "Click to View Log", durMin: "{m}m {s}s", durSec: "{s}s",
-      confirmSend: "Send Streak Message to All Contacts of {name} Now?", confirmClear: "Delete All History?",
+      confirmSend: "Send Streak Message to All Contacts of {name} Now?", confirmClear: "Delete All of Your History?",
       confirmDeleteAccount: "Delete Account \"{name}\" with Its Cookies, Contacts, and Schedules?", confirmClearCookies: "Delete Saved Cookie?",
       promptAccountName: "Account Name:", promptRename: "New Name for This Contact (Exactly as in the TikTok Message List):",
       toastStopping: "Stopping…", toastChecking: "Checking Cookie… See the Log on the Dashboard", toastCookieSaved: "Cookie Saved",
@@ -321,7 +337,7 @@
   };
   const CONNECTORS = {
     id: new Set(["di", "ke", "dari", "dan", "atau", "yang", "untuk", "dengan", "pada", "per", "lewat", "lalu", "agar"]),
-    en: new Set(["a", "an", "the", "and", "or", "of", "to", "in", "on", "for", "at", "by", "with", "via", "as", "from"]),
+    en: new Set(["a", "an", "the", "and", "or", "of", "to", "in", "on", "for", "at", "by", "with", "via", "as", "from", "per"]),
   };
   const LOCALE = { id: "id-ID", en: "en-US" };
 
@@ -368,7 +384,23 @@
   let serverNow = "";
   let st = null;            // /api/status terakhir
   let settings = null;
-  let history = [];
+  let hist = { items: [], total: 0, page: 1, page_size: 20 };  // halaman riwayat aktif
+  let dash = null;          // /api/dashboard untuk akun terpilih
+  let histSeq = 0;
+  const HIST_KEY = "bara_history";
+  const loadHF = () => {
+    const d = { page: 1, size: 20, mode: "", status: "" };
+    try {
+      const v = JSON.parse(localStorage.getItem(HIST_KEY) || "{}");
+      if ([10, 20, 50].includes(v.size)) d.size = v.size;
+      if (Number.isInteger(v.page) && v.page > 0) d.page = v.page;
+      if (["send", "check"].includes(v.mode)) d.mode = v.mode;
+      if (["success", "partial", "failed", "expired", "cancelled"].includes(v.status)) d.status = v.status;
+    } catch (e) { /* abaikan */ }
+    return d;
+  };
+  let hf = loadHF();
+  const saveHF = () => { try { localStorage.setItem(HIST_KEY, JSON.stringify(hf)); } catch (e) { /* abaikan */ } };
   let contactList = [];
   let logCursor = 0;
   let lastRunId = null;
@@ -583,19 +615,19 @@
     $("login").classList.add("hidden");
     $("app").classList.remove("hidden");
     applyRole();
-    await Promise.all([loadSettings(), loadMyNotif(), loadContacts(), loadHistory(), isAdmin() ? loadUsers() : Promise.resolve()]);
+    await Promise.all([loadSettings(), loadMyNotif(), loadContacts(), loadHistory(), loadSlots(), isAdmin() ? Promise.all([loadUsers(), loadQueueAdmin()]) : Promise.resolve()]);
     renderSchedules(curAccount().schedules);
     renderAll();
     await refresh();
     clearInterval(pollTimer);
     clearInterval(histTimer);
     pollTimer = setInterval(refresh, 2000);
-    histTimer = setInterval(() => loadHistory().catch(() => {}), 30000);
+    histTimer = setInterval(() => { loadHistory().catch(() => {}); loadSlots(); loadQueueAdmin(); }, 30000);
   }
 
   // Reset data per sesi agar pengguna berikutnya tidak melihat sisa data
   function resetSession() {
-    accounts = []; history = []; contactList = []; users = []; st = null; settings = null; myNotif = null;
+    accounts = []; hist = { items: [], total: 0, page: 1, page_size: 20 }; dash = null; contactList = []; users = []; st = null; settings = null; myNotif = null;
     lastRunId = null; logCursor = 0; pinned = false; idleLogKey = null; dashSig = "";
     $("logBox").replaceChildren(); $("proofBox").replaceChildren(); setRunBadge("");
     $("historyBody").replaceChildren(); $("scheduleList").replaceChildren();
@@ -725,7 +757,7 @@
 
   async function reloadAll() {
     try {
-      await Promise.all([loadSettings(), loadMyNotif(), loadContacts(), loadHistory(), isAdmin() ? loadUsers() : Promise.resolve()]);
+      await Promise.all([loadSettings(), loadMyNotif(), loadContacts(), loadHistory(), loadSlots(), isAdmin() ? Promise.all([loadUsers(), loadQueueAdmin()]) : Promise.resolve()]);
       dashSig = "";
       await refresh();
     } catch (e) { toast(e.message); }
@@ -848,9 +880,11 @@
     if (loginTimer || loginMode !== "idle") { await api("/login/stop", { method: "POST" }).catch(() => {}); endLogin(null); }
     syncAccounts(accounts);
     dashSig = "";
-    await loadContacts();
+    dash = null;
+    await Promise.all([loadContacts(), loadDash()]);
     renderSchedules(curAccount().schedules);
     await refresh();
+    renderDashboard(true);
   }
 
   const cookieDot = (c) => (c.invalid ? "bad" : c.present ? "ok" : "");
@@ -868,6 +902,36 @@
   function cookieBrief(c) {
     return t(c.invalid ? "cookieBriefBad" : !c.present ? "cookieBriefNone" : c.last_ok ? "cookieBriefOk" : "cookieBriefSaved");
   }
+
+  // statistik antrean untuk admin (hanya hitungan)
+  let queueAdmin = null;
+  async function loadQueueAdmin() {
+    if (!isAdmin()) return;
+    try { queueAdmin = await api("/queue/admin"); renderQueueAdmin(); } catch (e) { /* abaikan */ }
+  }
+  function renderQueueAdmin() {
+    const box = $("queueAdminList");
+    if (!box || !queueAdmin) return;
+    box.replaceChildren();
+    const row = (label, val, id) => el("div", { className: "nav-row static", ...(id ? { id } : {}) }, [el("span", { className: "nr-label", textContent: label }), el("span", { className: "nr-val", textContent: val })]);
+    box.append(row(t("qWorkers"), String(queueAdmin.workers)), row(t("qQueued"), String(queueAdmin.queued)), row(t("qRunning"), String(queueAdmin.running)),
+      row(t("qLogin"), `${queueAdmin.login_sessions}/${queueAdmin.login_limit}`));
+    const load = Object.entries(queueAdmin.load_by_hour || {});
+    const max = Math.max(1, ...load.map(([, n]) => n));
+    const bars = el("div", { className: "load-bars", role: "img", "aria-label": t("qLoad") });
+    if (!load.length) bars.append(el("span", { className: "muted", textContent: t("qNoLoad") }));
+    load.forEach(([h, n]) => bars.append(el("div", { className: "lb-col", title: `${h} · ${n}` }, [el("span", { className: "lb-bar", style: `height:${6 + Math.round((n / max) * 40)}px` }),
+      el("span", { className: "lb-n", textContent: String(n) }), el("span", { className: "lb-h", textContent: h.slice(0, 2) })])));
+    box.append(el("div", { className: "nav-row static col" }, [el("span", { className: "nr-label", textContent: t("qLoad") }), bars]));
+  }
+
+  // kepadatan jadwal per slot 30 menit (untuk petunjuk di editor jadwal)
+  let slotInfo = null;
+  async function loadSlots() {
+    try { slotInfo = await api("/queue/slots"); } catch (e) { slotInfo = null; }
+    document.querySelectorAll(".sched").forEach((r) => r.updateHint && r.updateHint());
+  }
+  const slotKey = (hh, mm) => `${hh}:${+mm >= 30 ? "30" : "00"}`;
 
   async function loadUsers() {
     users = (await api("/users")).users;
@@ -952,8 +1016,8 @@
     if (!st || !accounts.length) return;
     const a = curAccount();
     ringState(a);
-    const sig = JSON.stringify([lang, currentId, accounts, st.running, st.foreign_busy, st.current && [st.current.id, st.current.status, st.current.sent, (st.current.results || []).length],
-      serverNow.slice(0, 16), history.map((r) => [r.id, r.status, r.sent]), settings, contactList]);
+    const sig = JSON.stringify([lang, currentId, accounts, st.running, st.queue, st.current && [st.current.id, st.current.status, st.current.sent, (st.current.results || []).length],
+      serverNow.slice(0, 16), dash, settings, contactList]);
     if (!force && sig === dashSig) return;
     dashSig = sig;
 
@@ -963,8 +1027,9 @@
 
     // pil antrean
     const pill = $("queuePill");
-    pill.className = "pill " + (st.running ? "busy" : "ok");
-    pill.textContent = st.running ? (st.foreign_busy ? t("panelBusy") : st.current && st.current.account ? t("busyAcct", { name: st.current.account.name }) : t("busy")) : t("ready");
+    const waiting = ((st.queue && st.queue.mine) || []).some((j) => j.state === "queued");
+    pill.className = "pill " + (st.running || waiting ? "busy" : "ok");
+    pill.textContent = st.running ? (st.current && st.current.account ? t("busyAcct", { name: st.current.account.name }) : t("busy")) : waiting ? t("queued") : t("ready");
 
     // jadwal berikutnya
     const n = a.next;
@@ -984,9 +1049,9 @@
     }
 
     // data hari ini
-    const mine = history.filter((r) => r.account && r.account.id === currentId);
+    const mine = dash ? dash.runs_today : [];
     const cur = st.running && st.current && st.current.account && st.current.account.id === currentId ? st.current : null;
-    const sendRuns = (cur && cur.mode === "send" ? [cur] : []).concat(mine.filter((r) => r.mode === "send"));
+    const sendRuns = (cur && cur.mode === "send" ? [cur] : []).concat(mine);
     const slots = slotsOfToday(a);
     const isDone = (r) => r.status === "success" || r.status === "partial";
     const todaySlots = slots.map((s) => {
@@ -996,17 +1061,17 @@
       return { s, run, status, done: !!run && isDone(run) };
     });
 
-    renderStreak(sendRuns, today);
+    renderStreak(today);
     renderGoal(a, todaySlots);
-    renderWeek(a, sendRuns, today, todaySlots, slots.length);
+    renderWeek(today, todaySlots, slots.length);
     renderStatusWidgets(a);
     renderTodayList(a, todaySlots);
     renderCookieBanner(a.cookies);
     renderHistory();
   }
 
-  function renderStreak(sendRuns, today) {
-    const days = new Set(sendRuns.filter((r) => r.sent > 0).map((r) => dayOf(r.started_at)));
+  function renderStreak(today) {
+    const days = new Set(dash ? dash.send_days : []);
     let day = days.has(today) ? today : addDays(today, -1);
     let n = 0;
     while (days.has(day)) { n++; day = addDays(day, -1); }
@@ -1026,7 +1091,7 @@
     $("goalFg").setAttribute("stroke-dashoffset", String(351.9 * (1 - (total ? done / total : 0))));
   }
 
-  function renderWeek(a, sendRuns, today, todaySlots, scheduleCount) {
+  function renderWeek(today, todaySlots, scheduleCount) {
     const box = $("weekDays");
     box.replaceChildren();
     let good = 0;
@@ -1034,15 +1099,14 @@
     for (let i = 6; i >= 0; i--) {
       const day = addDays(today, -i);
       const isToday = i === 0;
-      const runs = sendRuns.filter((r) => r.status !== "running" && dayOf(r.started_at) === day);
+      const ds = dash && dash.week ? dash.week[day] : null;
       let state, style = "";
       const pending = isToday && scheduleCount > 0 && todaySlots.some((x) => !x.done);
       if (pending) {
         state = "ring-day";
         style = `${Math.round((todaySlots.filter((x) => x.done).length / scheduleCount) * 100)}%`;
-      } else if (runs.length) {
-        const anySent = runs.some((r) => r.sent > 0);
-        state = !anySent ? "failed" : runs.every((r) => r.total > 0 && r.sent >= r.total) ? "success" : "partial";
+      } else if (ds && ds.runs) {
+        state = ds.sent <= 0 ? "failed" : ds.full >= ds.runs ? "success" : "partial";
       } else {
         state = scheduleCount === 0 ? "rest" : "none";
       }
@@ -1153,8 +1217,7 @@
       serverNow = s.server_now || serverNow;
       if (syncAccounts(s.accounts)) { await switchAccount(currentId); return; }
       renderDashboard();
-      $("btnSend").disabled = $("btnTest").disabled = s.running;
-      $("btnStop").classList.toggle("hidden", !s.running || s.foreign_busy);
+      renderQueue();
 
       if (cur.run) {
         if (cur.run.id !== lastRunId) {
@@ -1180,8 +1243,8 @@
   let idleLogKey = null;
   function renderIdleLog() {
     if (pinned || lastRunId) return;
-    const last = history[0];
-    const key = last ? last.id : "none:" + lang;
+    const last = st && st.last_run;
+    const key = last ? last.id + last.status + (last.logs || []).length : "none:" + lang;
     if (key === idleLogKey) return;
     idleLogKey = key;
     const box = $("logBox");
@@ -1212,6 +1275,46 @@
     if (atBottom) box.scrollTop = box.scrollHeight;
   }
 
+  // ---- antrean: job milik pengguna untuk akun terpilih (dasbor = kirim/uji, tab cookie = cek)
+  let queueSig = "";
+  const myJobs = (check) => ((st && st.queue && st.queue.mine) || []).filter((j) => j.account_id === currentId && (j.kind === "check") === check);
+  function queueLine(j) {
+    if (j.state === "running") return t("runningState");
+    const parts = [t("queued"), t("queuePos", { n: j.position })];
+    if (j.eta) parts.push(t("queueEta", { time: j.eta }));
+    return parts.join(" · ");
+  }
+  function fillQueueBox(box, jobsList) {
+    box.replaceChildren();
+    box.classList.toggle("hidden", !jobsList.length);
+    jobsList.forEach((j) => {
+      const row = el("div", { className: "qrow " + j.state }, [el("span", { className: "qdot" }), el("span", { className: "qtext", textContent: queueLine(j) })]);
+      if (j.state === "queued") {
+        const b = el("button", { type: "button", className: "btn plain small destructive-text", textContent: t("cancelJob") });
+        b.addEventListener("click", async () => {
+          b.disabled = true;
+          try { await api("/jobs/" + encodeURIComponent(j.id), { method: "DELETE" }); toast(t("toastJobCancelled")); } catch (e) { toast(e.message); }
+          await refresh();
+        });
+        row.append(b);
+      }
+      box.append(row);
+    });
+  }
+  function renderQueue(force) {
+    if (!st) return;
+    const sig = JSON.stringify([lang, currentId, st.queue, st.running]);
+    if (!force && sig === queueSig) return;
+    queueSig = sig;
+    const dj = myJobs(false), cj = myJobs(true);
+    fillQueueBox($("queueBox"), dj);
+    fillQueueBox($("cookieQueue"), cj);
+    const busy = dj.length > 0;
+    $("btnSend").disabled = $("btnTest").disabled = busy;
+    $("btnStop").classList.toggle("hidden", !dj.some((j) => j.state === "running"));
+    $("btnCheckCookies").disabled = cj.length > 0;
+  }
+
   async function startRun(mode) {
     $("runErr").textContent = "";
     try {
@@ -1223,7 +1326,7 @@
     if (confirm(t("confirmSend", { name: curAccount().name }))) startRun("send");
   });
   $("btnTest").addEventListener("click", () => startRun("test"));
-  $("btnStop").addEventListener("click", () => api("/run/stop", { method: "POST" }).then(() => toast(t("toastStopping"))).catch((e) => toast(e.message)));
+  $("btnStop").addEventListener("click", () => api("/run/stop?account=" + encodeURIComponent(currentId), { method: "POST" }).then(() => toast(t("toastStopping"))).catch((e) => toast(e.message)));
 
   // ------------------------------------------------------------- lightbox
   const lb = { items: [], index: 0, trigger: null, open: false };
@@ -1371,31 +1474,117 @@
     }
   }
 
+  async function loadDash() {
+    if (!currentId) { dash = null; return; }
+    const id = currentId;
+    try {
+      const d = await api("/dashboard?account=" + encodeURIComponent(id));
+      if (id === currentId) dash = d;
+    } catch (e) { /* abaikan */ }
+  }
+
   async function loadHistory() {
-    const { runs } = await api("/history");
-    history = runs;
+    const seq = ++histSeq;
+    const q = new URLSearchParams({ account: "all", page: String(hf.page), page_size: String(hf.size) });
+    if (hf.mode) q.set("mode", hf.mode);
+    if (hf.status) q.set("status", hf.status);
+    const [h] = await Promise.all([api("/history?" + q), loadDash()]);
+    if (seq !== histSeq) return;
+    const pages = Math.max(1, Math.ceil(h.total / h.page_size));
+    if (h.page > pages) { hf.page = pages; saveHF(); return loadHistory(); }
+    hist = h;
     renderIdleLog();
     renderHistory();
-    renderDashboard();
+    renderDashboard(true);
   }
+
+  // daftar nomor halaman ringkas: 1 … 4 5 6 … 12
+  function pageItems(cur, pages) {
+    const keep = [...new Set([1, pages, cur - 1, cur, cur + 1].filter((n) => n >= 1 && n <= pages))].sort((a, b) => a - b);
+    const out = [];
+    keep.forEach((n, i) => {
+      if (i) {
+        const gap = n - keep[i - 1];
+        if (gap === 2) out.push(n - 1);
+        else if (gap > 2) out.push("…");
+      }
+      out.push(n);
+    });
+    return out;
+  }
+
+  function goPage(n) {
+    hf.page = n;
+    saveHF();
+    loadHistory().catch(() => {});
+  }
+
+  function renderPager() {
+    const pages = Math.max(1, Math.ceil(hist.total / hist.page_size));
+    const cur = Math.min(hist.page, pages);
+    const from = hist.total ? (cur - 1) * hist.page_size + 1 : 0;
+    const to = Math.min(hist.total, cur * hist.page_size);
+    setText("pagerInfo", hist.total ? t("showing", { a: from, b: to, n: hist.total }) : t("showingNone"));
+    $("pgPrev").disabled = cur <= 1;
+    $("pgNext").disabled = cur >= pages;
+    const box = $("pgNums");
+    box.replaceChildren();
+    pageItems(cur, pages).forEach((n) => {
+      if (n === "…") { box.append(el("span", { className: "pg-gap", textContent: "…", "aria-hidden": "true" })); return; }
+      const b = el("button", { type: "button", className: "pg-num" + (n === cur ? " on" : ""), textContent: String(n), "aria-label": t("pageN", { n }) });
+      if (n === cur) b.setAttribute("aria-current", "page");
+      b.addEventListener("click", () => { if (n !== cur) goPage(n); });
+      box.append(b);
+    });
+    $("pager").classList.toggle("hidden", !hist.total && !hf.mode && !hf.status);
+  }
+
+  function renderHistFilters() {
+    const seg = $("fMode");
+    seg.replaceChildren();
+    [["", "fAll"], ["send", "fSend"], ["check", "fCheck"]].forEach(([v, k]) => {
+      const b = el("button", { type: "button", className: "fchip", textContent: t(k), "aria-pressed": String(hf.mode === v) });
+      b.addEventListener("click", () => { if (hf.mode === v) return; hf.mode = v; hf.page = 1; saveHF(); renderHistFilters(); loadHistory().catch(() => {}); });
+      seg.append(b);
+    });
+    seg.setAttribute("aria-label", t("filterMode"));
+    const ss = $("fStatus");
+    ss.replaceChildren(new Option(t("statusAll"), ""));
+    ["success", "partial", "failed", "expired", "cancelled"].forEach((k) => ss.append(new Option(t("st_" + k), k)));
+    ss.value = hf.status;
+    ss.setAttribute("aria-label", t("filterStatus"));
+    const sz = $("pgSize");
+    sz.replaceChildren();
+    [10, 20, 50].forEach((n) => sz.append(new Option(t("perPage", { n }), String(n))));
+    sz.value = String(hf.size);
+    sz.setAttribute("aria-label", t("pageSizeLbl"));
+    $("pgPrev").setAttribute("aria-label", t("prevPage"));
+    $("pgNext").setAttribute("aria-label", t("nextPage"));
+    $("pager").setAttribute("aria-label", t("pagination"));
+  }
+  $("fStatus").addEventListener("change", (e) => { hf.status = e.target.value; hf.page = 1; saveHF(); loadHistory().catch(() => {}); });
+  $("pgSize").addEventListener("change", (e) => { hf.size = +e.target.value; hf.page = 1; saveHF(); loadHistory().catch(() => {}); });
+  $("pgPrev").addEventListener("click", () => goPage(Math.max(1, hist.page - 1)));
+  $("pgNext").addEventListener("click", () => goPage(hist.page + 1));
 
   function renderHistory() {
     const body = $("historyBody");
     body.replaceChildren();
-    if (!history.length) {
-      body.append(el("tr", {}, [el("td", { colSpan: 6, className: "muted", textContent: t("noHistory") })]));
+    renderPager();
+    if (!hist.items.length) {
+      body.append(el("tr", { className: "empty-row" }, [el("td", { colSpan: 6, className: "muted", textContent: t(hist.total || hf.mode || hf.status ? "noHistoryFiltered" : "noHistory") })]));
       return;
     }
-    history.forEach((r) => {
+    hist.items.forEach((r) => {
       const type = { test: t("typeTest"), check: t("typeCheck") }[r.mode] || t("typeSend");
       const how = r.trigger === "schedule" ? r.label || "" : r.trigger === "keepalive" ? t("trAuto") : [t("trManual"), r.by].filter(Boolean).join(" · ");
       const tr = el("tr", { tabIndex: 0, title: t("clickForLog") }, [
-        el("td", { textContent: fmtDateTime(r.started_at) }),
-        el("td", { textContent: (r.account && r.account.name) || "-" }),
-        el("td", { textContent: how ? `${type} · ${how}` : type }),
-        el("td", { className: "num", textContent: r.mode === "check" ? "-" : `${r.sent}/${r.total}` }),
-        el("td", { className: "num", textContent: duration(r) }),
-        el("td", {}, [badge(r.status)]),
+        el("td", { className: "h-time", textContent: fmtDateTime(r.started_at) }),
+        el("td", { className: "h-acct", textContent: (r.account && r.account.name) || "-" }),
+        el("td", { className: "h-type", textContent: how ? `${type} · ${how}` : type }),
+        el("td", { className: "num h-res", textContent: r.mode === "check" ? "-" : `${r.sent}/${r.total}` }),
+        el("td", { className: "num h-dur", textContent: duration(r) }),
+        el("td", { className: "h-st" }, [badge(r.status)]),
       ]);
       const open = () => {
         const box = $("logBox");
@@ -1413,7 +1602,7 @@
   }
   $("clearHistory").addEventListener("click", async () => {
     if (!confirm(t("confirmClear"))) return;
-    try { await api("/history", { method: "DELETE" }); await loadHistory(); } catch (e) { toast(e.message); }
+    try { await api("/history", { method: "DELETE" }); hf.page = 1; saveHF(); await loadHistory(); await refresh(); } catch (e) { toast(e.message); }
   });
 
   // --------------------------------------------------------------- contacts
@@ -1714,6 +1903,7 @@
     const title = el("div", { className: "title" });
     const meta = el("div", { className: "meta" });
     const del = el("button", { className: "more-btn", type: "button", "aria-haspopup": "menu", "aria-expanded": "false" }, [icon("i-more")]);
+    const hint = el("p", { className: "busy-hint hidden", role: "status" }, [icon("i-warn"), el("span", { textContent: t("busyHint") })]);
     const msg = el("input", { type: "text", value: sc.message || "", placeholder: t("schedMsgPh"), maxLength: 500, "aria-label": t("schedMsgPh") });
 
     // Penerima: semua kontak akun, atau hanya yang dicentang
@@ -1753,8 +1943,18 @@
       msg,
       el("label", { className: "switch-row" }, [el("span", { textContent: t("sendToAll") }), allBox]),
       chips,
+      hint,
     ]);
     row.setContacts = buildChips;
+    row.updateHint = () => {
+      const n = slotInfo && slotInfo.slots ? slotInfo.slots[slotKey(hour.value, min.value)] || 0 : 0;
+      // hitungan sudah memuat jadwal ini sendiri bila tersimpan di jam yang sama; ambang "ramai" diukur di atasnya
+      hint.classList.toggle("hidden", !(slotInfo && enabled.checked && n >= slotInfo.busy_at));
+    };
+    hour.addEventListener("change", row.updateHint);
+    min.addEventListener("change", row.updateHint);
+    enabled.addEventListener("change", row.updateHint);
+    row.updateHint();
     row.dataset.id = sc.id || "";
     enabled.addEventListener("change", () => row.classList.toggle("off", !enabled.checked));
     del.addEventListener("click", () => openMenu(del, [
@@ -1796,6 +1996,7 @@
       const acc = await api("/accounts/" + currentId, { method: "PUT", body: { schedules: readSchedules() } });
       renderSchedules(acc.schedules);
       setMsg("scheduleMsg", "", "schedulesSaveHint");
+      loadSlots();
       toast(t("toastSchedulesSaved"));
       await refresh();
     } catch (e) { setMsg("scheduleMsg", e.message); }
@@ -1999,6 +2200,10 @@
     dashSig = "";
     renderAccountList(true);
     renderDashboard(true);
+    renderQueue(true);
+    renderHistFilters();
+    renderHistory();
+    renderQueueAdmin();
     renderContacts(contactList);
     renderSettingsStates();
     renderMyNotifStates();
@@ -2029,6 +2234,7 @@
   renderShotButtons();
   renderLoginSteps();
   renderLoginMsg();
+  renderHistFilters();
   showTab("dashboard");
   initAuth();
 })();

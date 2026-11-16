@@ -377,7 +377,7 @@ def day_stats(account_id, since_day, mode="send"):
     out = {}
     for r in db.q("SELECT substr(started_at,1,10) d, COUNT(*) n, SUM(sent) s, SUM(total) t, "
                   "SUM(CASE WHEN total>0 AND sent>=total THEN 1 ELSE 0 END) f FROM runs "
-                  "WHERE account_id=? AND mode=? AND status!='running' AND substr(started_at,1,10)>=? GROUP BY d",
+                  "WHERE account_id=? AND mode=? AND status NOT IN ('running','expired','cancelled') AND substr(started_at,1,10)>=? GROUP BY d",
                   (account_id, mode, since_day)):
         out[r["d"]] = {"runs": r["n"], "sent": r["s"] or 0, "total": r["t"] or 0, "full": r["f"] or 0}
     return out
