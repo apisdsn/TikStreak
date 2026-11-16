@@ -241,6 +241,32 @@ class Runner:
                     best = nxt
         return best.strftime("%Y-%m-%d %H:%M") + " " + str(best.tzinfo) if best else None
 
+    def next_schedule(self, account_id):
+        """Jadwal aktif terdekat untuk satu akun: {time, at, epoch, contacts, message} atau None."""
+        s = get_settings()
+        acc = get_account(account_id)
+        best, pick = None, None
+        for sched in (acc["schedules"] if acc else []):
+            if not sched["enabled"]:
+                continue
+            try:
+                now, nxt = self._slot(sched, s)
+                if nxt <= now:
+                    nxt += timedelta(days=1)
+            except Exception:  # noqa: BLE001
+                continue
+            if best is None or nxt < best:
+                best, pick = nxt, sched
+        if not best:
+            return None
+        return {
+            "time": pick["time"],
+            "at": best.strftime("%Y-%m-%d %H:%M") + " " + str(best.tzinfo),
+            "epoch": int(best.timestamp()),
+            "contacts": pick.get("contacts"),
+            "message": pick.get("message") or "",
+        }
+
     def scheduler_loop(self):
         while True:
             try:

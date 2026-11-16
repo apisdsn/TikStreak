@@ -1,5 +1,6 @@
 import os
 import re
+from datetime import datetime
 import secrets
 import uuid
 import threading
@@ -142,6 +143,7 @@ def account_view(acc):
         "cookies": cookie_view(acc["id"]),
         "schedules": acc["schedules"],
         "next_run": runner.next_run_at(acc["id"]),
+        "next": runner.next_schedule(acc["id"]),
     }
 
 
@@ -155,6 +157,7 @@ def status():
         "last_run": run_view(hist[0]) if hist else None,
         "accounts": [account_view(a) for a in list_accounts()],
         "login": login_session.account_id,
+        "server_now": datetime.now().isoformat(timespec="seconds"),
     }
 
 

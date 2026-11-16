@@ -2,204 +2,329 @@
 <html lang="id">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
   <title>Streak Panel</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <symbol id="i-flame" viewBox="0 0 24 24"><path d="M12.9 2.2c.3 2.6 1.6 4.2 3.2 5.9 1.7 1.8 3.4 3.7 3.4 7a7.5 7.5 0 01-15 0c0-2.4 1-4.2 2.4-5.6.4-.4 1-.1 1 .4-.1 1.4.3 2.6 1.2 3.2.1-3.6 1.3-7.2 3.2-10.6.2-.4.6-.5.6-.3z" fill="currentColor"/><path d="M12 22a3.6 3.6 0 01-3.6-3.6c0-2 1.6-3.2 2.5-4.6.3-.5 1-.4 1.2.1.5 1.1 1.4 1.8 2.1 2.6.9 1 1.4 1.8 1.4 2.9A3.6 3.6 0 0112 22z" fill="#FFD60A"/></symbol>
+      <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6h-6v6H4a1 1 0 01-1-1z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></symbol>
+      <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="4" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M3 10h18M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></symbol>
+      <symbol id="i-people" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5M16 4.8a3.5 3.5 0 010 6.4M18 14.8c2 .6 3.2 2.2 3.5 5.2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></symbol>
+      <symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4.2" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M11 12l9-9M16 7l3 3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></symbol>
+      <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M12 2.8v2.6M12 18.6v2.6M21.2 12h-2.6M5.4 12H2.8M18.5 5.5l-1.8 1.8M7.3 16.7l-1.8 1.8M18.5 18.5l-1.8-1.8M7.3 7.3L5.5 5.5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-x" viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></symbol>
+      <symbol id="i-bang" viewBox="0 0 24 24"><path d="M12 4v10" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/><circle cx="12" cy="19.5" r="1.9" fill="currentColor"/></symbol>
+      <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0112 0v5l1.5 2h-15zM10 20.5a2 2 0 004 0" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></symbol>
+      <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 12a8 8 0 11-2.3-5.6M20 4v5h-5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.9"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.9"/></symbol>
+      <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></symbol>
+      <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 019.5 4a8 8 0 1010.5 10.5z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></symbol>
+      <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    </defs>
+  </svg>
+
   <div id="login" class="login hidden">
-    <form id="loginForm" class="card login-card">
-      <h1>🔥 Streak Panel</h1>
-      <p class="muted">Masukkan access key (API_KEY di file .env).</p>
-      <input id="keyInput" type="password" placeholder="Access key" autocomplete="current-password" required>
-      <button class="btn primary" type="submit">Masuk</button>
-      <p id="loginErr" class="error"></p>
+    <form id="loginForm" class="sheet login-card">
+      <span class="app-icon" aria-hidden="true"><svg><use href="#i-flame"/></svg></span>
+      <h1 data-i18n="brand"></h1>
+      <p class="sub" data-i18n="loginHint"></p>
+      <input id="keyInput" type="password" data-i18n-ph="accessKey" data-i18n-aria="accessKey" autocomplete="current-password" required>
+      <button class="btn primary block" type="submit" data-i18n="signIn"></button>
+      <p id="loginErr" class="error" role="alert"></p>
     </form>
   </div>
 
   <div id="app" class="hidden">
-    <header>
-      <div class="brand">🔥 Streak Panel</div>
-      <nav id="tabs">
-        <button data-tab="dashboard" class="active">Dashboard</button>
-        <button data-tab="contacts">Kontak</button>
-        <button data-tab="cookies">Cookie</button>
-        <button data-tab="accounts">Akun</button>
-        <button data-tab="settings">Pengaturan</button>
-      </nav>
-      <select id="accountSelect" class="acct-select" aria-label="Akun aktif" title="Akun aktif"></select>
-      <button id="logout" class="btn ghost small">Keluar</button>
+    <header class="topbar">
+      <div class="topbar-in">
+        <div class="brand"><span class="app-icon small" aria-hidden="true"><svg><use href="#i-flame"/></svg></span><strong data-i18n="brand"></strong></div>
+        <nav id="tabs" class="tabs" data-i18n-aria="navLabel">
+          <button type="button" data-tab="dashboard" class="active"><svg aria-hidden="true"><use href="#i-home"/></svg><span data-i18n="navDashboard"></span></button>
+          <button type="button" data-tab="accounts"><svg aria-hidden="true"><use href="#i-cal"/></svg><span data-i18n="navAccounts"></span></button>
+          <button type="button" data-tab="contacts"><svg aria-hidden="true"><use href="#i-people"/></svg><span data-i18n="navContacts"></span></button>
+          <button type="button" data-tab="cookies"><svg aria-hidden="true"><use href="#i-key"/></svg><span data-i18n="navCookies"></span></button>
+          <button type="button" data-tab="settings"><svg aria-hidden="true"><use href="#i-gear"/></svg><span data-i18n="navSettings"></span></button>
+        </nav>
+        <div class="spacer"></div>
+        <div class="segmented" role="group" data-i18n-aria="language">
+          <button type="button" data-lang="id" aria-pressed="false">ID</button>
+          <button type="button" data-lang="en" aria-pressed="false">EN</button>
+        </div>
+        <button type="button" id="themeBtn" class="icon-btn" data-i18n-aria="toggleTheme" data-i18n-title="toggleTheme"><svg aria-hidden="true"><use href="#i-moon"/></svg></button>
+        <label class="acct-pill">
+          <span class="avatar" id="acctAvatar" aria-hidden="true">U</span>
+          <select id="accountSelect" data-i18n-aria="activeAccount"></select>
+        </label>
+        <button type="button" id="logout" class="btn plain small" data-i18n="signOut"></button>
+      </div>
     </header>
 
     <main>
       <!-- Dashboard -->
       <section id="tab-dashboard">
-        <div class="grid stats">
-          <div class="card stat"><span class="label">Status</span><strong id="stState">-</strong></div>
-          <div class="card stat"><span class="label">Kontak</span><strong id="stContacts">-</strong></div>
-          <div class="card stat"><span class="label">Cookie</span><strong id="stCookies">-</strong></div>
-          <div class="card stat"><span class="label">Jadwal berikutnya</span><strong id="stNext">-</strong></div>
+        <div class="page-head">
+          <div><p class="eyebrow" id="dashDate"></p><h1 data-i18n="navDashboard"></h1></div>
+          <span class="pill" id="queuePill"></span>
         </div>
 
-        <div class="card">
-          <h2>Jalankan <span class="badge acct-name"></span></h2>
-          <label for="runMessage">Pesan (kosongkan untuk memakai pesan default)</label>
-          <input id="runMessage" type="text" placeholder="Pesan default dari Pengaturan">
-          <div class="row">
-            <button id="btnSend" class="btn primary">Kirim streak sekarang</button>
-            <button id="btnTest" class="btn">Uji (tanpa kirim)</button>
-            <button id="btnStop" class="btn danger hidden">Hentikan</button>
+        <div class="widgets">
+          <!-- Next schedule (2x2) -->
+          <article class="widget w-2x2" id="wNext">
+            <div class="w-head"><span class="w-icon blue"><svg><use href="#i-cal"/></svg></span><h2 data-i18n="nextSchedule"></h2></div>
+            <div class="next-body">
+              <div class="next-main">
+                <div class="big-time" id="heroTime">--:--</div>
+                <div class="w-sub" id="heroSlot"></div>
+                <div class="w-sub" id="heroMeta"></div>
+              </div>
+              <svg class="ring" viewBox="0 0 148 148" role="img" id="ringSvg">
+                <circle cx="74" cy="74" r="60" fill="none" class="ring-bg" stroke-width="16"/>
+                <circle id="ringFg" cx="74" cy="74" r="60" fill="none" class="ring-fg blue" stroke-width="16" stroke-linecap="round" stroke-dasharray="377" stroke-dashoffset="377" transform="rotate(-90 74 74)"/>
+                <text id="ringText" x="74" y="80" text-anchor="middle" class="ring-text">--</text>
+              </svg>
+            </div>
+            <div class="next-actions">
+              <input id="runMessage" type="text" data-i18n-ph="customMessagePh" data-i18n-aria="customMessagePh">
+              <div class="row">
+                <button id="btnSend" class="btn primary" type="button"><svg aria-hidden="true"><use href="#i-play"/></svg><span data-i18n="sendNow"></span></button>
+                <button id="btnTest" class="btn tinted" type="button" data-i18n="dryRun"></button>
+                <button id="btnStop" class="btn destructive hidden" type="button" data-i18n="stop"></button>
+              </div>
+              <p id="runErr" class="error" role="alert"></p>
+            </div>
+          </article>
+
+          <!-- Streak (1x1) -->
+          <article class="widget w-1x1 yellow" id="wStreak">
+            <div class="streak-num" id="streakNum">0</div>
+            <div class="streak-label" data-i18n="streakDays"></div>
+            <svg class="streak-flame" aria-hidden="true"><use href="#i-flame"/></svg>
+          </article>
+
+          <!-- Goal (1x1) -->
+          <article class="widget w-1x1" id="wGoal">
+            <div class="w-head"><h2 data-i18n="todayGoal"></h2></div>
+            <div class="goal-body">
+              <svg class="ring small" viewBox="0 0 148 148" aria-hidden="true">
+                <circle cx="74" cy="74" r="56" fill="none" class="ring-bg" stroke-width="22"/>
+                <circle id="goalFg" cx="74" cy="74" r="56" fill="none" class="ring-fg blue" stroke-width="22" stroke-linecap="round" stroke-dasharray="351.9" stroke-dashoffset="351.9" transform="rotate(-90 74 74)"/>
+              </svg>
+              <div class="goal-stats">
+                <span title=""><svg aria-hidden="true"><use href="#i-cal"/></svg><b id="goalSched">0/0</b></span>
+                <span><svg aria-hidden="true"><use href="#i-people"/></svg><b id="goalContacts">0/0</b></span>
+              </div>
+            </div>
+          </article>
+
+          <!-- Week (2x1) -->
+          <article class="widget w-2x1" id="wWeek">
+            <div class="w-head between">
+              <div class="w-head"><span class="w-icon orange"><svg><use href="#i-flame"/></svg></span><h2 data-i18n="last7Days"></h2></div>
+              <span class="w-stat" id="weekStat"></span>
+            </div>
+            <div class="week" id="weekDays"></div>
+          </article>
+
+          <!-- Small status widgets -->
+          <a class="widget w-1x1 link" href="#cookies" data-goto="cookies" id="wCookie">
+            <div class="w-head"><span class="w-icon" id="cookieIcon"><svg><use href="#i-key"/></svg></span><h2 data-i18n="cookie"></h2></div>
+            <div class="w-value" id="cookieValue"></div>
+            <div class="w-sub" id="cookieSub"></div>
+          </a>
+          <a class="widget w-1x1 link" href="#settings" data-goto="settings" id="wRefresh">
+            <div class="w-head"><span class="w-icon teal"><svg><use href="#i-refresh"/></svg></span><h2 data-i18n="cookieRefresh"></h2></div>
+            <div class="w-value" id="refreshValue"></div>
+            <div class="w-sub" id="refreshSub"></div>
+          </a>
+          <a class="widget w-1x1 link" href="#settings" data-goto="settings" id="wNotif">
+            <div class="w-head"><span class="w-icon purple"><svg><use href="#i-bell"/></svg></span><h2 data-i18n="notifications"></h2></div>
+            <div class="w-value" id="notifValue"></div>
+            <div class="w-sub" id="notifSub"></div>
+          </a>
+          <a class="widget w-1x1 link" href="#accounts" data-goto="accounts" id="wAccounts">
+            <div class="w-head"><span class="w-icon blue"><svg><use href="#i-people"/></svg></span><h2 data-i18n="accounts"></h2></div>
+            <div class="w-value" id="accountsValue"></div>
+            <div class="w-sub" id="accountsSub"></div>
+          </a>
+        </div>
+
+        <div class="two-col">
+          <div class="group">
+            <div class="group-head"><h2 data-i18n="today"></h2><span class="muted" id="todayCount"></span></div>
+            <div id="todayList" class="stack"></div>
           </div>
-          <p id="runErr" class="error"></p>
-        </div>
-
-        <div class="card">
-          <h2>Log <span id="runBadge" class="badge"></span></h2>
-          <pre id="logBox" class="log">Belum ada proses.</pre>
-          <div class="row"><button id="btnShot" class="btn small">Lihat screenshot browser terakhir</button></div>
-          <div id="proofBox" class="proofs"></div>
-          <img id="shotView" class="shot hidden" alt="Screenshot browser terakhir">
-        </div>
-
-        <div class="card">
-          <div class="row between">
-            <h2>Riwayat</h2>
-            <button id="clearHistory" class="btn ghost small">Hapus riwayat</button>
+          <div class="group">
+            <div class="group-head"><h2 data-i18n="latestLog"></h2><span id="runBadge" class="badge"></span></div>
+            <pre id="logBox" class="log"></pre>
+            <div class="row"><button id="btnShot" class="btn tinted small" type="button" data-i18n="viewScreenshot"></button></div>
+            <img id="shotView" class="shot hidden" alt="">
+            <div id="proofBox" class="proofs"></div>
           </div>
+        </div>
+
+        <div class="group">
+          <div class="group-head"><h2 data-i18n="history"></h2><button id="clearHistory" class="btn plain small destructive-text" type="button" data-i18n="clearHistory"></button></div>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>Waktu</th><th>Akun</th><th>Mode</th><th>Pemicu</th><th>Hasil</th><th>Status</th></tr></thead>
+              <thead><tr><th data-i18n="colTime"></th><th data-i18n="colAccount"></th><th data-i18n="colType"></th><th data-i18n="colResult"></th><th data-i18n="colDuration"></th><th data-i18n="colStatus"></th></tr></thead>
               <tbody id="historyBody"></tbody>
             </table>
           </div>
         </div>
       </section>
 
+      <!-- Accounts & schedules -->
+      <section id="tab-accounts" class="hidden">
+        <div class="page-head"><div><p class="eyebrow" data-i18n="accountsHint"></p><h1 data-i18n="navAccounts"></h1></div></div>
+        <div class="two-col wide-right">
+          <div class="stack">
+            <div class="inset-list" id="accountList"></div>
+            <div class="group">
+              <label for="newAccountName" data-i18n="newAccountName"></label>
+              <input id="newAccountName" type="text" maxlength="40" data-i18n-ph="newAccountPh">
+              <button id="btnAddAccount" class="btn primary block" type="button" data-i18n="addAccount"></button>
+              <p id="accountErr" class="error" role="alert"></p>
+            </div>
+          </div>
+          <div class="stack">
+            <div class="group-head"><h2><span data-i18n="sendSchedules"></span> · <span class="acct-name-text"></span></h2><span class="muted small-text" id="tzLabel"></span></div>
+            <p class="muted small-text" data-i18n="schedulesHint"></p>
+            <div id="scheduleList" class="stack"></div>
+            <button id="btnAddSchedule" class="btn dashed block" type="button" data-i18n="addSchedule"></button>
+            <div class="savebar">
+              <span id="scheduleMsg" class="muted" data-i18n="schedulesSaveHint"></span>
+              <button id="btnSaveSchedules" class="btn primary" type="button" data-i18n="saveSchedules"></button>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- Contacts -->
       <section id="tab-contacts" class="hidden">
-        <div class="card">
-          <h2>Tambah kontak <span class="badge acct-name"></span></h2>
-          <p class="muted">Nickname persis seperti yang tampil di daftar pesan TikTok. Pisahkan dengan baris baru atau koma.</p>
-          <textarea id="contactsInput" rows="3" placeholder="nickname1&#10;nickname2"></textarea>
-          <div class="row"><button id="btnAddContacts" class="btn primary">Tambah</button></div>
-          <p id="contactsErr" class="error"></p>
-        </div>
-        <div class="card">
-          <h2>Daftar kontak <span class="badge acct-name"></span> <span id="contactsCount" class="badge"></span></h2>
-          <ul id="contactsList" class="list"></ul>
+        <div class="page-head"><div><p class="eyebrow" data-i18n="contactsHint"></p><h1><span data-i18n="navContacts"></span> · <span class="acct-name-text"></span></h1></div></div>
+        <div class="two-col wide-right">
+          <div class="group">
+            <h2 data-i18n="addContacts"></h2>
+            <textarea id="contactsInput" rows="4" data-i18n-ph="contactsPh" data-i18n-aria="addContacts"></textarea>
+            <div class="row"><button id="btnAddContacts" class="btn primary" type="button" data-i18n="add"></button></div>
+            <p id="contactsErr" class="error" role="alert"></p>
+          </div>
+          <div class="stack">
+            <div class="group-head"><h2 data-i18n="contactList"></h2><span id="contactsCount" class="badge"></span></div>
+            <ul id="contactsList" class="inset-list"></ul>
+          </div>
         </div>
       </section>
 
       <!-- Cookies -->
       <section id="tab-cookies" class="hidden">
-        <div class="card">
-          <h2>Cookie TikTok <span class="badge acct-name"></span></h2>
-          <p id="cookieState" class="muted"></p>
-          <div class="row"><button id="btnCheckCookies" class="btn small">Cek cookie sekarang</button></div>
-          <p class="muted small-text">Cek otomatis berkala juga memperbarui cookie yang tersimpan agar sesi tetap aktif (atur di Pengaturan).</p>
+        <div class="page-head">
+          <div><p class="eyebrow"><span data-i18n="account"></span>: <span class="acct-name-text"></span></p><h1 data-i18n="navCookies"></h1></div>
+          <button id="btnCheckCookies" class="btn tinted" type="button" data-i18n="checkCookieNow"></button>
         </div>
-        <div class="card">
-          <h2>Opsi 1: Login langsung di panel</h2>
-          <p class="muted">Panel membuka browser TikTok di server. Klik dan ketik pada tampilan di bawah (termasuk captcha/OTP), lalu simpan.</p>
-          <div class="row">
-            <button id="btnLoginStart" class="btn primary">Mulai login</button>
-            <button id="btnLoginSave" class="btn hidden">Simpan sesi login</button>
-            <button id="btnLoginStop" class="btn danger hidden">Batal</button>
-          </div>
-          <p id="loginState" class="muted"></p>
-          <div id="remoteWrap" class="remote hidden">
-            <img id="remoteView" alt="Browser remote" tabindex="0" draggable="false">
-          </div>
-          <input id="remoteText" type="text" class="hidden" placeholder="Ketik/tempel teks di sini lalu Enter untuk dikirim ke browser (opsional)">
-        </div>
-        <div class="card">
-          <h2>Opsi 2: Tempel cookie manual</h2>
-          <p class="muted">Login ke tiktok.com di browser, lalu ekspor cookie (mis. ekstensi Cookie-Editor, format JSON) atau salin header <code>Cookie</code>. Tempel di bawah.</p>
-          <textarea id="cookieInput" rows="8" placeholder='[{"name":"sessionid","value":"...","domain":".tiktok.com"}]  atau  sessionid=...; sid_tt=...'></textarea>
-          <div class="row">
-            <button id="btnSaveCookies" class="btn primary">Simpan cookie</button>
-            <button id="btnClearCookies" class="btn danger">Hapus cookie</button>
-          </div>
-          <p id="cookieErr" class="error"></p>
-          <p class="muted small-text">Cookie disimpan di volume Docker dan tidak pernah ditampilkan kembali.</p>
-        </div>
-      </section>
+        <div class="banner" id="cookieBanner"></div>
 
-      <!-- Accounts -->
-      <section id="tab-accounts" class="hidden">
-        <div class="card">
-          <h2>Akun TikTok</h2>
-          <p class="muted">Tiap akun punya cookie, kontak, dan jadwal sendiri. Proses berjalan bergantian, satu akun pada satu waktu.</p>
-          <ul id="accountList" class="list"></ul>
-          <div class="row">
-            <input id="newAccountName" type="text" maxlength="40" placeholder="Nama akun baru, mis. Akun B" style="max-width:320px">
-            <button id="btnAddAccount" class="btn primary">Tambah akun</button>
+        <div class="group">
+          <div class="group-head"><h2 data-i18n="reLogin"></h2><span class="muted small-text" data-i18n="idleNote"></span></div>
+          <ol class="steps" id="loginSteps"></ol>
+          <div class="two-col wide-left">
+            <div>
+              <div id="remoteIdle" class="remote-idle">
+                <p class="muted" data-i18n="remoteHint"></p>
+                <button id="btnLoginStart" class="btn primary" type="button" data-i18n="startLogin"></button>
+              </div>
+              <div id="remoteWrap" class="remote hidden">
+                <div class="remote-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">tiktok.com/login</span></div>
+                <img id="remoteView" data-i18n-alt="remoteBrowser" tabindex="0" draggable="false">
+                <div class="remote-send">
+                  <label for="remoteText" data-i18n="sendText"></label>
+                  <input id="remoteText" type="text" data-i18n-ph="sendTextPh">
+                </div>
+              </div>
+            </div>
+            <div class="stack">
+              <div class="note" id="loginStateBox"><strong id="loginState"></strong></div>
+              <ul class="tips">
+                <li data-i18n="tip1"></li>
+                <li data-i18n="tip2"></li>
+                <li data-i18n="tip3"></li>
+              </ul>
+              <button id="btnLoginSave" class="btn primary block hidden" type="button" data-i18n="saveLoginSession"></button>
+              <button id="btnLoginStop" class="btn destructive block hidden" type="button" data-i18n="cancel"></button>
+            </div>
           </div>
-          <p id="accountErr" class="error"></p>
+          <p id="cookieErr" class="error" role="alert"></p>
         </div>
-        <div class="card">
-          <h2>Jadwal kirim <span class="badge acct-name"></span></h2>
-          <p class="muted small-text">Tambahkan satu atau lebih jadwal (mis. pagi dan malam). Tiap jadwal bisa punya pesan sendiri; kosongkan untuk memakai pesan default. Zona waktu diatur di Pengaturan.</p>
-          <div id="scheduleList" class="schedules"></div>
+
+        <details class="group">
+          <summary><span><strong data-i18n="manualCookie"></strong><br><span class="muted small-text" data-i18n="manualCookieHint"></span></span><svg class="chev" aria-hidden="true"><use href="#i-chev"/></svg></summary>
+          <textarea id="cookieInput" rows="6" data-i18n-ph="cookiePh" data-i18n-aria="manualCookie"></textarea>
           <div class="row">
-            <button id="btnAddSchedule" class="btn small" type="button">+ Tambah jadwal</button>
-            <button id="btnSaveSchedules" class="btn primary" type="button">Simpan jadwal</button>
+            <button id="btnSaveCookies" class="btn primary" type="button" data-i18n="saveCookie"></button>
+            <button id="btnClearCookies" class="btn destructive" type="button" data-i18n="deleteCookie"></button>
           </div>
-          <p id="scheduleMsg" class="muted"></p>
-        </div>
+        </details>
       </section>
 
       <!-- Settings -->
       <section id="tab-settings" class="hidden">
-        <form id="settingsForm" class="card">
-          <h2>Pesan</h2>
-          <label for="setMessage">Pesan default</label>
-          <input id="setMessage" type="text" required>
-
-          <h2>Zona waktu</h2>
-          <label for="setTimezone">Timezone untuk semua jadwal</label>
-          <input id="setTimezone" type="text" placeholder="Asia/Jakarta">
-
-          <h2>Cookie</h2>
-          <label class="check"><input id="setKeepalive" type="checkbox"> Cek &amp; perbarui cookie otomatis (jaga sesi tetap aktif)</label>
-          <div class="grid two">
-            <div><label for="setKeepaliveHours">Interval cek (jam, 1-72)</label><input id="setKeepaliveHours" type="number" min="1" max="72"></div>
+        <div class="page-head"><div><p class="eyebrow" data-i18n="settingsHint"></p><h1 data-i18n="navSettings"></h1></div></div>
+        <form id="settingsForm" class="settings">
+          <h3 class="list-title" data-i18n="message"></h3>
+          <div class="inset-list form">
+            <div class="cell"><label for="setMessage" data-i18n="defaultMessage"></label><input id="setMessage" type="text" required></div>
+            <div class="cell"><label for="setTimezone" data-i18n="timezone"></label><input id="setTimezone" type="text" placeholder="Asia/Jakarta"></div>
           </div>
 
-          <h2>Waktu tunggu (detik)</h2>
-          <div class="grid three">
-            <div><label for="setPageWait">Muat halaman</label><input id="setPageWait" type="number" min="0" max="60"></div>
-            <div><label for="setElementWait">Elemen</label><input id="setElementWait" type="number" min="0" max="60"></div>
-            <div><label for="setSendDelay">Jeda kirim</label><input id="setSendDelay" type="number" min="0" max="60"></div>
+          <h3 class="list-title" data-i18n="cookie"></h3>
+          <div class="inset-list form">
+            <label class="cell switch-cell"><span data-i18n="keepalive"></span><input id="setKeepalive" type="checkbox" class="switch" role="switch"></label>
+            <div class="cell"><label for="setKeepaliveHours" data-i18n="keepaliveHours"></label><input id="setKeepaliveHours" type="number" min="1" max="72"></div>
           </div>
 
-          <h2>Bukti kirim</h2>
-          <label class="check"><input id="setNotifyShot" type="checkbox"> Lampirkan screenshot chat di notifikasi</label>
-          <p class="muted small-text">Screenshot berisi tampilan chat dengan penerima dan ikut terkirim ke Discord/Telegram Anda. Matikan jika channel notifikasi dibaca orang lain.</p>
-
-          <h2>Notifikasi Discord (opsional)</h2>
-          <label class="check"><input id="setDcEnabled" type="checkbox"> Aktifkan notifikasi</label>
-          <label for="setDcWebhook">Webhook URL <span id="dcWebhookState" class="muted"></span></label>
-          <input id="setDcWebhook" type="password" placeholder="https://discord.com/api/webhooks/..." autocomplete="off">
-          <div class="row"><button id="btnDcTest" class="btn" type="button">Tes Discord</button></div>
-
-          <h2>Notifikasi Telegram (opsional)</h2>
-          <label class="check"><input id="setTgEnabled" type="checkbox"> Aktifkan notifikasi</label>
-          <div class="grid two">
-            <div><label for="setTgToken">Bot token <span id="tgTokenState" class="muted"></span></label><input id="setTgToken" type="password" placeholder="Kosongkan untuk tidak mengubah" autocomplete="off"></div>
-            <div><label for="setTgChat">Chat ID</label><input id="setTgChat" type="text"></div>
+          <h3 class="list-title" data-i18n="waits"></h3>
+          <div class="inset-list form">
+            <div class="cell"><label for="setPageWait" data-i18n="pageLoad"></label><input id="setPageWait" type="number" min="0" max="60"></div>
+            <div class="cell"><label for="setElementWait" data-i18n="element"></label><input id="setElementWait" type="number" min="0" max="60"></div>
+            <div class="cell"><label for="setSendDelay" data-i18n="sendDelay"></label><input id="setSendDelay" type="number" min="0" max="60"></div>
           </div>
-          <div class="row">
-            <button class="btn primary" type="submit">Simpan</button>
-            <button id="btnTgTest" class="btn" type="button">Tes Telegram</button>
+
+          <h3 class="list-title" data-i18n="proof"></h3>
+          <div class="inset-list form">
+            <label class="cell switch-cell"><span data-i18n="attachScreenshot"></span><input id="setNotifyShot" type="checkbox" class="switch" role="switch"></label>
           </div>
-          <p id="settingsMsg" class="muted"></p>
+          <p class="list-foot" data-i18n="attachScreenshotHint"></p>
+
+          <h3 class="list-title">Discord</h3>
+          <div class="inset-list form">
+            <label class="cell switch-cell"><span data-i18n="enableNotif"></span><input id="setDcEnabled" type="checkbox" class="switch" role="switch"></label>
+            <div class="cell"><label for="setDcWebhook"><span data-i18n="webhookUrl"></span> <span id="dcWebhookState" class="muted"></span></label><input id="setDcWebhook" type="password" placeholder="https://discord.com/api/webhooks/..." autocomplete="off"></div>
+            <div class="cell"><button id="btnDcTest" class="btn plain" type="button" data-i18n="testDiscord"></button></div>
+          </div>
+
+          <h3 class="list-title">Telegram</h3>
+          <div class="inset-list form">
+            <label class="cell switch-cell"><span data-i18n="enableNotif"></span><input id="setTgEnabled" type="checkbox" class="switch" role="switch"></label>
+            <div class="cell"><label for="setTgToken"><span data-i18n="botToken"></span> <span id="tgTokenState" class="muted"></span></label><input id="setTgToken" type="password" data-i18n-ph="keepEmptyPh" autocomplete="off"></div>
+            <div class="cell"><label for="setTgChat" data-i18n="chatId"></label><input id="setTgChat" type="text"></div>
+            <div class="cell"><button id="btnTgTest" class="btn plain" type="button" data-i18n="testTelegram"></button></div>
+          </div>
+
+          <div class="savebar">
+            <span id="settingsMsg" class="muted"></span>
+            <button class="btn primary" type="submit" data-i18n="save"></button>
+          </div>
         </form>
       </section>
     </main>
   </div>
-  <div id="toast" class="toast hidden"></div>
+  <div id="toast" class="toast hidden" role="status"></div>
   <script src="/static/app.js"></script>
 </body>
 </html>
