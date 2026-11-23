@@ -383,6 +383,12 @@ def day_stats(account_id, since_day, mode="send"):
     return out
 
 
+def last_success_at(account_id):
+    """Waktu mulai kiriman sukses terakhir (sent > 0) untuk akun ini, atau None."""
+    r = db.q1("SELECT MAX(started_at) t FROM runs WHERE account_id=? AND mode='send' AND sent>0", (account_id,))
+    return r["t"] if r else None
+
+
 def send_days(account_id, since_day):
     return [r["d"] for r in db.q("SELECT DISTINCT substr(started_at,1,10) d FROM runs WHERE account_id=? AND mode='send' "
                                  "AND sent>0 AND substr(started_at,1,10)>=? ORDER BY d DESC", (account_id, since_day))]

@@ -5,6 +5,10 @@ import tempfile
 
 import pytest
 
+# tes in-process memakai folder data sementara bersama; harus diatur sebelum modul app diimpor
+os.environ.setdefault("DATA_DIR", tempfile.mkdtemp(prefix="bara-inproc-"))
+os.environ.setdefault("API_KEY", "testkey123")
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "tests", "support"))
 from server import Server, chromium_path  # noqa: E402
@@ -42,3 +46,24 @@ def run_script():
 
 
 needs_browser = pytest.mark.skipif(not chromium_path() or not os.path.exists(chromium_path() or ""), reason="Chromium tidak tersedia")
+
+
+@pytest.fixture(scope="session")
+def app_mods():
+    """Modul aplikasi untuk tes in-process (satu DATA_DIR sementara untuk seluruh sesi)."""
+    sys.path.insert(0, ROOT)
+    from app import auth, db, jobs, notify as N, runner as R, store
+    return type("M", (), {"auth": auth, "db": db, "jobs": jobs, "N": N, "R": R, "store": store})
+
+
+@pytest.fixture
+def sent(monkeypatch, app_mods):
+    """Tangkap semua notifikasi yang dikirim Runner: daftar (judul, baris)."""
+    out = []
+    def fake(cfg, title, lines=(), files=None):
+        out.append({"title": title, "lines": list(lines), "discord": cfg.get("discord_webhook") if cfg.get("discord_enabled") else None,
+                    "telegram": cfg.get("telegram_chat_id") if cfg.get("telegram_enabled") else None})
+        return True
+    monkeypatch.setattr(app_mods.R, "notify", fake)
+    return out
+

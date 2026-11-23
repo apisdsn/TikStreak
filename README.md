@@ -174,6 +174,13 @@ Pengunjung yang belum login melihat halaman depan Bara (fitur, cara kerja, keama
 
 HTML dikirim dengan `Cache-Control: private, no-cache` dan `Vary: Cookie`, jadi aman di belakang Cloudflare.
 
+## Peringatan Kesehatan
+
+- **Belum ada pesan terkirim:** akun dengan jadwal aktif dan cookie yang belum punya kiriman sukses selama 24 jam membuat pemiliknya diberi tahu, paling sering sekali sehari.
+- **Semua kontak gagal:** bila satu kiriman gagal untuk semua kontak padahal cookie valid (verifikasi gagal, elemen tidak ditemukan), pemilik diberi tahu, dan kanal global admin menerima peringatan sistem tanpa nama akun atau kontak. Jeda 6 jam.
+- **`/api/health?deep=1`:** memeriksa umur tik scheduler, status worker, dan database. Mengembalikan 503 bila tik scheduler lebih dari 2 menit, worker mati, atau database gagal. `/api/health` biasa tidak berubah. `HEALTHCHECK` Docker memakai pemeriksaan mendalam.
+- **`HEALTHCHECK_PING_URL`** (opsional): URL push healthchecks.io atau Uptime Kuma yang dipanggil tiap 5 menit selama pemeriksaan mendalam OK.
+
 ## Backup
 
 Semua data ada di satu file SQLite (`/data/streak.db`) plus `secret.key` (atau env `SECRET_KEY`) dan folder `proofs/`. Cookie dan rahasia notifikasi dienkripsi; **tanpa kunci yang sama cookie tidak bisa dibaca**, jadi simpan `SECRET_KEY` (atau `secret.key`) bersama backup database.

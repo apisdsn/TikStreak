@@ -9,7 +9,7 @@ import uuid
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from . import config, jobs
+from . import config, db, jobs
 from .bot import Cancelled, CookieInvalid, StreakBot
 from .config import DATA_DIR
 from .notify import notify
@@ -20,6 +20,7 @@ from .store import (
     insert_run,
     kv_get,
     kv_set,
+    last_success_at,
     list_accounts,
     new_run_id,
     rename_contact,
@@ -31,6 +32,7 @@ MAX_LOG_LINES = 500
 PROOFS_DIR = os.path.join(DATA_DIR, "proofs")
 CATCHUP_SECONDS = 3 * 3600
 ALERT_COOLDOWN = 6 * 3600  # jeda minimal antar alert cookie dari cek otomatis
+BREAKAGE_COOLDOWN = 6 * 3600  # jeda alert tampilan TikTok berubah
 KEEPALIVE_GUARD = 600      # keepalive tidak mulai bila jadwal kirim jatuh tempo dalam 10 menit
 
 
@@ -60,6 +62,8 @@ class Runner:
         self.started = False
 
     # ------------------------------------------------------------ siklus hidup
+        self.scheduler_on = False
+        self.last_tick = time.time()
     def start_workers(self, workers=None, scheduler=True):
         if self.started:
             return
@@ -78,6 +82,8 @@ class Runner:
         if scheduler:
             t = threading.Thread(target=self.scheduler_loop, daemon=True, name="bara-scheduler")
             t.start()
+            self.scheduler_on = True
+            self.last_tick = time.time()
             self._threads.append(t)
 
     def shutdown(self):
@@ -285,6 +291,7 @@ class Runner:
             log_line("Dihentikan Oleh Pengguna", "warning")
         except CookieInvalid as e:
             run["status"] = "failed"
+            self._after_run(get_settings(), run)
             run["error"] = str(e)
             run["cookie_invalid"] = True
             log_line(f"Gagal: {e}", "error")
@@ -633,9 +640,119 @@ class Runner:
         st = stores(acc["id"])
         if not s["keepalive_enabled"] or not st.cookies.read():
             return False
+            self.last_tick = time.time()
         meta = st.meta.read()
         if time.time() - meta.get("last_check", 0) < s["keepalive_hours"] * 3600:
             return False
+    # ------------------------------------------------------- alert kegagalan Bara sendiri
+    CONTACT_ERRORS = ("Kontak Tidak Ditemukan", "Chat yang Terbuka Milik")  # masalah satu kontak, bukan tanda tampilan TikTok berubah
+
+    def _after_run(self, settings, run):
+        try:
+            self._breakage_alert(settings, run)
+        except Exception:  # noqa: BLE001
+            log.exception("alert kegagalan galat")
+
+    def _breakage_alert(self, settings, run):
+        """Semua kontak gagal pada cookie yang valid: kemungkinan tampilan TikTok berubah. Jeda 6 jam per akun dan untuk kanal sistem."""
+        res = run.get("results") or []
+        if run["mode"] != "send" or run.get("cookie_invalid") or not res or any(r.get("ok") for r in res):
+            return
+        if all(any(m in (r.get("error") or "") for m in self.CONTACT_ERRORS) for r in res):
+            return
+        now = time.time()
+        aid = run["account"]["id"]
+        own = self._targets(settings, run)
+        if now - float(kv_get("brk:" + aid, 0) or 0) >= BREAKAGE_COOLDOWN:
+            kv_set("brk:" + aid, now)
+            for t in own:
+                notify(t, "🛠️ Semua Kontak Gagal, Kemungkinan Tampilan TikTok Berubah",
+                       [f"Akun {run['account']['name']}: {len(res)} kontak gagal, cookie masih valid.", "Cek screenshot di riwayat, lalu perbarui Bara bila perlu."])
+        if now - float(kv_get("brk-sys", 0) or 0) >= BREAKAGE_COOLDOWN:
+            used_d = {t.get("discord_webhook") for t in own if t.get("discord_enabled")}
+            used_t = {(t.get("telegram_token"), t.get("telegram_chat_id")) for t in own if t.get("telegram_enabled")}
+            sys_t = [t for t in self._global_channels(settings)
+                     if not (t.get("discord_enabled") and t["discord_webhook"] in used_d)
+                     and not (t.get("telegram_enabled") and (t["telegram_token"], t["telegram_chat_id"]) in used_t)]
+            if sys_t:
+                kv_set("brk-sys", now)
+                for t in sys_t:  # peringatan sistem: tanpa nama akun atau kontak
+                    notify(t, "🛠️ Peringatan Sistem: Pengiriman Gagal untuk Semua Kontak pada Satu Akun",
+                           ["Kemungkinan tampilan TikTok berubah. Periksa Bara dan perbarui bila perlu."])
+
+    @staticmethod
+    def _global_channels(settings):
+        c = dict(settings)
+        out = []
+        if c.get("discord_enabled") and c.get("discord_webhook"):
+            out.append({**c, "telegram_enabled": False})
+        if c.get("telegram_enabled") and c.get("telegram_token") and c.get("telegram_chat_id"):
+            out.append({**c, "discord_enabled": False})
+        return out
+
+    def check_stalled(self):
+        """Akun dengan jadwal aktif dan cookie tetapi tanpa kiriman sukses selama 24 jam: peringatkan pemilik, sekali sehari."""
+        s = get_settings()
+        today = datetime.now(_tz(s)).strftime("%Y-%m-%d")
+        for acc in list_accounts():
+            if not any(x["enabled"] for x in acc["schedules"]):
+                continue
+            st = stores(acc["id"])
+            if not st.cookies.read() or st.meta.read().get("invalid"):
+                continue  # masalah cookie punya alert sendiri
+            row = db.q1("SELECT created_at FROM accounts WHERE id=?", (acc["id"],))
+            ref = None
+            for v in (row and row["created_at"], last_success_at(acc["id"])):
+                try:
+                    d = datetime.fromisoformat(v) if v else None
+                except ValueError:
+                    d = None
+                if d and (ref is None or d > ref):
+                    ref = d
+            if ref is None or datetime.now() - ref < timedelta(hours=24):
+                continue
+            key = "nosucc:" + acc["id"]
+            if kv_get(key) == today:
+                continue
+            kv_set(key, today)
+            fake = {"account": {"id": acc["id"], "name": acc["name"]}, "mode": "send", "status": "warning"}
+            for t in self._targets(s, fake):
+                notify(t, "⚠️ Belum Ada Pesan Terkirim dalam 24 Jam",
+                       [f"Akun {acc['name']} punya jadwal aktif dan cookie, tetapi tidak ada kiriman sukses.", "Cek riwayat dan log di panel."])
+
+    # --------------------------------------------------------------- kesehatan
+    def deep_health(self):
+        now = time.time()
+        workers = [t for t in self._threads if t.name.startswith("bara-worker")]
+        alive = sum(1 for t in workers if t.is_alive())
+        info = {"scheduler_age": round(now - self.last_tick, 1) if self.scheduler_on else None,
+                "workers": {"total": len(workers), "alive": alive}, "db": True}
+        ok = True
+        if self.scheduler_on and now - self.last_tick > 120:
+            ok = False
+        if alive < len(workers):
+            ok = False
+        try:
+            db.q1("SELECT 1")
+        except Exception:  # noqa: BLE001
+            info["db"] = False
+            ok = False
+        info["status"] = "ok" if ok else "fail"
+        return ok, info
+
+    def ping(self):
+        """Dead-man's switch: panggil HEALTHCHECK_PING_URL selama kesehatan mendalam OK."""
+        url = config.HEALTHCHECK_PING_URL
+        if not url or not self.deep_health()[0]:
+            return False
+        try:
+            import urllib.request
+            urllib.request.urlopen(url, timeout=10).read(1)
+            return True
+        except Exception as e:  # noqa: BLE001
+            log.warning("ping healthcheck gagal: %s", e)
+            return False
+
         try:
             jobs.enqueue(acc["id"], acc.get("owner_id"), "check", "keepalive")
         except jobs.Duplicate:

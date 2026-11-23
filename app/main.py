@@ -12,7 +12,7 @@ from typing import List, Optional
 from zoneinfo import ZoneInfo
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
-from fastapi.responses import FileResponse, RedirectResponse, Response
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -174,8 +174,11 @@ def run_view(run, with_logs=False):
 
 # -------------------------------------------------------------------- API
 @app.get("/api/health")
-def health():
-    return {"status": "ok"}
+def health(deep: int = Query(0)):
+    if not deep:
+        return {"status": "ok"}
+    ok, info = runner.deep_health()
+    return JSONResponse(info, status_code=200 if ok else 503)
 
 
 def keepalive_next(aid):

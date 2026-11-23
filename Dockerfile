@@ -20,7 +20,7 @@ VOLUME /data
 EXPOSE 8000
 
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
-    CMD curl -fs http://127.0.0.1:8000/api/health || exit 1
+    CMD curl -fs "http://127.0.0.1:8000/api/health?deep=1" || exit 1
 
 ENTRYPOINT ["tini", "--"]
 # TRUST_PROXY=1 hanya bila ada reverse proxy tepercaya di depan (lihat .env.example)
