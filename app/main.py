@@ -34,6 +34,7 @@ from .auth import (
     visible_accounts,
 )
 from .cookies import parse_cookies, summary
+from .messages import MAX_LENGTH, MAX_VARIATIONS
 from .streaks import effective_streak
 from . import db, jobs, migrate_json
 from .login import login_mgr
@@ -138,6 +139,8 @@ class SettingsIn(BaseModel):
 class AccountIn(BaseModel):
     name: Optional[str] = None
     schedules: Optional[List[ScheduleIn]] = None
+    variations: Optional[List[str]] = None
+    random_emoji: Optional[bool] = None
 
 
 class ContactsIn(BaseModel):
@@ -208,6 +211,8 @@ def account_view(acc, user=None):
         "contacts": len(st.contacts.read()),
         "cookies": cookie_view(acc["id"]),
         "schedules": acc["schedules"],
+        "variations": acc.get("variations", []),
+        "random_emoji": bool(acc.get("random_emoji")),
         "next_run": runner.next_run_at(acc["id"]),
         "next": runner.next_schedule(acc["id"]),
         "keepalive_next": keepalive_next(acc["id"]),
@@ -349,6 +354,15 @@ def update_account(aid: str, body: AccountIn, user=Depends(current_user)):
         acc["name"] = clean_name(body.name, acc.get("owner_id"), aid)
     if body.schedules is not None:
         acc["schedules"] = clean_schedules(body.schedules)
+    if body.variations is not None:
+        items = [v.strip() for v in body.variations if v and v.strip()]
+        if len(items) > MAX_VARIATIONS:
+            raise HTTPException(400, f"Maksimal {MAX_VARIATIONS} Variasi Pesan")
+        if any(len(v) > MAX_LENGTH for v in items):
+            raise HTTPException(400, f"Setiap Variasi Maksimal {MAX_LENGTH} Karakter")
+        acc["variations"] = items
+    if body.random_emoji is not None:
+        acc["random_emoji"] = body.random_emoji
     save_account(acc)
     return account_view(acc, user)
 

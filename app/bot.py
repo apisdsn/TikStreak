@@ -106,13 +106,14 @@ def xpath_literal(s):
 
 
 class StreakBot:
-    def __init__(self, settings, log, cancel_event, cookies_store, test_mode=False, message=None, check_only=False, proof_dir=None, convs_store=None, account_id=None, provider=None):
+    def __init__(self, settings, log, cancel_event, cookies_store, test_mode=False, message=None, check_only=False, proof_dir=None, convs_store=None, account_id=None, provider=None, message_fn=None):
         self.s = settings
         self.cookies_store = cookies_store
         self.log = log
         self.cancel = cancel_event
         self.test_mode = test_mode
         self.message = message or settings["message"]
+        self.message_fn = message_fn  # nama kontak -> teks (variasi, placeholder); None = satu pesan untuk semua
         self.check_only = check_only
         self.proof_dir = proof_dir
         self.convs = convs_store
@@ -567,6 +568,8 @@ class StreakBot:
 
             for name in contacts:
                 self._check_cancel()
+                if self.message_fn:
+                    self.message = self.message_fn(name)
                 ok, err, evidence = False, None, None
                 for attempt in range(1, 4):
                     try:
@@ -586,7 +589,7 @@ class StreakBot:
                     shown = ", ".join(self._visible_nicknames()) or "-"
                     self.log(f"Nickname Terlihat di Halaman: {shown}", "info")
                 results.append({
-                    "contact": name, "ok": ok, "error": None if ok else err,
+                    "contact": name, "ok": ok, "error": None if ok else err, "message": self.message,
                     "sent_at": datetime.now().strftime("%H:%M:%S") if ok and not self.test_mode else None,
                     "proof": self._capture_proof(len(results)) if ok else None,
                     "evidence": evidence if ok else None,

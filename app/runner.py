@@ -9,11 +9,12 @@ import uuid
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from . import config, db, jobs
+from . import config, db, jobs, messages
 from .bot import Cancelled, CookieInvalid, StreakBot
 from .config import DATA_DIR
 from .notify import notify
 from .store import (
+    contact_stats,
     contact_stats_apply,
     get_account,
     get_run,
@@ -317,7 +318,7 @@ class Runner:
             bot = StreakBot(settings, log_line, cancel, st.cookies, test_mode=(mode == "test"),
                             message=run.get("message"), check_only=(mode == "check"),
                             proof_dir=os.path.join(PROOFS_DIR, run["id"]), convs_store=st.convs,
-                            account_id=run["account"]["id"], provider=get_provider())
+                            account_id=run["account"]["id"], provider=get_provider(), message_fn=self._message_fn(run, settings))
             res = bot.run(contacts)
             run.update(res)
             for r in res["results"]:  # kontak yang berganti nama dikenali lewat ID percakapan
@@ -339,6 +340,14 @@ class Runner:
             run["error"] = str(e)
             log_line(f"Gagal: {e}", "error")
         return bot
+
+    def _message_fn(self, run, settings):
+        """Pemilih teks per kontak (variasi akun, placeholder, emoji acak) untuk satu run."""
+        aid = run["account"]["id"]
+        acc = get_account(aid) or {"id": aid}
+        stats = contact_stats(aid)
+        today = datetime.now(_tz(settings)).strftime("%Y-%m-%d")
+        return lambda name: messages.resolve(settings, acc, name, run.get("message"), today, stats.get(name.strip().lower()))
 
     def _update_meta(self, run, bot):
         meta_store = stores(run["account"]["id"]).meta
@@ -424,7 +433,8 @@ class Runner:
         elif run.get("label"):
             lines.insert(0, f"Jadwal {run['label']}")
         if run["mode"] == "send":
-            lines.append(f"Pesan: \"{run.get('message') or settings['message']}\"")
+            first = next((r.get("message") for r in run["results"] if r.get("message")), None)
+            lines.append(f"Pesan: \"{first or run.get('message') or settings['message']}\"")
         if run.get("error"):
             lines.append(run["error"])
         proofs = []

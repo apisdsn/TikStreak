@@ -178,6 +178,14 @@ HTML dikirim dengan `Cache-Control: private, no-cache` dan `Vary: Cookie`, jadi 
 
 Di tab Kontak, **Impor dari TikTok** memasukkan pemindaian daftar chat ke antrean browser (jenis job `scan_contacts`, prioritas seperti kirim manual). Bara membuka halaman pesan dengan cookie akun, menggulir daftar percakapan dan mengumpulkan nama, ID percakapan, dan jam pesan terakhir (maksimal `SCAN_MAX`, default 200). Hasilnya tampil di sheet dengan kotak centang dan pencarian; kontak yang sudah ada ditandai "Sudah Ada". Kontak yang dipilih ditambahkan bersama ID percakapannya sehingga kiriman memakai percakapan yang tepat. Hasil pindai hanya bisa dilihat pemilik akun, tidak masuk riwayat atau notifikasi, dan dihapus setelah 1 jam.
 
+## Kirim Ulang Otomatis
+
+Setelah kirim terjadwal, kontak yang gagal karena kesalahan sementara (timeout, halaman gagal dimuat, pesan tidak terverifikasi, browser mogok) dimasukkan ke antrean lagi `RETRY_DELAY_MIN` menit kemudian (default 30), maksimal `RETRY_MAX` kali (default 2), dan hanya bila perkiraan mulainya sebelum 23:50. Kontak yang tidak ditemukan, selector yang gagal, dan cookie tidak valid tidak diulang. Run ulang berlabel **Ulang** di riwayat dan notifikasinya berjudul "Percobaan Ulang". Admin dapat mengubah nilainya di Pengaturan, baris **Kirim Ulang**.
+
+## Variasi Pesan
+
+Setiap akun dapat menyimpan hingga 20 variasi pesan (maks. 500 karakter) di Akun & Jadwal. Urutan pemilihan: pesan khusus pada jadwal (jika diisi) menimpa; selain itu satu variasi dipilih per kontak per hari secara deterministik dari akun, kontak, dan tanggal, jadi percobaan ulang mengirim teks yang sama; tanpa variasi dipakai pesan default di Pengaturan. Placeholder `{nama}` diganti nama kontak dan `{hari}` menjadi streak kontak + 1. Sakelar **Emoji Acak** menambahkan satu emoji dari 🔥✨💫⚡🌟. Pesan yang sudah ada tidak berubah.
+
 ## Status per Kontak
 
 Setiap run kirim memperbarui tabel `contact_stats` (kiriman sukses/gagal terakhir, alasan gagal, dan streak hari beruntun per kontak; streak kembali ke 0 bila satu hari terlewat). Migrasi mengisinya dari riwayat yang sudah ada. Tab Kontak menampilkan chip streak, "Terakhir Terkirim", dan status hari ini (Terkirim, Gagal, Menunggu, Tidak Dijadwalkan) lewat `GET /api/contacts/status?account=`. Dasbor menampilkan kartu **Perlu Dicek** untuk kontak yang gagal hari ini, dengan tombol **Uji Kirim Ulang** yang mengantrekan kiriman manual hanya untuk kontak itu (`POST /api/run` dengan `contacts`).

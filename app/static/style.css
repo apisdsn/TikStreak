@@ -746,6 +746,12 @@ details.group label { margin-top: 4px; }
 .nc-row .title { font-weight: 600; }
 .crow-li .title { font-weight: 600; }
 
+/* variasi pesan */
+.var-row { display: flex; align-items: flex-start; gap: 6px; }
+.var-row textarea { flex: 1; min-width: 0; margin: 0; }
+.preview-box { display: flex; flex-direction: column; gap: 6px; padding: 12px; border-radius: 14px; background: var(--group2); margin: 10px 0 4px; max-height: 220px; overflow: auto; }
+.preview-box .bubble { align-self: flex-start; max-width: 100%; padding: 8px 12px; border-radius: 16px 16px 16px 4px; background: var(--blue); color: #FFFFFF; font-size: 14px; overflow-wrap: anywhere; }
+
 /* antrean */
 .queue-box { display: flex; flex-direction: column; gap: 6px; margin: 8px 0; }
 .qrow { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 12px; background: var(--group2); font-size: 14px; font-weight: 600; }

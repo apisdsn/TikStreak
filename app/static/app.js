@@ -44,6 +44,10 @@
       saved: "(Tersimpan)", ready: "Siap", busyAcct: "Berjalan: {name}", busy: "Berjalan",
       st_running: "Berjalan", st_success: "Berhasil", st_partial: "Sebagian", st_failed: "Gagal", st_cancelled: "Dihentikan",
       st_missed: "Terlewat", st_pending: "Menunggu",
+      variations: "Variasi Pesan", variationsHint: "Satu Variasi Dipilih untuk Setiap Kontak per Hari. Pesan Khusus pada Jadwal, Jika Diisi, Selalu Dipakai. Gunakan {nama} untuk Nama Kontak dan {hari} untuk Hari ke-Berapa.",
+      variationPh: "Tulis Variasi Pesan (Maks. 500 Karakter)", addVariation: "Tambah Variasi", delVariation: "Hapus Variasi", randomEmoji: "Emoji Acak", saveVariations: "Simpan Variasi",
+      previewLbl: "Pratinjau", previewSample: "Contoh: Rina, Hari ke-128", noVariations: "Belum Ada Variasi, Pesan Default Dipakai", maxVariations: "Maksimal 20 Variasi",
+      toastVariationsSaved: "Variasi Pesan Disimpan", variationsSaveHint: "Tekan Simpan Variasi untuk Menerapkan Perubahan",
       gRetry: "Kirim Ulang", retryEnabled: "Kirim Ulang Otomatis", retryDelay: "Jeda (Menit)", retryMax: "Maksimal Percobaan", trRetry: "Ulang",
       retryHint: "Hanya untuk Kegagalan Sementara (Timeout, Halaman Gagal Dimuat, Pesan Tidak Terverifikasi). Tidak untuk Kontak yang Tidak Ditemukan atau Cookie Tidak Valid. Percobaan Ulang Hanya Dijadwalkan Sebelum Jam 23:50.",
       retrySummary: "{min} Menit · {n}×",
@@ -214,6 +218,10 @@
       saved: "(Saved)", ready: "Ready", busyAcct: "Running: {name}", busy: "Running",
       st_running: "Running", st_success: "Success", st_partial: "Partial", st_failed: "Failed", st_cancelled: "Stopped",
       st_missed: "Missed", st_pending: "Pending",
+      variations: "Message Variations", variationsHint: "One Variation Is Picked for Each Contact per Day. A Schedule's Own Message, if Set, Always Wins. Use {nama} for the Contact Name and {hari} for the Day Number.",
+      variationPh: "Write a Message Variation (Max. 500 Characters)", addVariation: "Add Variation", delVariation: "Delete Variation", randomEmoji: "Random Emoji", saveVariations: "Save Variations",
+      previewLbl: "Preview", previewSample: "Sample: Rina, Day 128", noVariations: "No Variations Yet, the Default Message Is Used", maxVariations: "Up to 20 Variations",
+      toastVariationsSaved: "Message Variations Saved", variationsSaveHint: "Press Save Variations to Apply Changes",
       gRetry: "Retry", retryEnabled: "Retry Automatically", retryDelay: "Delay (Minutes)", retryMax: "Max Attempts", trRetry: "Retry",
       retryHint: "Only for Transient Failures (Timeouts, Page Load Errors, Unverified Delivery). Not for Contacts Not Found or an Invalid Cookie. Retries Are Only Scheduled Before 23:50.",
       retrySummary: "{min} Minutes · {n}×",
@@ -638,6 +646,7 @@
     applyRole();
     await Promise.all([loadSettings(), loadMyNotif(), loadContacts(), loadHistory(), loadSlots(), isAdmin() ? Promise.all([loadUsers(), loadQueueAdmin()]) : Promise.resolve()]);
     renderSchedules(curAccount().schedules);
+    renderVariations(curAccount().variations, curAccount().random_emoji);
     renderAll();
     await refresh();
     clearInterval(pollTimer);
@@ -908,6 +917,7 @@
     dash = null;
     await Promise.all([loadContacts(), loadDash()]);
     renderSchedules(curAccount().schedules);
+    renderVariations(curAccount().variations, curAccount().random_emoji);
     await refresh();
     renderDashboard(true);
   }
@@ -2145,6 +2155,50 @@
     [...list].sort((x, y) => x.time.localeCompare(y.time)).forEach(addScheduleRow);
     syncSchedEmpty();
   }
+  // ---- variasi pesan per akun
+  const SAMPLE = { name: "Rina", day: 128, emoji: "✨" };
+  const readVariations = () => [...$("variationList").querySelectorAll("textarea")].map((x) => x.value);
+  function renderVariationPreview() {
+    const box = $("variationPreview");
+    box.replaceChildren();
+    const items = readVariations().map((v) => v.trim()).filter(Boolean);
+    const emoji = $("randomEmoji").checked ? " " + SAMPLE.emoji : "";
+    const rows = items.length ? items : [settings ? settings.message : ""];
+    box.append(el("div", { className: "muted small-text", textContent: `${t("previewLbl")} · ${t("previewSample")}` }));
+    rows.forEach((v) => box.append(el("div", { className: "bubble", textContent: v.replace(/\{nama\}/g, SAMPLE.name).replace(/\{hari\}/g, String(SAMPLE.day)) + emoji })));
+    if (!items.length) box.append(el("div", { className: "muted small-text", textContent: t("noVariations") }));
+    setText("variationsCount", `${items.length}/20`);
+  }
+  function addVariationRow(text = "") {
+    const ta = el("textarea", { rows: 2, maxLength: 500, placeholder: t("variationPh"), "aria-label": t("variationPh"), value: text });
+    const del = el("button", { type: "button", className: "more-btn", "aria-label": t("delVariation"), title: t("delVariation") }, [icon("i-trash")]);
+    const row = el("div", { className: "var-row" }, [ta, del]);
+    ta.addEventListener("input", renderVariationPreview);
+    del.addEventListener("click", () => { row.remove(); renderVariationPreview(); });
+    $("variationList").append(row);
+  }
+  function renderVariations(list, emoji) {
+    $("variationList").replaceChildren();
+    (list || []).forEach(addVariationRow);
+    if (emoji !== undefined) $("randomEmoji").checked = !!emoji;
+    renderVariationPreview();
+  }
+  $("btnAddVariation").addEventListener("click", () => {
+    if ($("variationList").children.length >= 20) return toast(t("maxVariations"));
+    addVariationRow();
+    $("variationList").lastElementChild.querySelector("textarea").focus();
+    renderVariationPreview();
+  });
+  $("randomEmoji").addEventListener("change", renderVariationPreview);
+  $("btnSaveVariations").addEventListener("click", async () => {
+    try {
+      const acc = await api("/accounts/" + currentId, { method: "PUT", body: { variations: readVariations(), random_emoji: $("randomEmoji").checked } });
+      renderVariations(acc.variations, acc.random_emoji);
+      setMsg("variationMsg", "", "variationsSaveHint");
+      toast(t("toastVariationsSaved"));
+      await refresh();
+    } catch (e) { setMsg("variationMsg", e.message); }
+  });
   const readSchedules = () => [...$("scheduleList").querySelectorAll(".sched")].map((r) => r.read());
 
   $("btnAddSchedule").addEventListener("click", () => {
@@ -2386,7 +2440,7 @@
     if (lb.open) showLightboxItem();
     renderShotButtons();
     $("shotView").title = t("fullScreen");
-    if (!$("app").classList.contains("hidden")) renderSchedules(readSchedules());
+    if (!$("app").classList.contains("hidden")) { renderSchedules(readSchedules()); renderVariations(readVariations()); }
   }
 
   // ------------------------------------------------------------------ start

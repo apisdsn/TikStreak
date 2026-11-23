@@ -86,8 +86,12 @@ def _schedules_of(aid):
 
 
 def _account(row, scheds):
+    try:
+        variations = json.loads(row["variations_json"]) if row["variations_json"] else []
+    except (TypeError, ValueError):
+        variations = []
     return {"id": row["id"], "name": row["name"], "owner_id": row["owner_id"], "schedules": scheds.get(row["id"], []),
-            "created_at": row["created_at"]}
+            "created_at": row["created_at"], "variations": variations, "random_emoji": bool(row["random_emoji"])}
 
 
 def list_accounts():
@@ -119,6 +123,9 @@ def save_account(acc):
         db.x("INSERT INTO accounts(id, owner_id, name, created_at) VALUES(?,?,?,?) "
              "ON CONFLICT(id) DO UPDATE SET owner_id=excluded.owner_id, name=excluded.name",
              (acc["id"], acc.get("owner_id"), acc["name"], acc.get("created_at") or now_iso()))
+        if "variations" in acc:  # hanya ditulis bila disertakan, agar pemanggil lain tidak menghapusnya
+            db.x("UPDATE accounts SET variations_json=?, random_emoji=? WHERE id=?",
+                 (_j(acc["variations"]) if acc["variations"] else None, 1 if acc.get("random_emoji") else 0, acc["id"]))
         db.x("DELETE FROM schedules WHERE account_id=?", (acc["id"],))
         for i, s in enumerate(acc.get("schedules") or []):
             c = s.get("contacts")

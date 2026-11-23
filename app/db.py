@@ -168,7 +168,14 @@ def _m5(c):
     _script(c, "ALTER TABLE jobs ADD COLUMN attempt INTEGER NOT NULL DEFAULT 0")
 
 
-MIGRATIONS = [_m1, _m2, _m3, _m4, _m5]
+def _m6(c):
+    _script(c, """
+    ALTER TABLE accounts ADD COLUMN variations_json TEXT;
+    ALTER TABLE accounts ADD COLUMN random_emoji INTEGER NOT NULL DEFAULT 0
+    """)
+
+
+MIGRATIONS = [_m1, _m2, _m3, _m4, _m5, _m6]
 
 
 def init():
