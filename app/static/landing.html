@@ -4,124 +4,153 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Bara · Penjaga Streak TikTok</title>
-<meta name="description" content="Bara mengirim pesan streak TikTok setiap hari sesuai jadwal dari server Anda sendiri, dan melapor ke Discord atau Telegram.">
+<meta name="description" content="Bara mengirim pesan streak TikTok setiap hari sesuai jadwal, lengkap dengan bukti terkirim dan notifikasi Discord atau Telegram.">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Bara · Penjaga Streak TikTok">
-<meta property="og:description" content="Bara mengirim pesan streak TikTok setiap hari sesuai jadwal dari server Anda sendiri, dan melapor ke Discord atau Telegram.">
-<meta name="theme-color" content="#EEF2F8" media="(prefers-color-scheme: light)">
+<meta property="og:description" content="Bara mengirim pesan streak TikTok setiap hari sesuai jadwal, lengkap dengan bukti terkirim dan notifikasi Discord atau Telegram.">
+<meta name="theme-color" content="#F6F7FB" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%3E%3Cstyle%3E.f%7Bstroke:%23FF6A00%7D.h%7Bstroke:%231C1C1E%7D.d%7Bfill:%23FF6A00%7D%40media%20(prefers-color-scheme:dark)%7B.f%7Bstroke:%23FF8A33%7D.h%7Bstroke:%23FFFFFF%7D.d%7Bfill:%23FF8A33%7D%7D%3C/style%3E%3Cpath%20class='f'%20fill='none'%20stroke-width='1.5'%20stroke-linejoin='round'%20d='M13%202.5C13.6%206%2018.5%208.8%2018.5%2015A6.5%206.5%200%200%201%205.5%2015C5.5%2011.2%207.6%208.6%209.4%207.2C9.4%209.2%2010.3%2010.4%2011.2%2010.9C11%207.8%2011.6%204.8%2013%202.5Z'/%3E%3Cpath%20class='h'%20fill='none'%20stroke-width='1.5'%20stroke-linecap='round'%20d='M12%2015L10.09%2013.9'/%3E%3Cpath%20class='h'%20fill='none'%20stroke-width='1.2'%20stroke-linecap='round'%20d='M12%2015L14.68%2013.45'/%3E%3Ccircle%20class='d'%20cx='12'%20cy='15'%20r='.7'/%3E%3C/svg%3E">
-<script>
-// tema dari pilihan tersimpan (kunci yang sama dengan panel) sebelum halaman digambar, agar tidak berkedip
-(function () { var t = null; try { t = localStorage.getItem("bara_theme"); } catch (e) {} if (t !== "dark" && t !== "light") t = window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"; document.documentElement.dataset.theme = t; })();
-</script>
 <link rel="stylesheet" href="/static/landing.css">
 </head>
 <body>
-<a class="skip" href="#main" data-i18n="skip"></a>
+<a class="skip" href="#main" data-i18n="skip">Lewati ke Konten Utama</a>
+<div class="lp">
+<div class="glow"></div>
+<svg class="wm" width="620" height="620" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2.5C13.6 6 18.5 8.8 18.5 15A6.5 6.5 0 0 1 5.5 15C5.5 11.2 7.6 8.6 9.4 7.2C9.4 9.2 10.3 10.4 11.2 10.9C11 7.8 11.6 4.8 13 2.5Z" fill="none" stroke="#FF6A00" stroke-width=".6" stroke-linejoin="round"/></svg>
 
-<header class="nav-bar">
-  <div class="wrap nav">
-    <a class="brand" href="/" aria-label="Bara">
-      <svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2.5C13.6 6 18.5 8.8 18.5 15A6.5 6.5 0 0 1 5.5 15C5.5 11.2 7.6 8.6 9.4 7.2C9.4 9.2 10.3 10.4 11.2 10.9C11 7.8 11.6 4.8 13 2.5Z" fill="none" stroke="var(--flame)" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 15L10.09 13.9" stroke="var(--hands)" stroke-width="1.5" stroke-linecap="round"/><path d="M12 15L14.68 13.45" stroke="var(--hands)" stroke-width="1.2" stroke-linecap="round"/><path d="M12.5 14.13L10.3 17.94" stroke="var(--flame)" stroke-width=".55" stroke-linecap="round"/><circle cx="12" cy="15" r=".7" fill="var(--flame)"/></svg>
-      <span>Bara</span>
-    </a>
-    <nav class="links" data-i18n-aria="navLabel">
-      <a href="#how-it-works" data-tc="nHow"></a><a href="#security" data-tc="nSafe"></a><a href="#install" data-tc="nInstall"></a><a href="#faq" data-tc="nFaq"></a>
-    </nav>
-    <span class="grow"></span>
-    <div class="seg" role="group" data-i18n-aria="langLabel">
-      <button type="button" id="langId" aria-pressed="true">ID</button>
-      <button type="button" id="langEn" aria-pressed="false">EN</button>
-    </div>
-    <button type="button" class="icon-btn" id="themeBtn" data-i18n-aria="themeLabel"><svg id="themeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"></svg></button>
-    <a class="btn primary" href="/login" data-login data-tc="login"></a>
-  </div>
+<header class="wrap nav">
+<a class="brand" href="/" aria-label="Bara">
+<svg width="34" height="34" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2.5C13.6 6 18.5 8.8 18.5 15A6.5 6.5 0 0 1 5.5 15C5.5 11.2 7.6 8.6 9.4 7.2C9.4 9.2 10.3 10.4 11.2 10.9C11 7.8 11.6 4.8 13 2.5Z" fill="none" stroke="var(--flame)" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 15L10.09 13.9" stroke="var(--hands)" stroke-width="1.5" stroke-linecap="round"/><path d="M12 15L14.68 13.45" stroke="var(--hands)" stroke-width="1.2" stroke-linecap="round"/><path d="M12.5 14.13L10.3 17.94" stroke="var(--flame)" stroke-width=".55" stroke-linecap="round"/><circle cx="12" cy="15" r=".7" fill="var(--flame)"/></svg>
+Bara</a>
+<nav class="links" data-i18n-aria="navLabel">
+<a href="#features" data-i18n="nFeat"></a><a href="#how-it-works" data-i18n="nHow"></a><a href="#security" data-i18n="nSafe"></a><a href="#faq" data-i18n="nFaq"></a>
+</nav>
+<span class="sp"></span>
+<div class="seg" role="group" data-i18n-aria="langLabel">
+<button type="button" id="langId" aria-pressed="true">ID</button>
+<button type="button" id="langEn" aria-pressed="false">EN</button>
+</div>
+<button type="button" class="icon-btn" id="themeBtn" data-i18n-aria="themeLabel"><svg id="themeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"></svg></button>
+<a class="btn primary small" href="/login" data-login data-i18n="login"></a>
 </header>
 
 <main id="main">
-  <section class="wrap hero" aria-labelledby="heroH">
-    <div class="hero-text">
-      <h1 id="heroH" data-tc="h1"></h1>
-      <p class="lead" data-i18n="lead"></p>
-      <div class="hero-actions">
-        <a class="btn primary" href="/login" data-login data-tc="ctaMain"></a>
-        <a class="textlink" href="#how-it-works" data-tc="ctaHow"></a>
-      </div>
-    </div>
-    <figure class="hero-shot">
-      <picture>
-        <source id="heroDark" srcset="/static/img/hero-dark.webp" media="(prefers-color-scheme: dark)">
-        <img id="heroImg" src="/static/img/hero-light.webp" width="1136" height="1352" fetchpriority="high" decoding="async" alt="Tangkapan layar dasbor Bara dengan jadwal berikutnya pukul 23:00, hari beruntun 14, dan tujuh hari terakhir.">
-      </picture>
-      <figcaption data-i18n="caption"></figcaption>
-    </figure>
-  </section>
+<div class="wrap">
+<div class="hero">
+<div>
+<span class="eyebrow"><i></i><span data-i18n="eyebrow"></span></span>
+<h1 class="hl"><span data-i18n="h1a"></span> <em data-i18n="h1b"></em></h1>
+<p class="lead" data-i18n="lead"></p>
+<div class="ctas">
+<a class="btn primary" href="/login" data-login><span data-i18n="ctaMain"></span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+<a class="btn ghost" href="#how-it-works" data-i18n="ctaHow"></a>
+</div>
+<div class="trust"><span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#34C759" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4 10-10"/></svg><i data-i18n="tr1" style="font-style:normal"></i></span><span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#34C759" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4 10-10"/></svg><i data-i18n="tr2" style="font-style:normal"></i></span><span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#34C759" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4 10-10"/></svg><i data-i18n="tr3" style="font-style:normal"></i></span></div>
+</div>
 
-  <section id="how-it-works" class="wrap night" aria-labelledby="nightH">
-    <h2 id="nightH" data-tc="hNight"></h2>
-    <p class="intro" data-i18n="nightIntro"></p>
-    <div class="night-widget">
-      <ol class="log" id="log"></ol>
-      <h3 class="log-rules" data-tc="hRules"></h3>
-      <ol class="log rules" id="rules"></ol>
-    </div>
-    <p class="setup" data-i18n="setup"></p>
-  </section>
+<div class="stack" role="img" data-i18n-aria="previewLabel">
+<div class="w dark" style="grid-column:span 2;display:flex;align-items:center;justify-content:space-between;gap:16px">
+<div>
+<div class="w-head"><span class="w-ico" style="background:#0A84FF"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="4"/><path d="M3 10h18M8 3v4M16 3v4" stroke-linecap="round"/></svg></span><span data-i18n="wNext"></span></div>
+<div class="big" style="font-size:58px;font-weight:800;letter-spacing:-.03em;line-height:1.05;margin-top:14px">23:00</div>
+<div style="color:#A1A1A6;font-size:14px" data-i18n="wNextSub"></div>
+<div style="color:#A1A1A6;font-size:14px;margin-top:2px"><span data-i18n="wMsg"></span> <b style="color:#fff">"🔥"</b></div>
+</div>
+<svg class="ring" width="128" height="128" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="50" fill="none" stroke="#2C2C2E" stroke-width="12"/><circle cx="60" cy="60" r="50" fill="none" stroke="#0A84FF" stroke-width="12" stroke-linecap="round" stroke-dasharray="230 314" transform="rotate(-90 60 60)"/><text x="60" y="64" text-anchor="middle" fill="#fff" font-size="24" font-weight="800">2:14</text><text id="ringCap" x="60" y="82" text-anchor="middle" fill="#A1A1A6" font-size="10"></text></svg>
+</div>
+<div class="w yellow" style="min-height:160px">
+<div style="font-size:54px;font-weight:800;line-height:1">128</div>
+<div style="font-weight:700;margin-top:4px" data-i18n="wStreak"></div>
+<svg width="92" height="110" viewBox="0 0 24 28" style="position:absolute;right:-6px;bottom:-14px" aria-hidden="true"><path d="M13 2.5C13.6 6 18.5 8.8 18.5 15A6.5 6.5 0 0 1 5.5 15C5.5 11.2 7.6 8.6 9.4 7.2C9.4 9.2 10.3 10.4 11.2 10.9C11 7.8 11.6 4.8 13 2.5Z" fill="#FF6A00"/></svg>
+</div>
+<div class="w light">
+<div class="notif">
+<span class="av"><svg width="22" height="22" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M4 6a2 2 0 012-2h12a2 2 0 012 2v9a2 2 0 01-2 2H10l-4 3v-3H6a2 2 0 01-2-2z"/></svg></span>
+<div style="min-width:0">
+<div style="font-weight:700;font-size:15px" data-i18n="wNotif"></div>
+<div style="color:var(--muted);font-size:13px" data-i18n="wNotifSub"></div>
+<div class="ok-row"><b><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4 10-10"/></svg></b>rina.s · 23:01</div>
+<div class="ok-row"><b><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4 10-10"/></svg></b>dimas_k · 23:02</div>
+</div>
+</div>
+</div>
+<div class="w dark" style="grid-column:span 2">
+<div style="display:flex;justify-content:space-between;align-items:center"><div class="w-head">🔥 <span data-i18n="w7"></span></div><span style="color:#A1A1A6;font-size:14px"><b style="color:#fff">7/7</b> <span data-i18n="wGood"></span></span></div>
+<div class="days" id="days"></div>
+</div>
+</div>
+</div>
+<div class="strip" id="strip"></div>
+</div>
 
-  <section id="security" class="wrap security" aria-labelledby="safeH">
-    <h2 id="safeH" data-tc="hSafe"></h2>
-    <div class="split">
-      <div>
-        <h3 data-tc="hKept"></h3>
-        <ul class="plain" id="kept"></ul>
-      </div>
-      <div>
-        <h3 data-tc="hNever"></h3>
-        <ul class="plain" id="never"></ul>
-      </div>
-    </div>
-    <p class="risk" data-i18n="risk"></p>
-  </section>
+<section id="features" class="wrap" aria-labelledby="hFeatH">
+<div class="kicker" data-i18n="kFeat"></div>
+<h2 class="sec" id="hFeatH" data-i18n="hFeat"></h2>
+<p class="sub" data-i18n="sFeat"></p>
+<div class="feat" id="feat"></div>
+</section>
 
-  <section id="install" class="install" aria-labelledby="installH">
-    <div class="narrow">
-      <h2 id="installH" data-tc="hInstall"></h2>
-      <p data-i18n="installIntro"></p>
-      <div class="code">
-        <button type="button" class="copy" id="copyBtn" data-tc="copy"></button>
-        <pre><code id="cmd">git clone https://github.com/apisdsn/TikStreak
-cd TikStreak
-cp .env.example .env
-docker compose up -d --build</code></pre>
-      </div>
-      <p id="copyMsg" class="copy-msg" role="status" aria-live="polite"></p>
-      <p data-i18n="installAfter"></p>
-      <p data-i18n="requirements"></p>
-      <p id="docsRow" class="hidden"><a id="docsBtn" class="textlink" data-docs="__DOCS_URL__" href="#" rel="noopener" data-tc="ctaDocs"></a></p>
-    </div>
-  </section>
+<section id="how-it-works" class="wrap" aria-labelledby="hHowH">
+<div class="kicker" data-i18n="kHow"></div>
+<h2 class="sec" id="hHowH" data-i18n="hHow"></h2>
+<div class="steps" id="steps"></div>
+</section>
 
-  <section id="faq" class="wrap faq" aria-labelledby="faqH">
-    <h2 id="faqH" data-tc="hFaq"></h2>
-    <div id="faqList"></div>
-  </section>
+<section id="security" class="wrap" aria-labelledby="hSafeH">
+<div class="sec2">
+<div>
+<div class="kicker" data-i18n="kSafe"></div>
+<h2 class="sec" id="hSafeH" data-i18n="hSafe"></h2>
+<p class="sub" data-i18n="sSafe"></p>
+<ul class="list" id="safe"></ul>
+</div>
+<div class="term" role="img" data-i18n-aria="termLabel">
+<div class="dots"><i style="background:#FF5F57"></i><i style="background:#FEBC2E"></i><i style="background:#28C840"></i></div>
+<div><span class="c"># <span data-i18n="term1"></span></span></div>
+<div>$ cp .env.example .env</div>
+<div>$ docker compose up -d --build</div>
+<div class="g">✓ Container bara Started</div>
+<div><span class="c"># <span data-i18n="term2"></span></span></div>
+<div>$ open http://localhost:8000</div>
+<div class="o">→ <span data-i18n="term3"></span></div>
+</div>
+</div>
+</section>
+
+<section id="faq" class="wrap" aria-labelledby="hFaqH">
+<div style="text-align:center">
+<div class="kicker">FAQ</div>
+<h2 class="sec" id="hFaqH" data-i18n="hFaq"></h2>
+</div>
+<div class="faq" id="faqList"></div>
+</section>
+
+<div class="wrap" style="padding-top:96px">
+<div class="cta">
+<div>
+<h2 data-i18n="ctaT"></h2>
+<p data-i18n="ctaB"></p>
+</div>
+<div class="cta-btns">
+<a class="btn primary" href="/login" data-login data-i18n="ctaMain"></a>
+<a class="btn ghost2 hidden" id="docsBtn" data-docs="__DOCS_URL__" href="#" rel="noopener" data-i18n="ctaDocs"></a>
+</div>
+<svg width="300" height="300" viewBox="0 0 24 24" aria-hidden="true" style="position:absolute;right:-60px;bottom:-110px;opacity:.12"><path d="M13 2.5C13.6 6 18.5 8.8 18.5 15A6.5 6.5 0 0 1 5.5 15C5.5 11.2 7.6 8.6 9.4 7.2C9.4 9.2 10.3 10.4 11.2 10.9C11 7.8 11.6 4.8 13 2.5Z" fill="none" stroke="#FF8A33" stroke-width="1.2"/></svg>
+</div>
+</div>
 </main>
 
-<footer class="wrap foot">
-  <div class="foot-main">
-    <p data-i18n="footLine"></p>
-    <a class="btn primary" href="/login" data-login data-tc="login"></a>
-  </div>
-  <div class="foot-meta">
-    <span class="foot-brand"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2.5C13.6 6 18.5 8.8 18.5 15A6.5 6.5 0 0 1 5.5 15C5.5 11.2 7.6 8.6 9.4 7.2C9.4 9.2 10.3 10.4 11.2 10.9C11 7.8 11.6 4.8 13 2.5Z" fill="none" stroke="var(--flame)" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 15L10.09 13.9" stroke="var(--hands)" stroke-width="1.5" stroke-linecap="round"/><path d="M12 15L14.68 13.45" stroke="var(--hands)" stroke-width="1.2" stroke-linecap="round"/><path d="M12.5 14.13L10.3 17.94" stroke="var(--flame)" stroke-width=".55" stroke-linecap="round"/><circle cx="12" cy="15" r=".7" fill="var(--flame)"/></svg><span>© 2026 Bara · <span data-tc="disclaimer"></span></span></span>
-    <nav data-i18n-aria="footLabel"><a href="#how-it-works" data-tc="nHow"></a><a href="#security" data-tc="nSafe"></a><a href="#install" data-tc="nInstall"></a><a href="#faq" data-tc="nFaq"></a></nav>
-  </div>
+<div class="wrap">
+<footer class="foot">
+<span>© 2026 Bara · <span data-i18n="disclaimer"></span></span>
+<nav data-i18n-aria="footLabel"><a href="#features" data-i18n="nFeat"></a><a href="#security" data-i18n="nSafe"></a><a href="#faq">FAQ</a><a href="/login" data-login data-i18n="login"></a></nav>
 </footer>
-
+</div>
+</div>
 <div id="bootFail" class="boot-fail" hidden>
-  <p>Gagal memuat halaman. Tekan Ctrl+F5 untuk memuat ulang.</p>
-  <button type="button" onclick="location.reload()">Muat Ulang</button>
+<p>Gagal Memuat Halaman. Tekan Ctrl+F5 untuk Memuat Ulang.</p>
+<button type="button" onclick="location.reload()">Muat Ulang</button>
 </div>
 <script>
 (function () { function f() { if (!window.__landingReady) document.getElementById("bootFail").hidden = false; } window.__landingFail = f; setTimeout(f, 8000); })();

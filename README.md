@@ -174,8 +174,6 @@ Pengunjung yang belum login melihat halaman depan Bara (fitur, cara kerja, keama
 
 HTML dikirim dengan `Cache-Control: private, no-cache` dan `Vary: Cookie`, jadi aman di belakang Cloudflare.
 
-Gambar hero di `app/static/img/` adalah tangkapan layar dasbor sungguhan dengan data contoh. Untuk membuatnya ulang setelah tampilan panel berubah: `cd tests/ui && node landing-shots.js` (butuh `python3` dengan Pillow untuk konversi ke WebP; tiap gambar harus di bawah 200 KB).
-
 ## Impor Kontak dari TikTok
 
 Di tab Kontak, **Impor dari TikTok** memasukkan pemindaian daftar chat ke antrean browser (jenis job `scan_contacts`, prioritas seperti kirim manual). Bara membuka halaman pesan dengan cookie akun, menggulir daftar percakapan dan mengumpulkan nama, ID percakapan, dan jam pesan terakhir (maksimal `SCAN_MAX`, default 200). Hasilnya tampil di sheet dengan kotak centang dan pencarian; kontak yang sudah ada ditandai "Sudah Ada". Kontak yang dipilih ditambahkan bersama ID percakapannya sehingga kiriman memakai percakapan yang tepat. Hasil pindai hanya bisa dilihat pemilik akun, tidak masuk riwayat atau notifikasi, dan dihapus setelah 1 jam.

@@ -824,11 +824,7 @@ class VersionedStatic(StaticFiles):
 
 def _asset_version():
     h = hashlib.sha1()
-    names = ["app.js", "style.css", "index.html", "landing.html", "landing.css", "landing.js"]
-    img_dir = os.path.join(STATIC, "img")
-    if os.path.isdir(img_dir):
-        names += ["img/" + n for n in sorted(os.listdir(img_dir))]
-    for name in names:
+    for name in ("app.js", "style.css", "index.html"):
         try:
             with open(os.path.join(STATIC, name), "rb") as f:
                 h.update(f.read())
@@ -848,7 +844,6 @@ def _page(name, response=None):
         html = f.read()
     for asset in ("style.css", "app.js", "landing.css", "landing.js"):
         html = html.replace(f"/static/{asset}", f"/static/{asset}?v={ASSET_VER}")
-    html = re.sub(r"(/static/img/[\w.-]+\.webp)", rf"\1?v={ASSET_VER}", html)
     if name == "index.html" and config.LANDING_ENABLED:
         html = html.replace('<html lang="id">', '<html lang="id" data-landing="1">', 1)
     url = config.LANDING_DOCS_URL

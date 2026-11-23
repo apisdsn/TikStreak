@@ -1,168 +1,149 @@
 (() => {
 "use strict";
 const $ = (id) => document.getElementById(id);
+const NS = "http://www.w3.org/2000/svg";
 const LANG_KEY = "bara_lang", THEME_KEY = "bara_theme";
-
-// Kalimat penuh ditulis dengan huruf kapital kalimat; judul, navigasi, tombol, dan label pendek diberi Title Case oleh titleCase()
-// (aturan penghubung sama dengan panel). Kunci di VERBATIM ditulis persis seperti yang dimaksud.
-const VERBATIM = new Set(["hSafe"]);
 const DICT = {
 id: {
-  skip: "Lewati ke Konten Utama", navLabel: "Navigasi Utama", langLabel: "Bahasa", themeLabel: "Ganti Tema", footLabel: "Tautan Footer",
-  title: "Bara · Penjaga Streak TikTok",
-  desc: "Bara mengirim pesan streak TikTok setiap hari sesuai jadwal dari server Anda sendiri, dan melapor ke Discord atau Telegram.",
-  nHow: "Cara kerja", nSafe: "Keamanan", nInstall: "Pasang", nFaq: "FAQ", login: "Masuk",
-  h1: "Pesan streak TikTok terkirim tiap hari, dari server Anda sendiri",
-  lead: "Bara mengirim pesan ke kontak TikTok Anda sesuai jadwal dan baru menghitungnya terkirim setelah kolom chat kosong dan gelembung pesan baru muncul.",
-  ctaMain: "Masuk ke panel", ctaHow: "Lihat cara kerja",
-  heroAlt: "Tangkapan layar dasbor Bara: widget Jadwal Berikutnya pukul 23:00 dengan hitung mundur, widget Hari Beruntun bernilai 14, dan widget 7 Hari Terakhir dengan enam hari terkirim.",
-  caption: "Contoh tampilan panel dengan data contoh.",
-  hNight: "Satu malam bersama Bara",
-  nightIntro: "Ini contoh satu malam untuk jadwal pukul 23:00 dengan empat kontak. Jamnya hanya ilustrasi, sedangkan urutan dan aturannya sesuai cara Bara bekerja.",
-  log: [
-    ["23:00", "Jadwal jatuh tempo dan masuk antrean. Browser dibuka untuk akun ini dengan cookie sesi yang tersimpan."],
-    ["23:01", "Pesan untuk rina.s dikirim. Nama chat dicocokkan lebih dulu, dan pesan dihitung terkirim setelah kolom chat kosong dan gelembung pesan baru muncul. Jam di daftar chat dicatat sebagai bukti tambahan."],
-    ["23:02", "Pesan untuk dimas_k gagal tiga kali karena timeout, jadi Bara lanjut ke kontak berikutnya."],
-    ["23:04", "Pengiriman selesai dengan 3 dari 4 kontak terkirim. Laporannya masuk ke Discord atau Telegram, dengan screenshot bukti bila opsi itu diaktifkan."],
-    ["23:34", "Bara mencoba dimas_k lagi, 30 menit setelah pengiriman pertama. Percobaan ulang berlaku untuk kegagalan sementara seperti timeout dan halaman yang gagal dimuat, maksimal 2 kali."],
-  ],
-  hRules: "Aturan waktu",
-  rules: [
-    ["23:50", "Tidak ada percobaan ulang yang dijadwalkan bila perkiraan mulainya lewat jam ini."],
-    ["3 Jam", "Jadwal yang terlewat karena server restart atau antrean penuh masih dikejar sampai 3 jam. Setelah itu dicatat sebagai Terlewat dan pemiliknya diberi tahu."],
-  ],
-  setup: "Untuk mulai, hubungkan akun TikTok lewat browser di server panel atau dengan menempel cookie. Lalu tambahkan kontak, atau impor dari daftar chat TikTok, dan atur jadwal, maksimal 8 per akun.",
-  hSafe: "Yang Disimpan dan Yang Tidak", hKept: "Disimpan", hNever: "Tidak pernah dilakukan",
-  kept: [
-    "Cookie sesi TikTok, terenkripsi AES-256-GCM dengan kunci milik Anda (SECRET_KEY, atau file secret.key yang dibuat otomatis).",
-    "Kontak, jadwal, riwayat, dan pengguna, dalam database SQLite di volume server Anda.",
-    "Kata sandi panel, sebagai hash PBKDF2 dengan salt. Sesi login bisa dicabut kapan saja.",
-  ],
-  never: [
-    "Kata sandi TikTok. Saat login lewat browser server, Anda mengetiknya langsung ke halaman TikTok.",
-    "Sesi Anda di server pihak ketiga. Bara hanya berhubungan dengan TikTok, dan dengan Discord atau Telegram bila Anda mengaktifkannya.",
-    "Isi akun pengguna lain untuk admin. Admin mengelola pengguna dan pengaturan global, dan tidak bisa membaca akun, kontak, atau cookie mereka.",
-  ],
-  risk: "Tidak ada jaminan akun aman dari pembatasan. Bara memberi jeda acak antar pekerjaan dan memakai browser sungguhan, tetapi otomasi tetap berisiko, jadi pakai untuk akun pribadi.",
-  hInstall: "Pasang sendiri",
-  installIntro: "Bara berjalan di Docker. Empat perintah ini menyalakannya di server Anda.",
-  installAfter: "Isi API_KEY di file .env sebelum menjalankan docker compose. Panel lalu terbuka di http://localhost:8000, dan Anda membuat admin pertama di sana.",
-  requirements: "RAM 2 GB cukup untuk satu browser, dan 4 GB untuk dua (panduan di README). Perkiraan antrean Bara untuk akun dengan 4 kontak adalah sekitar 2,5 menit per akun, atau sekitar 23 akun per jam untuk satu browser.",
-  copy: "Salin", copied: "Tersalin", copyOk: "Perintah sudah disalin.", copyFail: "Gagal menyalin otomatis. Teksnya sudah dipilih, tekan Ctrl+C untuk menyalin.",
-  ctaDocs: "Panduan pasang",
-  hFaq: "Pertanyaan yang sering muncul",
-  faq: [
-    ["Apakah kata sandi TikTok saya disimpan?", "Tidak. Saat Anda login lewat browser server, kata sandi diketik langsung ke halaman TikTok. Bara hanya menyimpan cookie sesi dalam bentuk terenkripsi."],
-    ["Apa yang terjadi jika cookie kedaluwarsa?", "Bara memeriksa cookie secara berkala (default tiap 12 jam, bisa diubah admin). Bila sesi tidak berlaku lagi, pemilik akun diberi tahu lewat Discord atau Telegram yang sudah diatur, lalu perlu login ulang di tab Cookie."],
-    ["Apakah akun saya bisa terkena banned?", "Tidak ada jaminan. Bara memberi jeda acak antar pekerjaan dan memakai browser sungguhan, tetapi otomasi tetap berisiko. Pakai untuk akun pribadi."],
-    ["Bagaimana jika sebuah pesan gagal terkirim?", "Kegagalan sementara, seperti timeout atau halaman yang gagal dimuat, diulang 30 menit kemudian, maksimal 2 kali, dan hanya bila perkiraan mulainya sebelum pukul 23:50. Kontak yang tidak ditemukan dan cookie yang tidak valid tidak diulang. Admin bisa mengubah jeda dan batasnya di Pengaturan."],
-    ["Berapa spesifikasi server yang dibutuhkan?", "RAM 2 GB cukup untuk satu browser dan 4 GB untuk dua. Jumlah browser diatur lewat BROWSER_WORKERS, dan README menjelaskan panduan lengkapnya."],
-    ["Apakah bisa dipakai bersama teman?", "Bisa. Admin membuat akun pengguna, dan tiap pengguna mengelola akun TikTok, kontak, dan notifikasinya sendiri. Admin tidak bisa membaca akun pengguna lain."],
-  ],
-  footLine: "Sudah punya panel Bara? Masuk untuk mengelola akun, kontak, dan jadwal.",
-  disclaimer: "Tidak berafiliasi dengan TikTok",
+navLabel: 'Navigasi Utama', langLabel: 'Bahasa', themeLabel: 'Ganti Tema', login: 'Masuk', previewLabel: 'Contoh Tampilan Panel Bara',
+skip: 'Lewati ke Konten Utama', title: 'Bara · Penjaga Streak TikTok', desc: 'Bara mengirim pesan streak TikTok setiap hari sesuai jadwal, lengkap dengan bukti terkirim dan notifikasi Discord atau Telegram.',
+nFeat: 'Fitur', nHow: 'Cara Kerja', nSafe: 'Keamanan', nFaq: 'FAQ',
+eyebrow: 'Penjaga Streak TikTok',
+h1a: 'Streak Tetap Menyala,', h1b: 'Walau Anda Lupa.',
+lead: 'Bara Mengirim Pesan Streak ke Teman TikTok Anda Setiap Hari Sesuai Jadwal, Lengkap dengan Bukti Terkirim dan Notifikasi ke Discord atau Telegram.',
+ctaMain: 'Masuk ke Panel', ctaHow: 'Lihat Cara Kerja', ctaDocs: 'Panduan Pasang',
+tr1: 'Berjalan di Server Sendiri', tr2: 'Cookie Terenkripsi', tr3: 'Tanpa Menyimpan Kata Sandi TikTok',
+wNext: 'Jadwal Berikutnya', wNextSub: 'Malam · Semua Kontak (4)', wMsg: 'Pesan:', wLeft: 'Sisa Waktu',
+wStreak: 'Hari Beruntun', wNotif: 'Laporan Terkirim', wNotifSub: 'Discord · 4/4 Kontak', w7: '7 Hari Terakhir', wGood: 'Hari Lancar',
+strip: [{a: '24/7', b: 'Jadwal Berjalan Otomatis'}, {a: '8 Jadwal', b: 'per Akun, Kontak Bisa Dipilih'}, {a: '100 Akun', b: 'dengan Antrean Browser'}, {a: 'ID / EN', b: 'Tema Terang dan Gelap'}],
+kFeat: 'Fitur', hFeat: 'Semua yang Dibutuhkan untuk Menjaga Api Tetap Hidup', sFeat: 'Dari Jadwal sampai Bukti Terkirim, Bara Mengurus Semuanya dari Satu Panel.',
+fQueueT: 'Antrean Pintar, Bukan Kirim Membabi Buta', fQueueB: 'Satu Browser Melayani Banyak Akun secara Bergiliran dengan Jeda Acak. Bara Memperkirakan Waktu Selesai dan Memberi Peringatan Jika Antrean Bisa Lewat Tengah Malam.',
+kHow: 'Cara Kerja', hHow: 'Tiga Langkah, Lalu Lupakan',
+steps: [
+{n: '1', t: 'Hubungkan Akun TikTok', b: 'Login Langsung dari Panel Lewat Browser Server, atau Tempel Cookie dengan Panduan Langkah demi Langkah.', tag: 'Sekali Saja'},
+{n: '2', t: 'Pilih Kontak dan Jam', b: 'Tambahkan Teman yang Ingin Dijaga Streak-nya, Lalu Atur Jam Kirim, Pesan, dan Penerima untuk Setiap Jadwal.', tag: '± 2 Menit'},
+{n: '3', t: 'Bara Mengirim Setiap Hari', b: 'Pesan Terkirim Sesuai Jadwal. Anda Menerima Laporan Lengkap dengan Bukti di Discord atau Telegram.', tag: 'Otomatis'}],
+kSafe: 'Keamanan & Privasi', hSafe: 'Data Anda Tetap di Server Anda', sSafe: 'Bara Dipasang di Server atau Home Server Sendiri dengan Docker. Tidak Ada Layanan Pihak Ketiga yang Menyimpan Sesi Anda.',
+safe: [
+{t: 'Kata Sandi TikTok Tidak Pernah Disimpan', b: 'Hanya Cookie Sesi yang Disimpan, Terenkripsi dengan Kunci Milik Anda.'},
+{t: 'Setiap Pengguna Hanya Melihat Akunnya', b: 'Admin Mengelola Pengguna, Bukan Isi Akun Orang Lain.'},
+{t: 'Kata Sandi Panel Di-Hash', b: 'PBKDF2 dengan Salt, Sesi Login Bisa Dicabut Kapan Saja.'},
+{t: 'Bisa di Balik Cloudflare atau Caddy', b: 'HTTPS Otomatis dan Perlindungan Coba-Coba Login.'}],
+termLabel: 'Contoh Perintah Pemasangan', term1: 'Pasang di Server Sendiri', term2: 'Buka Panel', term3: 'Buat Admin Pertama',
+hFaq: 'Pertanyaan yang Sering Muncul',
+faq: [
+{q: 'Apakah Kata Sandi TikTok Saya Disimpan?', a: 'Tidak. Saat Login Lewat Browser Server, Kata Sandi Diketik Langsung ke Halaman TikTok. Bara Hanya Menyimpan Cookie Sesi yang Terenkripsi.', open: true},
+{q: 'Bagaimana Jika Cookie Kedaluwarsa?', a: 'Bara Memeriksa Cookie Secara Berkala dan Mengirim Notifikasi Jika Perlu Login Ulang, Jauh Sebelum Jadwal Berikutnya.', open: false},
+{q: 'Apakah Akun Bisa Dibanned?', a: 'Tidak Ada Jaminan. Bara Mengirim dengan Jeda Acak dan Perilaku seperti Manusia, Namun Otomasi Tetap Berisiko. Gunakan dengan Bijak untuk Akun Pribadi.', open: false},
+{q: 'Berapa Spesifikasi Server yang Dibutuhkan?', a: 'RAM 2 GB Cukup untuk Satu Browser (± 27 Akun per Jam). RAM 4 GB untuk Dua Browser Sekaligus.', open: false},
+{q: 'Apakah Bisa Dipakai Bersama Teman?', a: 'Bisa. Admin Membuat Akun Pengguna, dan Setiap Pengguna Mengelola Akun TikTok serta Notifikasinya Sendiri.', open: false}],
+ctaT: 'Jangan Biarkan Api Padam Lagi.', ctaB: 'Pasang Bara Sekali, dan Streak Anda Terjaga Setiap Hari.',
+disclaimer: 'Tidak Berafiliasi dengan TikTok', footLabel: 'Tautan Footer'
 },
 en: {
-  skip: "Skip to Main Content", navLabel: "Main Navigation", langLabel: "Language", themeLabel: "Toggle Theme", footLabel: "Footer Links",
-  title: "Bara · TikTok Streak Keeper",
-  desc: "Bara sends your TikTok streak messages every day on schedule from your own server, and reports to Discord or Telegram.",
-  nHow: "How it works", nSafe: "Security", nInstall: "Install", nFaq: "FAQ", login: "Log in",
-  h1: "Your TikTok streak messages, sent every day from your own server",
-  lead: "Bara sends messages to your TikTok contacts on schedule and only counts them as delivered once the chat box is empty and the new message bubble appears.",
-  ctaMain: "Open the panel", ctaHow: "See how it works",
-  heroAlt: "Screenshot of the Bara dashboard: the Next Schedule widget at 23:00 with a countdown, the Day Streak widget showing 14, and the Last 7 Days widget with six days delivered.",
-  caption: "Panel preview with example data.",
-  hNight: "One night with Bara",
-  nightIntro: "This is an example night for a 23:00 schedule with four contacts. The times are illustrative, while the order and the rules follow how Bara works.",
-  log: [
-    ["23:00", "The schedule comes due and joins the queue. A browser opens for this account with its saved session cookie."],
-    ["23:01", "The message to rina.s is sent. The chat name is matched first, and the message counts as delivered once the chat box is empty and a new message bubble appears. The time in the chat list is recorded as extra evidence."],
-    ["23:02", "The message to dimas_k times out three times, so Bara moves on to the next contact."],
-    ["23:04", "The send finishes with 3 of 4 contacts delivered. The report goes to Discord or Telegram, with a proof screenshot when that option is on."],
-    ["23:34", "Bara tries dimas_k again, 30 minutes after the first send. Retries apply to temporary failures such as timeouts and pages that fail to load, up to 2 times."],
-  ],
-  hRules: "Time rules",
-  rules: [
-    ["23:50", "No retry is scheduled when its estimated start falls after this time."],
-    ["3 Hours", "A schedule missed because of a server restart or a full queue is still caught up for up to 3 hours. After that it is recorded as Missed and its owner is notified."],
-  ],
-  setup: "To start, connect your TikTok account through the browser on the panel's server or by pasting a cookie. Then add contacts, or import them from your TikTok chat list, and set schedules, up to 8 per account.",
-  hSafe: "What Bara Keeps, and What It Doesn’t", hKept: "Stored", hNever: "Never stored or done",
-  kept: [
-    "The TikTok session cookie, encrypted with AES-256-GCM using a key you own (SECRET_KEY, or a secret.key file created automatically).",
-    "Contacts, schedules, history, and users, in a SQLite database on your server's volume.",
-    "Panel passwords, as PBKDF2 hashes with a salt. Login sessions can be revoked at any time.",
-  ],
-  never: [
-    "Your TikTok password. When you log in through the server browser, you type it straight into the TikTok page.",
-    "Your session on any third-party server. Bara only talks to TikTok, and to Discord or Telegram when you turn them on.",
-    "Other users' accounts, for admins. Admins manage users and global settings, and cannot read their accounts, contacts, or cookies.",
-  ],
-  risk: "There is no guarantee that an account stays free of restrictions. Bara adds random pauses between jobs and uses a real browser, yet automation stays risky, so use it for personal accounts.",
-  hInstall: "Install it yourself",
-  installIntro: "Bara runs in Docker. These four commands start it on your server.",
-  installAfter: "Fill in API_KEY in the .env file before running docker compose. The panel then opens at http://localhost:8000, where you create the first admin.",
-  requirements: "2 GB of RAM is enough for one browser, and 4 GB for two (guidance from the README). Bara's queue estimates about 2.5 minutes per account with 4 contacts, or about 23 accounts per hour for one browser.",
-  copy: "Copy", copied: "Copied", copyOk: "Commands copied.", copyFail: "Automatic copy failed. The text is selected, press Ctrl+C to copy it.",
-  ctaDocs: "Install guide",
-  hFaq: "Frequently asked questions",
-  faq: [
-    ["Is my TikTok password stored?", "No. When you log in through the server browser, you type the password straight into the TikTok page. Bara only keeps an encrypted session cookie."],
-    ["What happens when the cookie expires?", "Bara checks the cookie regularly (every 12 hours by default, which an admin can change). When the session stops working, the account owner is told through the Discord or Telegram channel they set up, and needs to log in again on the Cookie tab."],
-    ["Can my account get banned?", "There is no guarantee. Bara adds random pauses between jobs and uses a real browser, but automation stays risky. Use it for personal accounts."],
-    ["What if a message fails to send?", "Temporary failures, such as timeouts or pages that fail to load, are retried 30 minutes later, up to 2 times, and only when the estimated start is before 23:50. Contacts that are not found and invalid cookies are not retried. Admins can change the delay and the limit in Settings."],
-    ["What server specs do I need?", "2 GB of RAM is enough for one browser and 4 GB for two. The number of browsers is set with BROWSER_WORKERS, and the README has the full guidance."],
-    ["Can I share it with friends?", "Yes. The admin creates user accounts, and each user manages their own TikTok accounts, contacts, and notifications. Admins cannot read other users' accounts."],
-  ],
-  footLine: "Already have a Bara panel? Log in to manage accounts, contacts, and schedules.",
-  disclaimer: "Not affiliated with TikTok",
-},
-};
-
-// Title Case dengan aturan penghubung yang sama seperti di panel
-const CONNECTORS = {
-  id: new Set(["di", "ke", "dari", "dan", "atau", "yang", "untuk", "dengan", "pada", "per", "lewat", "lalu", "agar"]),
-  en: new Set(["a", "an", "the", "and", "or", "of", "to", "in", "on", "for", "at", "by", "with", "via", "as", "from", "per"]),
-};
-let lang, theme;
-function titleCase(s) {
-  let first = true;
-  return String(s).split(/(\s+)/).map((w) => {
-    if (!w.trim()) return w;
-    const core = w.replace(/^[“"'(\[]+|[”"'),.:;!?\]]+$/g, "").toLowerCase();
-    const isFirst = first;
-    first = /[.!?]$/.test(w);
-    if (!isFirst && CONNECTORS[lang].has(core)) return w.replace(/[\p{L}]+/u, core);
-    return w.replace(/\p{L}/u, (c) => c.toUpperCase());
-  }).join("");
+navLabel: 'Main Navigation', langLabel: 'Language', themeLabel: 'Toggle Theme', login: 'Log In', previewLabel: 'Bara Panel Preview',
+skip: 'Skip to Main Content', title: 'Bara · TikTok Streak Keeper', desc: 'Bara sends your TikTok streak messages every day on schedule, with proof of delivery and Discord or Telegram reports.',
+nFeat: 'Features', nHow: 'How It Works', nSafe: 'Security', nFaq: 'FAQ',
+eyebrow: 'Your TikTok Streak Keeper',
+h1a: 'Keep the Streak Alive,', h1b: 'Even When You Forget.',
+lead: 'Bara Sends Streak Messages to Your TikTok Friends Every Day on Schedule, with Proof of Delivery and Reports to Discord or Telegram.',
+ctaMain: 'Open the Panel', ctaHow: 'See How It Works', ctaDocs: 'Install Guide',
+tr1: 'Runs on Your Own Server', tr2: 'Encrypted Cookies', tr3: 'TikTok Password Never Stored',
+wNext: 'Next Schedule', wNextSub: 'Night · All Contacts (4)', wMsg: 'Message:', wLeft: 'Time Left',
+wStreak: 'Day Streak', wNotif: 'Delivery Report', wNotifSub: 'Discord · 4/4 Contacts', w7: 'Last 7 Days', wGood: 'Good Days',
+strip: [{a: '24/7', b: 'Schedules Run Automatically'}, {a: '8 Schedules', b: 'per Account, Pick Recipients'}, {a: '100 Accounts', b: 'with a Browser Queue'}, {a: 'ID / EN', b: 'Light and Dark Themes'}],
+kFeat: 'Features', hFeat: 'Everything You Need to Keep the Fire Going', sFeat: 'From Schedules to Proof of Delivery, Bara Handles It All from One Panel.',
+fQueueT: 'A Smart Queue, Not Blind Blasting', fQueueB: 'One Browser Serves Many Accounts in Turn with Random Pauses. Bara Estimates Finish Times and Warns You if the Queue Could Run Past Midnight.',
+kHow: 'How It Works', hHow: 'Three Steps, Then Forget About It',
+steps: [
+{n: '1', t: 'Connect Your TikTok Account', b: 'Log In Right from the Panel via the Server Browser, or Paste a Cookie with a Step-by-Step Guide.', tag: 'Just Once'},
+{n: '2', t: 'Pick Contacts and Times', b: 'Add the Friends Whose Streaks You Want to Keep, Then Set the Time, Message, and Recipients for Each Schedule.', tag: '± 2 Minutes'},
+{n: '3', t: 'Bara Sends Every Day', b: 'Messages Go Out on Schedule. You Get a Full Report with Proof on Discord or Telegram.', tag: 'Automatic'}],
+kSafe: 'Security & Privacy', hSafe: 'Your Data Stays on Your Server', sSafe: 'Bara Runs on Your Own Server or Home Server with Docker. No Third-Party Service Holds Your Sessions.',
+safe: [
+{t: 'TikTok Password Is Never Stored', b: 'Only the Session Cookie Is Kept, Encrypted with Your Own Key.'},
+{t: 'Each User Sees Only Their Accounts', b: 'Admins Manage Users, Not Other People’s Accounts.'},
+{t: 'Panel Passwords Are Hashed', b: 'PBKDF2 with Salt, and Sessions Can Be Revoked Anytime.'},
+{t: 'Works Behind Cloudflare or Caddy', b: 'Automatic HTTPS and Brute-Force Login Protection.'}],
+termLabel: 'Example Install Commands', term1: 'Install on Your Own Server', term2: 'Open the Panel', term3: 'Create the First Admin',
+hFaq: 'Frequently Asked Questions',
+faq: [
+{q: 'Is My TikTok Password Stored?', a: 'No. When You Log In via the Server Browser, You Type It Straight into TikTok. Bara Only Keeps an Encrypted Session Cookie.', open: true},
+{q: 'What if the Cookie Expires?', a: 'Bara Checks Cookies Regularly and Notifies You When a Re-Login Is Needed, Well Before the Next Schedule.', open: false},
+{q: 'Can My Account Get Banned?', a: 'There Is No Guarantee. Bara Uses Random Pauses and Human-Like Behavior, but Automation Is Still Risky. Use It Wisely on Personal Accounts.', open: false},
+{q: 'What Server Specs Do I Need?', a: '2 GB of RAM Is Enough for One Browser (About 27 Accounts per Hour). 4 GB for Two Browsers at Once.', open: false},
+{q: 'Can I Share It with Friends?', a: 'Yes. The Admin Creates User Accounts, and Each User Manages Their Own TikTok Accounts and Notifications.', open: false}],
+ctaT: 'Never Let the Fire Go Out Again.', ctaB: 'Set Up Bara Once, and Your Streaks Stay Alive Every Day.',
+disclaimer: 'Not Affiliated with TikTok', footLabel: 'Footer Links'
 }
+};
+const DAYS = { id: ['Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min', 'Sen'], en: ['Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun', 'Mon'] };
+const ICON = {
+cal: 'M7 3v4M17 3v4M3 9h18M5 5h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z',
+check: 'M9 12l2 2 4-4M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z',
+bell: 'M6 8a6 6 0 1112 0c0 7 3 8 3 8H3s3-1 3-8M10 20a2 2 0 004 0',
+users: 'M9 11a4 4 0 100-8 4 4 0 000 8zM2 21c.6-3.8 3.4-6 7-6s6.4 2.2 7 6M16 3.5a4 4 0 010 7M18 15c2 .6 3.4 2.4 4 6',
+key: 'M15 7a4 4 0 11-3.9 4.9L3 20v-3h3v-3h3l1.1-1.1A4 4 0 0115 7z'
+};
+const FEAT = {
+id: [
+{t: 'Jadwal Fleksibel', b: 'Hingga 8 Jadwal per Akun dengan Pesan dan Penerima Berbeda. Jadwal yang Terlewat Dikejar Sampai 3 Jam.', i: 'cal', c: '#0A84FF'},
+{t: 'Bukti Setiap Kirim', b: 'Setiap Pesan Diverifikasi: Kolom Chat Kosong, Gelembung Pesan Muncul, dan Jam di Daftar Chat Ikut Berubah.', i: 'check', c: '#34C759'},
+{t: 'Notifikasi Discord & Telegram', b: 'Laporan Siapa Saja yang Terkirim, Lengkap dengan Tangkapan Layar Jika Diinginkan.', i: 'bell', c: '#BF5AF2'},
+{t: 'Banyak Akun & Pengguna', b: 'Peran Admin dan Pengguna. Setiap Orang Mengelola Akun TikTok dan Notifikasinya Sendiri.', i: 'users', c: '#FF9F0A'},
+{t: 'Login dari Panel', b: 'Login TikTok Langsung Lewat Browser Server, Tanpa Menyalin Cookie. Cookie Dicek dan Dijaga Tetap Aktif.', i: 'key', c: '#FF375F'}],
+en: [
+{t: 'Flexible Schedules', b: 'Up to 8 Schedules per Account with Different Messages and Recipients. Missed Runs Are Caught Up for 3 Hours.', i: 'cal', c: '#0A84FF'},
+{t: 'Proof for Every Send', b: 'Each Message Is Verified: the Chat Box Clears, the Bubble Appears, and the Chat List Time Updates.', i: 'check', c: '#34C759'},
+{t: 'Discord & Telegram Reports', b: 'See Exactly Who Received a Message, with Screenshots if You Want Them.', i: 'bell', c: '#BF5AF2'},
+{t: 'Multiple Accounts & Users', b: 'Admin and User Roles. Everyone Manages Their Own TikTok Accounts and Notifications.', i: 'users', c: '#FF9F0A'},
+{t: 'Log In from the Panel', b: 'Sign In to TikTok Right in the Server Browser, No Cookie Copying. Cookies Are Checked and Kept Alive.', i: 'key', c: '#FF375F'}]
+};
 
 const store = {
   get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
   set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* abaikan */ } },
 };
-lang = store.get(LANG_KEY);
+let lang = store.get(LANG_KEY);
 if (lang !== "id" && lang !== "en") lang = (navigator.language || "").toLowerCase().startsWith("id") ? "id" : "en";
-theme = document.documentElement.dataset.theme === "dark" ? "dark" : "light";
+let theme = store.get(THEME_KEY);
+if (theme !== "dark" && theme !== "light") theme = window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 
 const el = (tag, props = {}, kids = []) => {
   const n = document.createElement(tag);
-  Object.entries(props).forEach(([k, v]) => { if (k in n) n[k] = v; else n.setAttribute(k, v); });
+  Object.entries(props).forEach(([k, v]) => { if (k === "style") n.style.cssText = v; else if (k in n) n[k] = v; else n.setAttribute(k, v); });
   kids.forEach((k) => n.append(k));
   return n;
 };
+const svg = (w, attrs, inner) => {
+  const s = document.createElementNS(NS, "svg");
+  s.setAttribute("width", w); s.setAttribute("height", w); s.setAttribute("viewBox", "0 0 24 24"); s.setAttribute("aria-hidden", "true");
+  Object.entries(attrs).forEach(([k, v]) => s.setAttribute(k, v));
+  s.innerHTML = inner;
+  return s;
+};
+const stroke = { fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round" };
+const checkSvg = (size, sw, color) => svg(size, { ...stroke, "stroke-width": sw, ...(color ? { stroke: color } : {}) }, '<path d="M5 12l4 4 10-10"/>');
+const caret = () => svg(18, { ...stroke, "stroke-width": "2.2" }, '<path d="M6 9l6 6 6-6"/>');
 
 function renderLists() {
   const d = DICT[lang];
-  const row = (cls) => ([t, x]) => el("li", {}, [el(t.includes(":") ? "time" : "span", { className: t.includes(":") ? "" : "stamp", textContent: t.includes(":") ? t : titleCase(t) }), el("p", { textContent: x })]);
-  $("log").replaceChildren(...d.log.map(row("log")));
-  $("rules").replaceChildren(...d.rules.map(([t, x]) => el("li", {}, [el("span", { className: "stamp", textContent: t.includes(":") ? t : titleCase(t) }), el("p", { textContent: x })])));
-  $("kept").replaceChildren(...d.kept.map((x) => el("li", { textContent: x })));
-  $("never").replaceChildren(...d.never.map((x) => el("li", { textContent: x })));
-  const open = [...$("faqList").querySelectorAll("details")].map((x) => x.open);
-  $("faqList").replaceChildren(...d.faq.map(([q, a], i) => {
-    const det = el("details", {}, [el("summary", { textContent: titleCase(q) }), el("p", { textContent: a })]);
-    det.open = open.length ? open[i] : i === 0;
+  $("days").replaceChildren(...DAYS[lang].map((label, i) => el("div", { className: i === 6 ? "day today" : "day" }, [el("b", {}, [checkSvg(10, "4", "#fff")]), label])));
+  $("strip").replaceChildren(...d.strip.map((s) => el("div", {}, [el("strong", { textContent: s.a }), el("span", { textContent: s.b })])));
+  const feats = FEAT[lang].map((f) => {
+    const fi = el("span", { className: "fi", style: "background:" + f.c }, [svg(22, { ...stroke, stroke: "#fff" }, '<path d="' + ICON[f.i] + '"/>')]);
+    return el("div", { className: "fc" }, [fi, el("h3", { textContent: f.t }), el("p", { textContent: f.b })]);
+  });
+  const logo = svg(44, { style: "flex:none" }, '<path d="M13 2.5C13.6 6 18.5 8.8 18.5 15A6.5 6.5 0 0 1 5.5 15C5.5 11.2 7.6 8.6 9.4 7.2C9.4 9.2 10.3 10.4 11.2 10.9C11 7.8 11.6 4.8 13 2.5Z" fill="none" stroke="#FF8A33" stroke-width="1.3" stroke-linejoin="round"/><path d="M12 15L10.09 13.9" stroke="#fff" stroke-width="1.4" stroke-linecap="round"/><path d="M12 15L14.68 13.45" stroke="#fff" stroke-width="1.1" stroke-linecap="round"/><path d="M12.5 14.13L10.3 17.94" stroke="#FF8A33" stroke-width=".5" stroke-linecap="round"/><circle cx="12" cy="15" r=".7" fill="#FF8A33"/>');
+  feats.push(el("div", { className: "fc wide" }, [logo, el("div", {}, [el("h3", { textContent: d.fQueueT }), el("p", { textContent: d.fQueueB })])]));
+  $("feat").replaceChildren(...feats);
+  $("steps").replaceChildren(...d.steps.map((s) => el("div", { className: "st" }, [el("span", { className: "n", textContent: s.n }), el("h3", { textContent: s.t }), el("p", { textContent: s.b }), el("span", { className: "tag", textContent: s.tag })])));
+  $("safe").replaceChildren(...d.safe.map((s) => el("li", {}, [el("b", {}, [checkSvg(15, "2.6")]), el("span", {}, [el("strong", { textContent: s.t }), el("small", { textContent: s.b })])])));
+  // FAQ: pertahankan status buka/tutup saat ganti bahasa
+  const prev = [...$("faqList").querySelectorAll("details")].map((x) => x.open);
+  $("faqList").replaceChildren(...d.faq.map((q, i) => {
+    const det = el("details", { className: "fq" }, [el("summary", {}, [q.q, caret()]), el("p", { textContent: q.a })]);
+    det.open = prev.length ? prev[i] : q.open;
     return det;
   }));
 }
@@ -174,24 +155,19 @@ function applyText() {
   document.querySelector('meta[name="description"]').content = d.desc;
   document.querySelector('meta[property="og:title"]').content = d.title;
   document.querySelector('meta[property="og:description"]').content = d.desc;
-  document.querySelectorAll("[data-i18n]").forEach((n) => { n.textContent = d[n.dataset.i18n]; });
-  document.querySelectorAll("[data-tc]").forEach((n) => { const v = d[n.dataset.tc]; n.textContent = VERBATIM.has(n.dataset.tc) ? v : titleCase(v); });
+  document.querySelectorAll("[data-i18n]").forEach((n) => { if (d[n.dataset.i18n] !== undefined) n.textContent = d[n.dataset.i18n]; });
   document.querySelectorAll("[data-i18n-aria]").forEach((n) => n.setAttribute("aria-label", d[n.dataset.i18nAria]));
-  $("heroImg").alt = d.heroAlt;
+  $("ringCap").textContent = d.wLeft;
   $("langId").setAttribute("aria-pressed", String(lang === "id"));
   $("langEn").setAttribute("aria-pressed", String(lang === "en"));
-  const cb = $("copyBtn");
-  if (!cb.dataset.state) cb.textContent = titleCase(d.copy);
   renderLists();
 }
 
 function applyTheme() {
   document.documentElement.dataset.theme = theme;
-  const bg = theme === "dark" ? "#000000" : "#EEF2F8";
+  const bg = theme === "dark" ? "#000000" : "#F6F7FB";
   document.querySelectorAll('meta[name="theme-color"]').forEach((m) => { m.content = bg; });
-  // gambar hero mengikuti tema pilihan (bukan hanya pengaturan sistem); ukurannya sama, jadi tidak ada pergeseran tata letak
-  $("heroDark").media = theme === "dark" ? "all" : "not all";
-  // ikon bulan saat tema terang aktif, matahari saat gelap, seperti di panel
+  // ikon bulan (tema terang aktif) atau matahari (tema gelap aktif), seperti di aplikasi
   $("themeIcon").innerHTML = theme === "dark"
     ? '<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6L7 7M17 17l1.4 1.4M18.4 5.6L17 7M7 17l-1.4 1.4"/>'
     : '<path d="M20 14.5A8 8 0 019.5 4a8 8 0 1010.5 10.5z"/>';
@@ -201,51 +177,18 @@ function remember() { store.set(LANG_KEY, lang); store.set(THEME_KEY, theme); }
 $("langId").addEventListener("click", () => { lang = "id"; store.set(LANG_KEY, lang); applyText(); });
 $("langEn").addEventListener("click", () => { lang = "en"; store.set(LANG_KEY, lang); applyText(); });
 $("themeBtn").addEventListener("click", () => { theme = theme === "dark" ? "light" : "dark"; store.set(THEME_KEY, theme); applyTheme(); });
-// pilihan bahasa dan tema ikut ke halaman login walau belum pernah diubah manual
+// pilihan bahasa dan tema ikut terbawa ke halaman login walau belum pernah diubah manual
 document.querySelectorAll("[data-login]").forEach((a) => a.addEventListener("click", remember));
 
 // tautan panduan hanya tampil bila LANDING_DOCS_URL diisi
 const docs = $("docsBtn");
 const docsUrl = docs.dataset.docs || "";
-if (/^https?:\/\//i.test(docsUrl)) { docs.href = docsUrl; $("docsRow").classList.remove("hidden"); }
+if (/^https?:\/\//i.test(docsUrl)) { docs.href = docsUrl; docs.classList.remove("hidden"); }
 
-// salin perintah pasang: Clipboard API, lalu execCommand, lalu teks dipilih agar bisa disalin manual
-function selectCmd() {
-  const r = document.createRange();
-  r.selectNodeContents($("cmd"));
-  const s = getSelection();
-  s.removeAllRanges();
-  s.addRange(r);
-}
-let copyTimer = null;
-function copyDone(ok) {
-  const d = DICT[lang], btn = $("copyBtn"), msg = $("copyMsg");
-  msg.classList.toggle("err", !ok);
-  msg.textContent = ok ? d.copyOk : d.copyFail;
-  clearTimeout(copyTimer);
-  if (ok) {
-    btn.dataset.state = "copied";
-    btn.textContent = titleCase(d.copied);
-    copyTimer = setTimeout(() => { delete btn.dataset.state; btn.textContent = titleCase(DICT[lang].copy); msg.textContent = ""; }, 2500);
-  }
-}
-$("copyBtn").addEventListener("click", async () => {
-  const text = $("cmd").textContent;
-  try {
-    if (!(navigator.clipboard && navigator.clipboard.writeText)) throw new Error("no clipboard");
-    await navigator.clipboard.writeText(text);
-    copyDone(true);
-  } catch (e) {
-    selectCmd();
-    let ok = false;
-    try { ok = !!(document.execCommand && document.execCommand("copy")); } catch (e2) { ok = false; }
-    copyDone(ok);
-  }
-});
-
-// scroll halus ke bagian halaman (menghormati prefers-reduced-motion); tautan lama (bahasa Indonesia) dipetakan ke ID baru
+// scroll halus ke bagian halaman (menghormati prefers-reduced-motion)
 const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)");
-const OLD_HASH = { features: "how-it-works", fitur: "how-it-works", cara: "how-it-works", aman: "security" };
+// ID bagian halaman sama di semua bahasa; tautan lama (bahasa Indonesia) dipetakan ke ID baru
+const OLD_HASH = { fitur: "features", cara: "how-it-works", aman: "security" };
 function goTo(id, smooth) {
   id = OLD_HASH[id] || id;
   const target = id && $(id);
