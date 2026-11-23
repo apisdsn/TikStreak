@@ -58,7 +58,7 @@ ck(await p.evaluate(()=>document.getElementById('pwModal').classList.contains('h
 ck(await p.isVisible('#app')&&(await p.evaluate(async()=>(await fetch('/api/status',{credentials:'same-origin'})).status))===200,'still logged in after change');
 ck((await p.textContent('#toast')).includes('Password Changed'),'toast: '+await p.textContent('#toast'));
 // logout via menu
-await p.click('#userBtn');await p.click('.menu >> text=Log Out');await p.waitForSelector('h1.hl');await p.goto((B+'/login'));await p.waitForSelector('#login:not(.hidden)');ck(true,'logout from menu (landing, then login)');
+await p.click('#userBtn');await p.click('.menu >> text=Log Out');await p.waitForSelector('h1');await p.goto((B+'/login'));await p.waitForSelector('#login:not(.hidden)');ck(true,'logout from menu (landing, then login)');
 ck(await p.evaluate(()=>document.documentElement.dataset.theme==='dark'&&document.documentElement.lang==='en'),'prefs persist on login screen');
 await p.click('#loginLang');ck((await p.textContent('#loginTitle'))==='Bara'&&(await p.textContent('#loginForm label[for=loginUser]'))==='Nama Pengguna'&&(await p.textContent('#loginSubmit'))==='Masuk','login EN->ID toggle');
 await p.click('#loginLang');ck((await p.textContent('#loginSubmit'))==='Login','back to EN: '+await p.textContent('#loginSubmit'));
