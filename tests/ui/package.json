@@ -1,0 +1,7 @@
+{
+  "name": "bara-ui-tests",
+  "private": true,
+  "description": "Tes UI Playwright untuk panel Bara",
+  "scripts": { "test": "node run.js" },
+  "devDependencies": { "playwright": "^1.45.0" }
+}

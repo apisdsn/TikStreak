@@ -1,0 +1,37 @@
+[
+  {
+    "id": "main",
+    "name": "Utama",
+    "schedules": [
+      {
+        "id": "35026d",
+        "enabled": true,
+        "time": "07:00",
+        "message": "",
+        "contacts": null
+      },
+      {
+        "id": "0aa033",
+        "enabled": true,
+        "time": "03:03",
+        "message": "Pagi",
+        "contacts": [
+          "Rina",
+          "Dimas"
+        ]
+      },
+      {
+        "id": "e43351",
+        "enabled": true,
+        "time": "07:03",
+        "message": "Malam",
+        "contacts": null
+      }
+    ]
+  },
+  {
+    "id": "236629",
+    "name": "Akun Kedua",
+    "schedules": []
+  }
+]

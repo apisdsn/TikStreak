@@ -1,0 +1,4 @@
+<!doctype html><meta charset=utf-8><title>flow</title>
+<input id=msg><button id=send onclick="document.getElementById('log').textContent+=document.getElementById('msg').value+';'">Send</button>
+<div id=log></div><img id=img src=/pixel.png><div id=media>pending</div>
+<script>fetch('/v.mp4').then(r=>{document.getElementById('media').textContent='loaded'}).catch(e=>{document.getElementById('media').textContent='blocked'})</script>

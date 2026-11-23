@@ -1,0 +1,15 @@
+{
+  "message": "Streak",
+  "timezone": "",
+  "telegram_enabled": false,
+  "telegram_token": "",
+  "telegram_chat_id": "",
+  "discord_enabled": false,
+  "discord_webhook": "",
+  "notify_screenshot": false,
+  "keepalive_enabled": false,
+  "keepalive_hours": 12,
+  "page_load_wait": 5,
+  "element_wait": 3,
+  "send_delay": 2
+}

@@ -1,0 +1,13 @@
+const { launch, server, fixtureServer, SH, ROOT } = require('./lib');
+let B;
+(async()=>{const fx=await fixtureServer();const srv=await server('seeded',{LOGIN_START_URL:fx.url+'/index.html'});B=srv.base;const b=await launch();
+const p=await b.newPage({viewport:{width:1280,height:900}});const errs=[];
+p.on('response',r=>{if(r.status()>=400)console.log('HTTP',r.status(),r.url(),r.request().method())});p.on('pageerror',e=>errs.push(e.message));p.on('console',m=>{if(m.type()==='error')errs.push(m.text())});
+await p.goto((B+'/login'));await p.fill('#loginUser','admin');await p.fill('#loginPass','password1');await p.click('#loginForm button[type=submit]');
+await p.waitForSelector('#app:not(.hidden)');await p.click('#tabs [data-tab=cookies]');await p.click('#btnLoginStart');
+await p.waitForSelector('#remoteWrap:not(.hidden)',{timeout:40000});await p.waitForTimeout(3500);
+console.log(await p.evaluate(()=>[document.getElementById('loginState').textContent,[...document.querySelectorAll('#loginSteps li')].map(l=>l.className).join(','),document.getElementById('remoteView').naturalWidth]));
+await p.click('#remoteView',{position:{x:100,y:100}});await p.fill('#remoteText','abc');await p.press('#remoteText','Enter');
+await p.screenshot({path:SH+'d-login2.png'});
+await p.click('#btnLoginStop');await p.waitForTimeout(5000);
+console.log(await p.textContent('#loginState'));console.log(errs.length?'ERRS '+errs.join(' | '):'ERRS none');await b.close();await srv.cleanup();fx.close();})().catch(async(e)=>{console.log('FAIL exception '+(e&&e.stack||e));process.exit(1)});

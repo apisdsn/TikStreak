@@ -1,0 +1,18 @@
+<!doctype html><meta charset=utf-8><title>fx</title>
+<style>body{font:20px sans-serif;margin:20px}button,.row{display:block;margin:12px 0;padding:14px 18px;font-size:20px}.row{background:#eee;border:2px solid #999;width:420px}.row.hover{background:#cde}</style>
+<div id=out>idle</div>
+<button id=openbtn onclick="window.open('/second.html','_blank')">Open second tab</button>
+<button id=alertbtn onclick="alert('halo dari fixture');document.getElementById('out').textContent='after-alert'">Alert then change</button>
+<div id=modal>
+  <div class=row id=pwd>Password &gt;</div>
+</div>
+<div id=mout>modal-idle</div>
+<button id=errbtn onclick="console.error('boom-test');fetch('/missing?secret=abc123')">Error</button>
+<a href="/ua.html" id=ualink>ua</a>
+<script>
+// komponen mirip React: hanya bereaksi pada urutan pointerover -> pointerdown -> pointerup, bukan click mentah
+const row=document.getElementById('pwd');let hovered=false,down=false;
+row.addEventListener('pointerover',()=>{hovered=true;row.classList.add('hover')});
+row.addEventListener('pointerdown',()=>{if(hovered)down=true});
+row.addEventListener('pointerup',()=>{if(hovered&&down){document.getElementById('mout').textContent='row-ok'}down=false});
+</script>

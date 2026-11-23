@@ -3,3 +3,6 @@ __pycache__/
 *.pyc
 data/
 .venv/
+tests/screenshots/
+node_modules/
+.pytest_cache/

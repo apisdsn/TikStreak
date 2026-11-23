@@ -1,0 +1,7 @@
+<!doctype html><meta charset=utf-8><title>ua</title><body style="font:14px monospace;margin:20px">
+<pre id=ua>loading</pre>
+<script>
+(async()=>{const d=navigator.userAgentData;let hi={};try{hi=await d.getHighEntropyValues(['platform','platformVersion','fullVersionList','architecture'])}catch(e){}
+document.getElementById('ua').textContent=JSON.stringify({ua:navigator.userAgent,platform:navigator.platform,webdriver:navigator.webdriver,brands:d&&d.brands,mobile:d&&d.mobile,uadPlatform:d&&d.platform,hi});
+const e=await (await fetch('/echo')).json();document.getElementById('ua').textContent+='\n'+JSON.stringify(e);document.title='ready'})();
+</script>
