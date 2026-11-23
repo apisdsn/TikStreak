@@ -34,7 +34,8 @@ from .auth import (
     visible_accounts,
 )
 from .cookies import parse_cookies, summary
-from . import jobs, migrate_json
+from .streaks import effective_streak
+from . import db, jobs, migrate_json
 from .login import login_mgr
 from .notify import DISCORD_RE, send_discord, send_telegram
 from .runner import runner
@@ -52,6 +53,7 @@ from .store import (
     query_runs,
     runs_since,
     SCAN_TTL,
+    contact_stats,
     save_settings,
     scan_clear,
     scan_get,
@@ -152,6 +154,7 @@ class RunIn(BaseModel):
     mode: str = "send"
     message: Optional[str] = None
     account: Optional[str] = None
+    contacts: Optional[list[str]] = None  # kirim ulang hanya untuk kontak ini (mode send)
 
 
 def public_settings():
@@ -398,6 +401,32 @@ def _scan_view(acc, user):
     return {"state": "failed" if res.get("error") else "done", "items": items, "error": res.get("error"), "expires_in": max(0, int(SCAN_TTL - (time.time() - res["at"])))}
 
 
+def _contact_rows(acc):
+    """Status hari ini per kontak: streak, kiriman terakhir, dan state (sent/failed/pending/unscheduled)."""
+    today = datetime.now().date().isoformat()
+    stats = contact_stats(acc["id"])
+    sched = [s for s in acc["schedules"] if s["enabled"]]
+    rows = []
+    for name in stores(acc["id"]).contacts.read():
+        s = stats.get(name.lower())
+        if s and (s["last_ok_at"] or "")[:10] == today:
+            state = "sent"
+        elif s and (s["last_fail_at"] or "")[:10] == today:
+            state = "failed"
+        elif any(x.get("contacts") is None or name.lower() in {c.lower() for c in x["contacts"]} for x in sched):
+            state = "pending"
+        else:
+            state = "unscheduled"
+        rows.append({"name": name, "streak": effective_streak(s, today), "last_ok_at": s["last_ok_at"] if s else None,
+                     "last_fail_at": s["last_fail_at"] if s else None, "last_error": s["last_error"] if s and state == "failed" else None, "today": state})
+    return rows
+
+
+@app.get("/api/contacts/status", dependencies=[Depends(current_user)])
+def contacts_status(acc=Depends(acct)):
+    return {"contacts": _contact_rows(acc)}
+
+
 @app.get("/api/contacts/scan")
 def scan_status(acc=Depends(acct), user=Depends(current_user)):
     return _scan_view(acc, user)
@@ -465,6 +494,7 @@ def delete_contact(name: str = Query(...), acc=Depends(acct)):
     if len(new) == len(current):
         raise HTTPException(404, "Kontak Tidak Ditemukan")
     contacts_store.write(new)
+    db.x("DELETE FROM contact_stats WHERE account_id=? AND name_lc=?", (acc["id"], name.lower()))
     # Lepaskan kontak yang dihapus dari jadwal yang memilih kontak tertentu
     for sched in acc["schedules"]:
         if sched.get("contacts") is not None:
@@ -586,8 +616,16 @@ def run(body: RunIn, user=Depends(current_user)):
         raise HTTPException(400, "Mode Harus Send, Test, atau Check")
     if login_mgr.account_active(acc["id"]):
         raise HTTPException(409, "Tutup Sesi Login di Tab Cookie Dulu")
+    only = None
+    if body.contacts is not None:
+        if body.mode != "send" or not body.contacts:
+            raise HTTPException(400, "Pilih Kontak hanya untuk Mode Send")
+        have = {c.lower(): c for c in stores(acc["id"]).contacts.read()}
+        only = [have[c.strip().lower()] for c in body.contacts if c.strip().lower() in have]
+        if not only:
+            raise HTTPException(404, "Kontak Tidak Ditemukan")
     try:
-        job = runner.submit(acc, body.mode, user["id"], user["username"], body.message.strip() if body.message else None)
+        job = runner.submit(acc, body.mode, user["id"], user["username"], body.message.strip() if body.message else None, contacts=only)
     except jobs.Duplicate:
         raise HTTPException(409, "Sudah Ada Proses untuk Akun Ini di Antrean")
     mine = next((j for j in runner.view_for(user["id"])["mine"] if j["id"] == job["id"]), {})
@@ -707,6 +745,7 @@ def dashboard(acc=Depends(acct), user=Depends(current_user)):
         "runs_today": [run_view(r) for r in runs_since(acc["id"], d + "T00:00:00")],
         "send_days": send_days(acc["id"], (today - timedelta(days=400)).isoformat()),
         "week": day_stats(acc["id"], (today - timedelta(days=6)).isoformat()),
+        "needs_check": [{"name": r["name"], "error": r["last_error"]} for r in _contact_rows(acc) if r["today"] == "failed"],
     }
 
 

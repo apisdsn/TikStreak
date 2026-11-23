@@ -235,6 +235,10 @@ def rename_contact(aid, old, new):
         if lo in convs and lo != ln:
             convs[ln] = convs.pop(lo)
             st.convs.write(convs)
+        if lo != ln:  # status/streak ikut pindah ke nama baru
+            old = db.q1("SELECT * FROM contact_stats WHERE account_id=? AND name_lc=?", (aid, lo))
+            if old and not db.q1("SELECT 1 FROM contact_stats WHERE account_id=? AND name_lc=?", (aid, ln)):
+                db.x("UPDATE contact_stats SET name_lc=? WHERE account_id=? AND name_lc=?", (ln, aid, lo))
 
 
 # ------------------------------------------------------------ pengguna
@@ -410,6 +414,27 @@ def scan_clear(account_id):
 def scan_prune():
     for r in db.q("SELECT key FROM settings WHERE key LIKE 'kv:scan:%'"):
         scan_get(r["key"][8:])
+
+
+def contact_stats_apply(run):
+    """Perbarui status per kontak dari satu run kirim yang sudah selesai (uji, cek, terlewat, dihentikan tidak dihitung)."""
+    from . import streaks
+    if run.get("mode") != "send" or run.get("status") in streaks.SKIP_STATUS or not (run.get("account") or {}).get("id"):
+        return
+    aid = run["account"]["id"]
+    with db.tx():
+        for res in run.get("results") or []:
+            name = (res.get("contact") or "").strip().lower()
+            if not name:
+                continue
+            row = db.q1("SELECT * FROM contact_stats WHERE account_id=? AND name_lc=?", (aid, name))
+            s = streaks.advance(dict(row) if row else None, bool(res.get("ok")), streaks.stamp(run, res), res.get("error"))
+            db.x("INSERT OR REPLACE INTO contact_stats(account_id, name_lc, last_ok_at, last_fail_at, last_error, streak_days, streak_date) VALUES(?,?,?,?,?,?,?)",
+                 (aid, name, s["last_ok_at"], s["last_fail_at"], s["last_error"], s["streak_days"], s["streak_date"]))
+
+
+def contact_stats(account_id):
+    return {r["name_lc"]: dict(r) for r in db.q("SELECT * FROM contact_stats WHERE account_id=?", (account_id,))}
 
 
 def last_success_at(account_id):

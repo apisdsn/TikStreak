@@ -44,6 +44,9 @@
       saved: "(Tersimpan)", ready: "Siap", busyAcct: "Berjalan: {name}", busy: "Berjalan",
       st_running: "Berjalan", st_success: "Berhasil", st_partial: "Sebagian", st_failed: "Gagal", st_cancelled: "Dihentikan",
       st_missed: "Terlewat", st_pending: "Menunggu",
+      streakChip: "{n} Hari", lastSentAgo: "Terakhir Terkirim {when}", neverSent: "Belum Pernah Terkirim", cs_sent: "Terkirim", cs_failed: "Gagal",
+      cs_pending: "Menunggu", cs_unscheduled: "Tidak Dijadwalkan", needsCheck: "Perlu Dicek", retrySend: "Uji Kirim Ulang", toastRetryQueued: "Kirim Ulang Dimasukkan ke Antrean",
+      needsCheckSub: "Kontak yang Gagal Hari Ini",
       importTikTok: "Impor dari TikTok", scanning: "Memindai Daftar Chat", importTitle: "Impor Kontak dari TikTok", importFound: "{n} Percakapan Ditemukan",
       importHint: "Hanya Anda yang Bisa Melihat Hasil Ini. Dihapus Otomatis Setelah 1 Jam.", importSearchPh: "Cari Nama", selectAll: "Pilih Semua",
       alreadyAdded: "Sudah Ada", lastMsgAt: "Pesan Terakhir {time}", addSelected: "Tambahkan {n} Kontak", importEmpty: "Tidak Ada Percakapan Ditemukan",
@@ -208,6 +211,9 @@
       saved: "(Saved)", ready: "Ready", busyAcct: "Running: {name}", busy: "Running",
       st_running: "Running", st_success: "Success", st_partial: "Partial", st_failed: "Failed", st_cancelled: "Stopped",
       st_missed: "Missed", st_pending: "Pending",
+      streakChip: "{n} Days", lastSentAgo: "Last Sent {when}", neverSent: "Never Sent", cs_sent: "Sent", cs_failed: "Failed",
+      cs_pending: "Pending", cs_unscheduled: "Not Scheduled", needsCheck: "Needs Attention", retrySend: "Test Resend", toastRetryQueued: "Resend Added to the Queue",
+      needsCheckSub: "Contacts That Failed Today",
       importTikTok: "Import from TikTok", scanning: "Scanning Chat List", importTitle: "Import Contacts from TikTok", importFound: "{n} Chats Found",
       importHint: "Only You Can See These Results. Deleted Automatically After 1 Hour.", importSearchPh: "Search by Name", selectAll: "Select All",
       alreadyAdded: "Already Added", lastMsgAt: "Last Message {time}", addSelected: "Add {n} Contacts", importEmpty: "No Chats Found",
@@ -1088,7 +1094,28 @@
     renderStatusWidgets(a);
     renderTodayList(a, todaySlots);
     renderCookieBanner(a.cookies);
+    renderNeedsCheck();
     renderHistory();
+  }
+
+  // kartu "Perlu Dicek": kontak yang gagal hari ini beserta alasannya, dengan kirim ulang untuk satu kontak
+  function renderNeedsCheck() {
+    const box = $("needsCheck");
+    const list = dash && dash.needs_check ? dash.needs_check : [];
+    box.classList.toggle("hidden", !list.length);
+    const body = $("needsCheckList");
+    body.replaceChildren();
+    list.forEach((n) => {
+      const busy = jobsOf((j) => j.kind === "send").length > 0;
+      const b = el("button", { type: "button", className: "btn tinted small", textContent: t("retrySend"), disabled: busy });
+      b.addEventListener("click", async () => {
+        b.disabled = true;
+        try { await api("/run", { method: "POST", body: { mode: "send", account: currentId, contacts: [n.name] } }); toast(t("toastRetryQueued")); await refresh(); }
+        catch (e) { toast(e.message); b.disabled = false; }
+      });
+      body.append(el("div", { className: "nc-row" }, [el("div", { className: "grow" }, [el("div", { className: "title", textContent: n.name }),
+        el("div", { className: "muted small-text", textContent: n.error || "" })]), b]));
+    });
   }
 
   function renderStreak(today) {
@@ -1514,7 +1541,7 @@
     const q = new URLSearchParams({ account: "all", page: String(hf.page), page_size: String(hf.size) });
     if (hf.mode) q.set("mode", hf.mode);
     if (hf.status) q.set("status", hf.status);
-    const [h] = await Promise.all([api("/history?" + q), loadDash()]);
+    const [h] = await Promise.all([api("/history?" + q), loadDash(), loadContactStatus()]);
     if (seq !== histSeq) return;
     const pages = Math.max(1, Math.ceil(h.total / h.page_size));
     if (h.page > pages) { hf.page = pages; saveHF(); return loadHistory(); }
@@ -1632,8 +1659,17 @@
   });
 
   // --------------------------------------------------------------- contacts
+  let contactStatus = {};   // nama (huruf kecil) -> status hari ini + streak
+  async function loadContactStatus() {
+    try {
+      const id = currentId;
+      const { contacts } = await apiA("/contacts/status");
+      if (id !== currentId) return;
+      contactStatus = Object.fromEntries(contacts.map((c) => [c.name.toLowerCase(), c]));
+    } catch (e) { /* abaikan */ }
+  }
   async function loadContacts() {
-    const { contacts } = await apiA("/contacts");
+    const [{ contacts }] = await Promise.all([apiA("/contacts"), loadContactStatus()]);
     renderContacts(contacts);
   }
   function renderContacts(contacts) {
@@ -1661,7 +1697,14 @@
           catch (e) { toast(e.message); }
         } },
       ], c));
-      ul.append(el("li", {}, [el("div", { className: "grow" }, [el("div", { className: "title", textContent: c })]), more]));
+      const cs = contactStatus[c.toLowerCase()];
+      const meta = el("div", { className: "cchips" });
+      if (cs) {
+        if (cs.streak > 0) meta.append(el("span", { className: "streak-chip" }, [icon("i-flame"), t("streakChip", { n: cs.streak })]));
+        meta.append(badge({ sent: "success", failed: "failed", pending: "neutral", unscheduled: "neutral" }[cs.today] || "neutral", t("cs_" + cs.today)));
+        meta.append(el("span", { className: "muted small-text", textContent: cs.last_ok_at ? t("lastSentAgo", { when: relTime(cs.last_ok_at) }) : t("neverSent") }));
+      }
+      ul.append(el("li", { className: "crow-li" }, [el("div", { className: "grow" }, [el("div", { className: "title", textContent: c }), meta]), more]));
     });
     dashSig = "";
     renderDashboard();

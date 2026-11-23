@@ -132,7 +132,39 @@ def _m3(c):
     """)
 
 
-MIGRATIONS = [_m1, _m2, _m3]
+def _m4(c):
+    """Status per kontak (streak, kiriman terakhir) + isi awal dari riwayat run yang sudah ada."""
+    import json
+    from . import streaks
+    _script(c, """
+    CREATE TABLE contact_stats(
+      account_id TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE, name_lc TEXT NOT NULL,
+      last_ok_at TEXT, last_fail_at TEXT, last_error TEXT, streak_days INTEGER NOT NULL DEFAULT 0, streak_date TEXT,
+      PRIMARY KEY(account_id, name_lc))
+    """)
+    state = {}
+    rows = c.execute("SELECT account_id, started_at, finished_at, status, results_json FROM runs WHERE mode='send' AND account_id IS NOT NULL "
+                     "AND status NOT IN ('running','expired','cancelled') ORDER BY started_at").fetchall()
+    for aid, started, finished, _status, results_json in rows:
+        try:
+            results = json.loads(results_json or "[]")
+        except ValueError:
+            continue
+        run = {"started_at": started, "finished_at": finished}
+        for res in results:
+            name = (res.get("contact") or "").strip().lower()
+            if not name:
+                continue
+            k = (aid, name)
+            state[k] = streaks.advance(state.get(k), bool(res.get("ok")), streaks.stamp(run, res), res.get("error"))
+    live = {a[0] for a in c.execute("SELECT id FROM accounts").fetchall()}
+    for (aid, name), s in state.items():
+        if aid in live:
+            c.execute("INSERT OR REPLACE INTO contact_stats VALUES(?,?,?,?,?,?,?)",
+                      (aid, name, s["last_ok_at"], s["last_fail_at"], s["last_error"], s["streak_days"], s["streak_date"]))
+
+
+MIGRATIONS = [_m1, _m2, _m3, _m4]
 
 
 def init():

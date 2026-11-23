@@ -14,6 +14,7 @@ from .bot import Cancelled, CookieInvalid, StreakBot
 from .config import DATA_DIR
 from .notify import notify
 from .store import (
+    contact_stats_apply,
     get_account,
     get_run,
     get_settings,
@@ -99,9 +100,9 @@ class Runner:
         self.started = False
 
     # --------------------------------------------------------------- antrean
-    def submit(self, account, kind, owner_id, by, message=None):
+    def submit(self, account, kind, owner_id, by, message=None, contacts=None):
         """Masukkan job manual ke antrean. Raise jobs.Duplicate bila akun ini sudah punya job sejenis."""
-        return jobs.enqueue(account["id"], owner_id, kind, "manual", message=message, by=by)
+        return jobs.enqueue(account["id"], owner_id, kind, "manual", message=message, by=by, contacts=contacts)
 
     def cancel_job(self, job_id, owner_id):
         return jobs.cancel_queued(job_id, owner_id)
@@ -648,6 +649,10 @@ class Runner:
     CONTACT_ERRORS = ("Kontak Tidak Ditemukan", "Chat yang Terbuka Milik")  # masalah satu kontak, bukan tanda tampilan TikTok berubah
 
     def _after_run(self, settings, run):
+        try:
+            contact_stats_apply(run)
+        except Exception:  # noqa: BLE001
+            log.exception("pembaruan status kontak galat")
         try:
             self._breakage_alert(settings, run)
         except Exception:  # noqa: BLE001

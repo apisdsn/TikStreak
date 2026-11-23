@@ -178,6 +178,10 @@ HTML dikirim dengan `Cache-Control: private, no-cache` dan `Vary: Cookie`, jadi 
 
 Di tab Kontak, **Impor dari TikTok** memasukkan pemindaian daftar chat ke antrean browser (jenis job `scan_contacts`, prioritas seperti kirim manual). Bara membuka halaman pesan dengan cookie akun, menggulir daftar percakapan dan mengumpulkan nama, ID percakapan, dan jam pesan terakhir (maksimal `SCAN_MAX`, default 200). Hasilnya tampil di sheet dengan kotak centang dan pencarian; kontak yang sudah ada ditandai "Sudah Ada". Kontak yang dipilih ditambahkan bersama ID percakapannya sehingga kiriman memakai percakapan yang tepat. Hasil pindai hanya bisa dilihat pemilik akun, tidak masuk riwayat atau notifikasi, dan dihapus setelah 1 jam.
 
+## Status per Kontak
+
+Setiap run kirim memperbarui tabel `contact_stats` (kiriman sukses/gagal terakhir, alasan gagal, dan streak hari beruntun per kontak; streak kembali ke 0 bila satu hari terlewat). Migrasi mengisinya dari riwayat yang sudah ada. Tab Kontak menampilkan chip streak, "Terakhir Terkirim", dan status hari ini (Terkirim, Gagal, Menunggu, Tidak Dijadwalkan) lewat `GET /api/contacts/status?account=`. Dasbor menampilkan kartu **Perlu Dicek** untuk kontak yang gagal hari ini, dengan tombol **Uji Kirim Ulang** yang mengantrekan kiriman manual hanya untuk kontak itu (`POST /api/run` dengan `contacts`).
+
 ## Peringatan Kesehatan
 
 - **Belum ada pesan terkirim:** akun dengan jadwal aktif dan cookie yang belum punya kiriman sukses selama 24 jam membuat pemiliknya diberi tahu, paling sering sekali sehari.
