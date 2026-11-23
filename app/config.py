@@ -36,6 +36,8 @@ BROWSER_RECYCLE_JOBS = _int("BROWSER_RECYCLE_JOBS", 25, 1)
 BROWSER_MAX_MB = _int("BROWSER_MAX_MB", 700, 100)
 BROWSER_KIND = os.getenv("BROWSER_KIND", "auto").lower()  # auto | full | shell
 SHELL_PATH = os.getenv("BROWSER_SHELL_PATH", "")
+LANDING_ENABLED = os.getenv("LANDING_ENABLED", "1").lower() not in ("0", "false", "no", "off")
+LANDING_DOCS_URL = os.getenv("LANDING_DOCS_URL", "").strip()
 TRUST_PROXY = os.getenv("TRUST_PROXY", "0").lower() in ("1", "true", "yes")
 HEADLESS = os.getenv("HEADLESS", "true").lower() == "true"
 

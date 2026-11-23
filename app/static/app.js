@@ -341,6 +341,7 @@
   };
   const LOCALE = { id: "id-ID", en: "en-US" };
 
+  const landingOn = document.documentElement.dataset.landing === "1";
   let lang = "id";
   let theme = "light";
   let me = null;            // {id, username, role}
@@ -653,6 +654,7 @@
       $("loginPass").value = $("loginPass2").value = $("setupKey").value = "";
       setupMode = false;
       resetSession();
+      if (location.pathname !== "/") history.replaceState(null, "", "/");
       await enter();
     } catch (ex) {
       err.textContent = ex.message;
@@ -664,6 +666,7 @@
     try { await api("/auth/logout", { method: "POST" }); } catch (e) { /* abaikan */ }
     resetSession();
     showLogin();
+    if (landingOn) { location.replace("/"); return; }  // kembali ke halaman depan
   }
 
   async function initAuth() {

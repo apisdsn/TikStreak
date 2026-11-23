@@ -140,6 +140,17 @@ Panduan RAM (hanya Bara, tanpa aplikasi lain):
 
 Hitungan kasar: satu kirim ke 4 kontak sekitar 2 menit, jadi **satu worker menangani sekitar 27 akun per jam**. Sebarkan jam jadwal; UI memberi petunjuk bila slot 30 menit sudah ramai. Pengukuran memori satu browser dengan satu tab (PSS): Chromium penuh sekitar 360 MB, `chrome-headless-shell` sekitar 90 MB.
 
+## Landing Page
+
+Pengunjung yang belum login melihat halaman depan Bara (fitur, cara kerja, keamanan, FAQ) di `/`. Tombol **Masuk** membuka `/login`. Setelah login, `/` langsung menampilkan panel. Sebelum admin pertama dibuat, `/` mengarahkan ke `/login` agar pengaturan awal tetap berjalan. Halaman memakai pilihan bahasa dan tema yang sama dengan panel.
+
+| Variabel | Default | Keterangan |
+|---|---|---|
+| `LANDING_ENABLED` | `1` | `0` menonaktifkan landing page: `/` langsung menampilkan panel atau halaman login seperti sebelumnya (`/login` tetap bisa dipakai) |
+| `LANDING_DOCS_URL` | kosong | Tautan tombol "Panduan Pasang". Kosong berarti tombol disembunyikan |
+
+HTML dikirim dengan `Cache-Control: private, no-cache` dan `Vary: Cookie`, jadi aman di belakang Cloudflare.
+
 ## Backup
 
 Semua data ada di satu file SQLite (`/data/streak.db`) plus `secret.key` (atau env `SECRET_KEY`) dan folder `proofs/`. Cookie dan rahasia notifikasi dienkripsi; **tanpa kunci yang sama cookie tidak bisa dibaca**, jadi simpan `SECRET_KEY` (atau `secret.key`) bersama backup database.

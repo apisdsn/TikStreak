@@ -23,6 +23,9 @@ services:
       BROWSER_RECYCLE_JOBS: ${BROWSER_RECYCLE_JOBS:-25}
       BROWSER_MAX_MB: ${BROWSER_MAX_MB:-700}
       BROWSER_KIND: ${BROWSER_KIND:-auto}
+      # halaman depan untuk pengunjung belum login; LANDING_DOCS_URL opsional (tombol Panduan Pasang)
+      LANDING_ENABLED: ${LANDING_ENABLED:-1}
+      LANDING_DOCS_URL: ${LANDING_DOCS_URL:-}
     volumes:
       - streak-data:/data
     shm_size: "1gb"

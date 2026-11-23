@@ -11,13 +11,15 @@ import threading
 from typing import List, Optional
 from zoneinfo import ZoneInfo
 
-from fastapi import Depends, FastAPI, Header, HTTPException, Query
-from fastapi.responses import FileResponse, Response
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
+from fastapi.responses import FileResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from . import config
 from .auth import (
+    COOKIE,
+    LEGACY_COOKIE,
     accessible_ids,
     can_access,
     current_user,
@@ -25,6 +27,10 @@ from .auth import (
     public_user,
     require_admin,
     router as auth_router,
+    session_token,
+    set_cookie,
+    user_from_token,
+    users_count,
     visible_accounts,
 )
 from .cookies import parse_cookies, summary
@@ -670,10 +676,46 @@ def _asset_version():
 ASSET_VER = _asset_version()
 app.mount("/static", VersionedStatic(directory=STATIC), name="static")
 
+HTML_HEADERS = {"Cache-Control": "private, no-cache", "Vary": "Cookie"}  # di belakang CDN: HTML tidak boleh disimpan cache bersama
+
+
+def _page(name, response=None):
+    with open(os.path.join(STATIC, name), "r", encoding="utf-8") as f:
+        html = f.read()
+    for asset in ("style.css", "app.js", "landing.css", "landing.js"):
+        html = html.replace(f"/static/{asset}", f"/static/{asset}?v={ASSET_VER}")
+    if name == "index.html" and config.LANDING_ENABLED:
+        html = html.replace('<html lang="id">', '<html lang="id" data-landing="1">', 1)
+    url = config.LANDING_DOCS_URL
+    if not re.match(r"^https?://", url, re.I):
+        url = ""
+    html = html.replace("__DOCS_URL__", url.replace("&", "&amp;").replace('"', "&quot;").replace("<", "&lt;"))
+    out = Response(html, media_type="text/html; charset=utf-8", headers=HTML_HEADERS)
+    if response is not None:  # teruskan cookie hasil upgrade sesi lama
+        for k, v in response.raw_headers:
+            if k.lower() == b"set-cookie":
+                out.raw_headers.append((k, v))
+    return out
+
 
 @app.get("/", include_in_schema=False)
-def index():
-    with open(os.path.join(STATIC, "index.html"), "r", encoding="utf-8") as f:
-        html = f.read()
-    html = html.replace("/static/style.css", f"/static/style.css?v={ASSET_VER}").replace("/static/app.js", f"/static/app.js?v={ASSET_VER}")
-    return Response(html, media_type="text/html; charset=utf-8", headers={"Cache-Control": "no-cache"})
+def index(request: Request, response: Response):
+    if not config.LANDING_ENABLED:
+        return _page("index.html")
+    if users_count() == 0:
+        return RedirectResponse("/login", status_code=302, headers=HTML_HEADERS)
+    token = session_token(request)
+    if token and user_from_token(token):
+        if not request.cookies.get(COOKIE) and request.cookies.get(LEGACY_COOKIE):
+            set_cookie(request, response, token)  # upgrade sesi lama ke bara_session
+            response.delete_cookie(LEGACY_COOKIE, path="/")
+        return _page("index.html", response)
+    return _page("landing.html")
+
+
+@app.get("/login", include_in_schema=False)
+def login_page(request: Request, response: Response):
+    token = session_token(request)
+    if token and user_from_token(token):
+        return RedirectResponse("/", status_code=302, headers=HTML_HEADERS)
+    return _page("index.html")
