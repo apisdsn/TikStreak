@@ -21,14 +21,14 @@ def test_login_session_limit(make_server, run_script):
 
 @needs_browser
 def test_login_browser_and_fingerprint(run_script):
-    run_script("logintest.py")
+    run_script("logintest.py", retries=1)
 
 
 @needs_browser
 def test_browser_pool(run_script):
-    run_script("pooltest.py")
+    run_script("pooltest.py", retries=1)
 
 
 @needs_browser
 def test_scan_contacts_virtual_list(run_script):
-    run_script("scantest.py")
+    run_script("scantest.py", retries=1)

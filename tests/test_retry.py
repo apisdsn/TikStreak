@@ -147,4 +147,4 @@ def test_migration_5_keeps_existing_jobs():
     p = subprocess.run([sys.executable, "-c", code], env={**os.environ, "DATA_DIR": tmp, "API_KEY": "k"}, capture_output=True, text=True, cwd=ROOT)
     assert p.returncode == 0, p.stderr[-1200:]
     row, ver = json.loads(p.stdout.strip().splitlines()[-1])
-    assert row == {"id": "j1", "attempt": 0} and ver == 5
+    assert row == {"id": "j1", "attempt": 0} and ver >= 5

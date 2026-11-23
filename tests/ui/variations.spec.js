@@ -18,10 +18,11 @@ for(const [w,h,scheme,lang] of combos){
   await p.check('#randomEmoji');ck((await p.textContent('#variationPreview')).includes('✨'),tag+' preview shows sample emoji');
   await p.uncheck('#randomEmoji');
   ck((await p.textContent('#variationsCount')).includes('1/20'),tag+' counter');
+  await p.click('#btnAddVariation');await p.fill('#variationList textarea >> nth=1','Semangat {nama}! Streak kita sudah {hari} hari');await p.click('#btnAddVariation');await p.fill('#variationList textarea >> nth=2','Jangan lupa streak hari ini');await p.check('#randomEmoji');
+  await p.locator('#variationsGroup').screenshot({path:SH+`variations-editor-${tag}.png`});await p.uncheck('#randomEmoji');
   // batas 20
   for(let i=0;i<25;i++){await p.click('#btnAddVariation').catch(()=>{});}
   ck(await p.locator('#variationList textarea').count()===20,tag+' capped at 20 rows');
-  await p.screenshot({path:SH+`variations-${tag}.png`,fullPage:true});
   // hapus semua selain satu
   while(await p.locator('#variationList .var-row').count()>1) await p.locator('#variationList .var-row >> nth=1').locator('button').click();
   ck(await p.locator('#variationList .var-row').count()===1,tag+' delete rows');

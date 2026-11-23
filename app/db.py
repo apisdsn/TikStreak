@@ -175,7 +175,16 @@ def _m6(c):
     """)
 
 
-MIGRATIONS = [_m1, _m2, _m3, _m4, _m5, _m6]
+def _m7(c):
+    _script(c, """
+    CREATE TABLE onboarding_dismissed(
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      account_id TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+      dismissed_at TEXT, PRIMARY KEY(user_id, account_id))
+    """)
+
+
+MIGRATIONS = [_m1, _m2, _m3, _m4, _m5, _m6, _m7]
 
 
 def init():

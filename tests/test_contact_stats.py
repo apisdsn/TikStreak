@@ -106,7 +106,8 @@ def test_status_endpoint_dashboard_and_single_contact_resend(client, user, app_m
     # kirim ulang satu kontak
     seen = []
     def fake(run, job, cancel, prov):
-        seen.append(run.get("only"))
+        if job["account_id"] == aid:  # jadwal akun lain dari tes sebelumnya ikut diproses worker yang sama
+            seen.append(run.get("only"))
         run.update(status="success", sent=1, total=1, results=[{"contact": "Failed", "ok": True, "sent_at": "09:00:00"}])
     old_exec = client.runner.executor
     client.runner.executor = fake

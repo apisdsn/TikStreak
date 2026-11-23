@@ -182,6 +182,10 @@ Di tab Kontak, **Impor dari TikTok** memasukkan pemindaian daftar chat ke antrea
 
 Setelah kirim terjadwal, kontak yang gagal karena kesalahan sementara (timeout, halaman gagal dimuat, pesan tidak terverifikasi, browser mogok) dimasukkan ke antrean lagi `RETRY_DELAY_MIN` menit kemudian (default 30), maksimal `RETRY_MAX` kali (default 2), dan hanya bila perkiraan mulainya sebelum 23:50. Kontak yang tidak ditemukan, selector yang gagal, dan cookie tidak valid tidak diulang. Run ulang berlabel **Ulang** di riwayat dan notifikasinya berjudul "Percobaan Ulang". Admin dapat mengubah nilainya di Pengaturan, baris **Kirim Ulang**.
 
+## Panduan Awal di Dasbor
+
+Kartu **Mulai dengan Bara** menampilkan lima langkah untuk akun aktif: hubungkan TikTok (cookie valid), tambah kontak, buat jadwal aktif, atur notifikasi pribadi, dan coba uji tanpa kirim (minimal satu uji sukses), dengan cincin progres. Kartu hilang sendiri bila semuanya selesai, atau bila pengguna menutupnya (disimpan per pengguna dan akun di tabel `onboarding_dismissed`).
+
 ## Variasi Pesan
 
 Setiap akun dapat menyimpan hingga 20 variasi pesan (maks. 500 karakter) di Akun & Jadwal. Urutan pemilihan: pesan khusus pada jadwal (jika diisi) menimpa; selain itu satu variasi dipilih per kontak per hari secara deterministik dari akun, kontak, dan tanggal, jadi percobaan ulang mengirim teks yang sama; tanpa variasi dipakai pesan default di Pengaturan. Placeholder `{nama}` diganti nama kontak dan `{hari}` menjadi streak kontak + 1. Sakelar **Emoji Acak** menambahkan satu emoji dari 🔥✨💫⚡🌟. Pesan yang sudah ada tidak berubah.

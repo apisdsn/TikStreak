@@ -756,6 +756,37 @@ def history(account: str = Query("all"), page: int = Query(1, ge=1), page_size: 
     return {"items": [{**run_view(r), "logs": r.get("logs", [])} for r in items], "total": total, "page": page, "page_size": page_size}
 
 
+ONBOARDING_STEPS = ("cookie", "contacts", "schedule", "notify", "test")
+
+
+def _onboarding(acc, user):
+    """Daftar langkah awal untuk akun aktif; sembunyi bila semua selesai atau ditutup pengguna."""
+    st = stores(acc["id"])
+    meta = st.meta.read()
+    from .auth import user_notify
+    n = user_notify(user)
+    done = {
+        "cookie": bool(st.cookies.read()) and not meta.get("invalid"),
+        "contacts": bool(st.contacts.read()),
+        "schedule": any(s["enabled"] for s in acc["schedules"]),
+        "notify": bool((n.get("discord_enabled") and n.get("discord_webhook")) or (n.get("telegram_enabled") and n.get("telegram_token") and n.get("telegram_chat_id"))),
+        "test": bool(db.q1("SELECT 1 FROM runs WHERE account_id=? AND mode='test' AND status='success' LIMIT 1", (acc["id"],))),
+    }
+    dismissed = bool(db.q1("SELECT 1 FROM onboarding_dismissed WHERE user_id=? AND account_id=?", (user["id"], acc["id"])))
+    count = sum(done.values())
+    return {"steps": [{"key": k, "done": done[k]} for k in ONBOARDING_STEPS], "done": count, "total": len(ONBOARDING_STEPS),
+            "dismissed": dismissed, "visible": not dismissed and count < len(ONBOARDING_STEPS)}
+
+
+@app.post("/api/onboarding/dismiss")
+def onboarding_dismiss(acc=Depends(acct), user=Depends(current_user)):
+    if user.get("synthetic"):
+        raise HTTPException(400, "Tidak Tersedia untuk Akses Kunci API")
+    db.x("INSERT OR IGNORE INTO onboarding_dismissed(user_id, account_id, dismissed_at) VALUES(?,?,?)",
+         (user["id"], acc["id"], datetime.now().isoformat(timespec="seconds")))
+    return _onboarding(acc, user)
+
+
 @app.get("/api/dashboard")
 def dashboard(acc=Depends(acct), user=Depends(current_user)):
     """Statistik dashboard lewat query terarah (bukan dari daftar riwayat berhalaman)."""
@@ -766,6 +797,7 @@ def dashboard(acc=Depends(acct), user=Depends(current_user)):
         "runs_today": [run_view(r) for r in runs_since(acc["id"], d + "T00:00:00")],
         "send_days": send_days(acc["id"], (today - timedelta(days=400)).isoformat()),
         "week": day_stats(acc["id"], (today - timedelta(days=6)).isoformat()),
+        "onboarding": _onboarding(acc, user),
         "needs_check": [{"name": r["name"], "error": r["last_error"]} for r in _contact_rows(acc) if r["today"] == "failed"],
     }
 

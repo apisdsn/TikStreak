@@ -110,6 +110,15 @@
           <span class="pill" id="queuePill"></span>
         </div>
 
+        <div class="group onboarding hidden" id="onboarding">
+          <div class="onb-head">
+            <svg class="onb-ring" id="onbRing" viewBox="0 0 80 80" role="img" aria-label=""><circle cx="40" cy="40" r="35" fill="none" class="ring-bg" stroke-width="8"/><circle id="onbRingFg" cx="40" cy="40" r="35" fill="none" class="ring-fg blue" stroke-width="8" stroke-linecap="round" stroke-dasharray="220" stroke-dashoffset="220" transform="rotate(-90 40 40)"/><text id="onbRingText" x="40" y="46" text-anchor="middle" class="ring-text onb-ring-text"></text></svg>
+            <div class="grow"><h2 data-i18n="onbTitle"></h2><p class="muted small-text" id="onbSub"></p></div>
+            <button id="onbDismiss" class="icon-btn onb-x" type="button" data-i18n-aria="onbDismiss" data-i18n-title="onbDismiss"><svg aria-hidden="true"><use href="#i-x"/></svg></button>
+          </div>
+          <ul id="onbList" class="onb-list"></ul>
+        </div>
+
         <div class="widgets">
           <!-- Next schedule (2x2) -->
           <article class="widget w-2x2" id="wNext">

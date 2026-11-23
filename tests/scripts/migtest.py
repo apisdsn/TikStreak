@@ -53,7 +53,7 @@ def run(d):
     return json.loads(p.stdout.strip().splitlines()[-1])
 # A
 NA=len(json.load(open(A+"/history.json")))
-a=run(A); ck(a["accounts"]==2 and a["runs"]==NA and a["ver"]==3,"A: pre-auth dir migrated "+str({k:a[k] for k in('accounts','runs')}))
+a=run(A); ck(a["accounts"]==2 and a["runs"]==NA and a["ver"]==len(__import__("app.db",fromlist=["MIGRATIONS"]).MIGRATIONS),"A: pre-auth dir migrated "+str({k:a[k] for k in('accounts','runs')}))
 ck(a["contacts"]["main"]==json.load(open(A+"/backup-json-"+[f for f in os.listdir(A) if f.startswith("backup-json")][0].split("backup-json-")[1]+"/accounts/main/contacts.json")),"A: contacts preserved")
 ck(not os.path.exists(A+"/accounts.json") and not os.path.exists(A+"/history.json") and any(f.startswith("backup-json-") for f in os.listdir(A)),"A: json moved to backup folder")
 ck(os.path.isdir(A+"/proofs") and os.path.exists(A+"/last_run.jpg"),"A: proofs/screenshot stay in place")

@@ -44,6 +44,9 @@
       saved: "(Tersimpan)", ready: "Siap", busyAcct: "Berjalan: {name}", busy: "Berjalan",
       st_running: "Berjalan", st_success: "Berhasil", st_partial: "Sebagian", st_failed: "Gagal", st_cancelled: "Dihentikan",
       st_missed: "Terlewat", st_pending: "Menunggu",
+      onbTitle: "Mulai dengan Bara", onbSub: "{n} dari {total} Langkah Selesai", onbDismiss: "Sembunyikan Panduan", onbGo: "Buka", onbRun: "Uji Sekarang",
+      onb_cookie: "Hubungkan TikTok", onb_contacts: "Tambah Kontak", onb_schedule: "Buat Jadwal", onb_notify: "Atur Notifikasi", onb_test: "Coba Uji Tanpa Kirim",
+      onbRingAria: "{n} dari {total} Langkah Selesai",
       variations: "Variasi Pesan", variationsHint: "Satu Variasi Dipilih untuk Setiap Kontak per Hari. Pesan Khusus pada Jadwal, Jika Diisi, Selalu Dipakai. Gunakan {nama} untuk Nama Kontak dan {hari} untuk Hari ke-Berapa.",
       variationPh: "Tulis Variasi Pesan (Maks. 500 Karakter)", addVariation: "Tambah Variasi", delVariation: "Hapus Variasi", randomEmoji: "Emoji Acak", saveVariations: "Simpan Variasi",
       previewLbl: "Pratinjau", previewSample: "Contoh: Rina, Hari ke-128", noVariations: "Belum Ada Variasi, Pesan Default Dipakai", maxVariations: "Maksimal 20 Variasi",
@@ -218,6 +221,9 @@
       saved: "(Saved)", ready: "Ready", busyAcct: "Running: {name}", busy: "Running",
       st_running: "Running", st_success: "Success", st_partial: "Partial", st_failed: "Failed", st_cancelled: "Stopped",
       st_missed: "Missed", st_pending: "Pending",
+      onbTitle: "Get Started with Bara", onbSub: "{n} of {total} Steps Done", onbDismiss: "Hide Guide", onbGo: "Open", onbRun: "Test Now",
+      onb_cookie: "Connect TikTok", onb_contacts: "Add Contacts", onb_schedule: "Create a Schedule", onb_notify: "Set Up Notifications", onb_test: "Try a Dry Run",
+      onbRingAria: "{n} of {total} Steps Done",
       variations: "Message Variations", variationsHint: "One Variation Is Picked for Each Contact per Day. A Schedule's Own Message, if Set, Always Wins. Use {nama} for the Contact Name and {hari} for the Day Number.",
       variationPh: "Write a Message Variation (Max. 500 Characters)", addVariation: "Add Variation", delVariation: "Delete Variation", randomEmoji: "Random Emoji", saveVariations: "Save Variations",
       previewLbl: "Preview", previewSample: "Sample: Rina, Day 128", noVariations: "No Variations Yet, the Default Message Is Used", maxVariations: "Up to 20 Variations",
@@ -1111,8 +1117,41 @@
     renderTodayList(a, todaySlots);
     renderCookieBanner(a.cookies);
     renderNeedsCheck();
+    renderOnboarding();
     renderHistory();
   }
+
+  // kartu "Mulai dengan Bara": lima langkah awal, hilang sendiri bila selesai atau ditutup (disimpan per pengguna dan akun)
+  const ONB_ACTIONS = {
+    cookie: () => showTab("cookies"),
+    contacts: () => showTab("contacts"),
+    schedule: () => showTab("accounts"),
+    notify: () => { showTab("settings"); $("myNotifForm").scrollIntoView({ block: "center" }); $("myDcEnabled").focus(); },
+    test: () => startRun("test"),
+  };
+  function renderOnboarding() {
+    const box = $("onboarding");
+    const o = dash && dash.onboarding;
+    box.classList.toggle("hidden", !(o && o.visible));
+    if (!o || !o.visible) return;
+    const frac = o.done / o.total;
+    setText("onbSub", t("onbSub", { n: o.done, total: o.total }));
+    setText("onbRingText", `${o.done}/${o.total}`);
+    $("onbRingFg").setAttribute("stroke-dashoffset", String(220 * (1 - frac)));
+    $("onbRing").setAttribute("aria-label", t("onbRingAria", { n: o.done, total: o.total }));
+    const list = $("onbList");
+    list.replaceChildren();
+    const firstOpen = o.steps.find((s) => !s.done);
+    o.steps.forEach((s) => {
+      const mark = el("span", { className: "onb-check" + (s.done ? " on" : "") }, s.done ? [icon("i-check")] : []);
+      const b = el("button", { type: "button", className: "btn small " + (firstOpen === s ? "primary" : "tinted"), textContent: t(s.key === "test" ? "onbRun" : "onbGo") });
+      b.addEventListener("click", () => ONB_ACTIONS[s.key]());
+      list.append(el("li", { className: "onb-step" + (s.done ? " done" : "") }, [mark, el("span", { className: "grow", textContent: t("onb_" + s.key) }), ...(s.done ? [] : [b])]));
+    });
+  }
+  $("onbDismiss").addEventListener("click", async () => {
+    try { await apiA("/onboarding/dismiss", { method: "POST" }); await loadDash(); renderDashboard(true); } catch (e) { toast(e.message); }
+  });
 
   // kartu "Perlu Dicek": kontak yang gagal hari ini beserta alasannya, dengan kirim ulang untuk satu kontak
   function renderNeedsCheck() {

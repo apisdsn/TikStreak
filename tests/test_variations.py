@@ -138,4 +138,4 @@ def test_migration_6_keeps_accounts_and_messages():
     """)
     p = subprocess.run([sys.executable, "-c", code], env={**os.environ, "DATA_DIR": tmp, "API_KEY": "k"}, capture_output=True, text=True, cwd=ROOT)
     assert p.returncode == 0, p.stderr[-1200:]
-    assert json.loads(p.stdout.strip().splitlines()[-1]) == ["Lama", "Pesan Lama", [], False, "Default Lama", 6]
+    assert json.loads(p.stdout.strip().splitlines()[-1]) [:5] == ["Lama", "Pesan Lama", [], False, "Default Lama"]

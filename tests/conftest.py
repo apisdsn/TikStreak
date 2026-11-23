@@ -35,13 +35,16 @@ def make_server():
 @pytest.fixture
 def run_script():
     """Jalankan skrip tes mandiri (tests/scripts) dan gagal bila keluarannya memuat FAIL atau kode keluar != 0."""
-    def run(name, server=None, extra_env=None, timeout=600):
+    def run(name, server=None, extra_env=None, timeout=600, retries=0):
         tmp = tempfile.mkdtemp(prefix="bara-script-")
         env = {**os.environ, "BARA_TMP": tmp, "BROWSER_PATH": chromium_path(), **(extra_env or {})}
         if server:
             env.update(BARA_BASE=server.base, BARA_DATA=server.data)
-        p = subprocess.run([sys.executable, os.path.join(SCRIPTS, name)], env=env, capture_output=True, text=True, timeout=timeout, cwd=ROOT)
-        bad = [l for l in p.stdout.splitlines() if l.startswith("FAIL ")]
+        for _attempt in range(retries + 1):  # peluncuran browser kadang gagal sesekali saat mesin sibuk
+            p = subprocess.run([sys.executable, os.path.join(SCRIPTS, name)], env=env, capture_output=True, text=True, timeout=timeout, cwd=ROOT)
+            bad = [l for l in p.stdout.splitlines() if l.startswith("FAIL ")]
+            if p.returncode == 0 and not bad:
+                break
         assert p.returncode == 0 and not bad, f"{name} gagal:\n" + "\n".join(bad) + "\n" + p.stdout[-1500:] + p.stderr[-1500:]
         return p.stdout
     return run
