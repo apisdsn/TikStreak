@@ -187,18 +187,25 @@ if (/^https?:\/\//i.test(docsUrl)) { docs.href = docsUrl; docs.classList.remove(
 
 // scroll halus ke bagian halaman (menghormati prefers-reduced-motion)
 const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)");
-document.querySelectorAll('a[href^="#"]').forEach((a) => a.addEventListener("click", (e) => {
-  const id = a.getAttribute("href").slice(1);
+// ID bagian halaman sama di semua bahasa; tautan lama (bahasa Indonesia) dipetakan ke ID baru
+const OLD_HASH = { fitur: "features", cara: "how-it-works", aman: "security" };
+function goTo(id, smooth) {
+  id = OLD_HASH[id] || id;
   const target = id && $(id);
-  if (!target) return;
-  e.preventDefault();
-  target.scrollIntoView({ behavior: reduce && reduce.matches ? "auto" : "smooth", block: "start" });
-  history.replaceState(null, "", "#" + id);
+  if (!target) return false;
+  target.scrollIntoView({ behavior: smooth && !(reduce && reduce.matches) ? "smooth" : "auto", block: "start" });
+  if (location.hash !== "#" + id) history.replaceState(null, "", "#" + id);
   if (!target.hasAttribute("tabindex")) target.setAttribute("tabindex", "-1");
   target.focus({ preventScroll: true });
+  return true;
+}
+document.querySelectorAll('a[href^="#"]').forEach((a) => a.addEventListener("click", (e) => {
+  if (goTo(a.getAttribute("href").slice(1), true)) e.preventDefault();
 }));
+window.addEventListener("hashchange", () => { goTo(location.hash.slice(1), true); });
 
 applyTheme();
 applyText();
+if (location.hash.length > 1) goTo(location.hash.slice(1), false);
 window.__landingReady = true;
 })();
