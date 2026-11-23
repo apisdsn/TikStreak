@@ -140,6 +140,29 @@ Panduan RAM (hanya Bara, tanpa aplikasi lain):
 
 Hitungan kasar: satu kirim ke 4 kontak sekitar 2 menit, jadi **satu worker menangani sekitar 27 akun per jam**. Sebarkan jam jadwal; UI memberi petunjuk bila slot 30 menit sudah ramai. Pengukuran memori satu browser dengan satu tab (PSS): Chromium penuh sekitar 360 MB, `chrome-headless-shell` sekitar 90 MB.
 
+## Pakai Image Jadi (GHCR)
+
+Setiap push ke `main` yang lulus tes membangun image Docker dan mengirimnya ke GitHub Container Registry sebagai `ghcr.io/<pemilik>/<repo>` (huruf kecil) dengan tag `latest` dan SHA singkat commit. Untuk memakainya tanpa build di server:
+
+```bash
+# .env
+BARA_IMAGE=ghcr.io/<pemilik>/<repo>:latest
+
+docker compose pull
+docker compose up -d
+```
+
+Tanpa `BARA_IMAGE`, `docker compose up -d --build` tetap membangun image lokal bernama `tikstreak-bara`.
+
+Paket GHCR bersifat **privat secara default**. Pilih salah satu:
+
+- buka halaman paket di GitHub (Packages) lalu ubah visibilitas menjadi Public di *Package settings*; atau
+- di server jalankan `docker login ghcr.io` memakai username GitHub dan Personal Access Token dengan izin `read:packages`.
+
+## Pengujian
+
+`make install-test` memasang dependensi tes dan Chromium, `make test-api` menjalankan pytest, `make test-ui` menjalankan tes UI Playwright (Node), dan `make test` menjalankan keduanya. CI GitHub Actions menjalankan hal yang sama pada setiap push dan pull request.
+
 ## Landing Page
 
 Pengunjung yang belum login melihat halaman depan Bara (fitur, cara kerja, keamanan, FAQ) di `/`. Tombol **Masuk** membuka `/login`. Setelah login, `/` langsung menampilkan panel. Sebelum admin pertama dibuat, `/` mengarahkan ke `/login` agar pengaturan awal tetap berjalan. Halaman memakai pilihan bahasa dan tema yang sama dengan panel.

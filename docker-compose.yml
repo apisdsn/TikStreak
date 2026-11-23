@@ -1,6 +1,7 @@
 services:
   bara:
     build: .
+    image: ${BARA_IMAGE:-tikstreak-bara}
     container_name: bara
     restart: unless-stopped
     ports:
