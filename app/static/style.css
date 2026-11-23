@@ -722,6 +722,19 @@ details.group label { margin-top: 4px; }
   .pager-ctl { justify-content: center; }
 }
 
+/* impor kontak dari TikTok */
+.import-sheet { max-width: 480px; }
+.overlay.center .import-sheet { max-width: 480px; }
+.import-list { max-height: 44vh; overflow: auto; }
+.import-list li { gap: 12px; cursor: pointer; }
+.import-list li.dis { opacity: .55; cursor: default; }
+.import-list .title { font-weight: 600; }
+.import-list .sub { color: var(--muted); font-size: 13px; }
+.import-list input[type=checkbox] { width: 22px; height: 22px; flex: none; accent-color: var(--blue); }
+.import-all { padding: 4px 4px; font-size: 14px; color: var(--muted); }
+.import-all span:first-child { color: var(--text); font-weight: 600; }
+.badge.neutral.sm { font-size: 11px; padding: 3px 8px; }
+
 /* antrean */
 .queue-box { display: flex; flex-direction: column; gap: 6px; margin: 8px 0; }
 .qrow { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 12px; background: var(--group2); font-size: 14px; font-weight: 600; }

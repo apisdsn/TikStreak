@@ -174,6 +174,10 @@ Pengunjung yang belum login melihat halaman depan Bara (fitur, cara kerja, keama
 
 HTML dikirim dengan `Cache-Control: private, no-cache` dan `Vary: Cookie`, jadi aman di belakang Cloudflare.
 
+## Impor Kontak dari TikTok
+
+Di tab Kontak, **Impor dari TikTok** memasukkan pemindaian daftar chat ke antrean browser (jenis job `scan_contacts`, prioritas seperti kirim manual). Bara membuka halaman pesan dengan cookie akun, menggulir daftar percakapan dan mengumpulkan nama, ID percakapan, dan jam pesan terakhir (maksimal `SCAN_MAX`, default 200). Hasilnya tampil di sheet dengan kotak centang dan pencarian; kontak yang sudah ada ditandai "Sudah Ada". Kontak yang dipilih ditambahkan bersama ID percakapannya sehingga kiriman memakai percakapan yang tepat. Hasil pindai hanya bisa dilihat pemilik akun, tidak masuk riwayat atau notifikasi, dan dihapus setelah 1 jam.
+
 ## Peringatan Kesehatan
 
 - **Belum ada pesan terkirim:** akun dengan jadwal aktif dan cookie yang belum punya kiriman sukses selama 24 jam membuat pemiliknya diberi tahu, paling sering sekali sehari.

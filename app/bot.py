@@ -451,6 +451,44 @@ class StreakBot:
                 continue
         return [n for n in dict.fromkeys(names) if n][:15]
 
+    def scan_contacts(self, limit=200):
+        """Kumpulkan percakapan dari daftar chat (menggulir daftar virtual). Return [{id, nick, time}] maksimal limit."""
+        found = {}
+
+        def collect():
+            for i in self._scan():
+                if i.get("id") and i.get("nick") and i["id"] not in found:
+                    found[i["id"]] = {"id": i["id"], "nick": i["nick"], "time": i.get("time") or ""}
+
+        try:
+            self._create_browser()
+            self._load_cookies()
+            self._verify_login()
+            self._sleep(self.s["element_wait"] + 2)
+            self._scroll_list("top")
+            self._sleep(0.3)
+            for _ in range(400):
+                self._check_cancel()
+                collect()
+                if len(found) >= limit:
+                    break
+                r = self._scroll_list("down")
+                if not r or r.get("atEnd") or not r.get("moved"):
+                    self._sleep(0.3)
+                    collect()
+                    break
+                self._sleep(0.3)
+        finally:
+            if self.page:
+                try:
+                    if self.provider:
+                        self.provider.release(self.page)
+                    else:
+                        self.page.quit()
+                except Exception:  # noqa: BLE001
+                    pass
+        return list(found.values())[:limit]
+
     def _send_to(self, name):
         """Kirim ke satu kontak. Return dict bukti (chat, bubble, count, list_time, renamed_to)."""
         conv_id = self.convs.read().get(name.strip().lower()) if self.convs else None

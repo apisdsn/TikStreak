@@ -44,6 +44,10 @@
       saved: "(Tersimpan)", ready: "Siap", busyAcct: "Berjalan: {name}", busy: "Berjalan",
       st_running: "Berjalan", st_success: "Berhasil", st_partial: "Sebagian", st_failed: "Gagal", st_cancelled: "Dihentikan",
       st_missed: "Terlewat", st_pending: "Menunggu",
+      importTikTok: "Impor dari TikTok", scanning: "Memindai Daftar Chat", importTitle: "Impor Kontak dari TikTok", importFound: "{n} Percakapan Ditemukan",
+      importHint: "Hanya Anda yang Bisa Melihat Hasil Ini. Dihapus Otomatis Setelah 1 Jam.", importSearchPh: "Cari Nama", selectAll: "Pilih Semua",
+      alreadyAdded: "Sudah Ada", lastMsgAt: "Pesan Terakhir {time}", addSelected: "Tambahkan {n} Kontak", importEmpty: "Tidak Ada Percakapan Ditemukan",
+      importNoMatch: "Tidak Ada Nama yang Cocok", scanFailed: "Pemindaian Gagal", toastImported: "{n} Kontak Ditambahkan",
       st_expired: "Terlewat", queued: "Dalam Antrean", queuePos: "Posisi {n}", queueEta: "Perkiraan {time}", runningState: "Sedang Berjalan",
       cancelJob: "Batalkan", toastJobCancelled: "Antrean Dibatalkan", queueLoad: "{n} Dalam Antrean",
       showing: "Menampilkan {a}–{b} dari {n}", showingNone: "Tidak Ada Data", fAll: "Semua", fSend: "Kirim", fCheck: "Cek Cookie", statusAll: "Semua Status",
@@ -204,6 +208,10 @@
       saved: "(Saved)", ready: "Ready", busyAcct: "Running: {name}", busy: "Running",
       st_running: "Running", st_success: "Success", st_partial: "Partial", st_failed: "Failed", st_cancelled: "Stopped",
       st_missed: "Missed", st_pending: "Pending",
+      importTikTok: "Import from TikTok", scanning: "Scanning Chat List", importTitle: "Import Contacts from TikTok", importFound: "{n} Chats Found",
+      importHint: "Only You Can See These Results. Deleted Automatically After 1 Hour.", importSearchPh: "Search by Name", selectAll: "Select All",
+      alreadyAdded: "Already Added", lastMsgAt: "Last Message {time}", addSelected: "Add {n} Contacts", importEmpty: "No Chats Found",
+      importNoMatch: "No Matching Names", scanFailed: "Scan Failed", toastImported: "{n} Contacts Added",
       st_expired: "Missed", queued: "Queued", queuePos: "Position {n}", queueEta: "Estimated {time}", runningState: "In Progress",
       cancelJob: "Cancel", toastJobCancelled: "Job Cancelled", queueLoad: "{n} Queued",
       showing: "Showing {a}–{b} of {n}", showingNone: "No Data", fAll: "All", fSend: "Send", fCheck: "Check Cookie", statusAll: "All Statuses",
@@ -811,9 +819,9 @@
   $("pwCancel").addEventListener("click", () => closePwModal());
   $("pwModal").addEventListener("mousedown", (e) => { if (e.target === $("pwModal")) closePwModal(); });
   document.addEventListener("keydown", (e) => {
-    const modal = [$("pwModal"), $("setSheet")].find((m) => !m.classList.contains("hidden"));
+    const modal = [$("pwModal"), $("setSheet"), $("importSheet")].find((m) => !m.classList.contains("hidden"));
     if (!modal) return;
-    if (e.key === "Escape") { e.preventDefault(); if (modal === $("pwModal")) closePwModal(); else closeSetSheet(); }
+    if (e.key === "Escape") { e.preventDefault(); if (modal === $("pwModal")) closePwModal(); else if (modal === $("importSheet")) closeImportSheet(); else closeSetSheet(); }
     else if (e.key === "Tab") {
       const f = [...modal.querySelectorAll("button:not([disabled]), input")].filter((x) => x.offsetParent !== null);
       const first = f[0], last = f[f.length - 1];
@@ -1231,6 +1239,7 @@
       if (syncAccounts(s.accounts)) { await switchAccount(currentId); return; }
       renderDashboard();
       renderQueue();
+      checkScanDone();
 
       if (cur.run) {
         if (cur.run.id !== lastRunId) {
@@ -1290,9 +1299,11 @@
 
   // ---- antrean: job milik pengguna untuk akun terpilih (dasbor = kirim/uji, tab cookie = cek)
   let queueSig = "";
-  const myJobs = (check) => ((st && st.queue && st.queue.mine) || []).filter((j) => j.account_id === currentId && (j.kind === "check") === check);
+  const jobsOf = (pred) => ((st && st.queue && st.queue.mine) || []).filter((j) => j.account_id === currentId && pred(j));
+  const myJobs = (check) => jobsOf((j) => j.kind !== "scan_contacts" && (j.kind === "check") === check);
+  const scanJobs = () => jobsOf((j) => j.kind === "scan_contacts");
   function queueLine(j) {
-    if (j.state === "running") return t("runningState");
+    if (j.state === "running") return t(j.kind === "scan_contacts" ? "scanning" : "runningState");
     const parts = [t("queued"), t("queuePos", { n: j.position })];
     if (j.eta) parts.push(t("queueEta", { time: j.eta }));
     return parts.join(" · ");
@@ -1322,6 +1333,8 @@
     const dj = myJobs(false), cj = myJobs(true);
     fillQueueBox($("queueBox"), dj);
     fillQueueBox($("cookieQueue"), cj);
+    fillQueueBox($("scanQueue"), scanJobs());
+    $("btnImport").disabled = scanJobs().length > 0;
     const busy = dj.length > 0;
     $("btnSend").disabled = $("btnTest").disabled = busy;
     $("btnStop").classList.toggle("hidden", !dj.some((j) => j.state === "running"));
@@ -1653,6 +1666,93 @@
     dashSig = "";
     renderDashboard();
   }
+  // ---- impor kontak dari daftar chat TikTok
+  let scanWaiting = false, importItems = [];
+  async function checkScanDone() {
+    if (!scanWaiting || scanJobs().length) return;
+    scanWaiting = false;
+    try {
+      const r = await apiA("/contacts/scan");
+      if (r.state === "failed") toast(r.error || t("scanFailed"));
+      else if (r.state === "done") openImportSheet(r.items);
+    } catch (e) { toast(e.message); }
+  }
+  $("btnImport").addEventListener("click", async () => {
+    $("contactsErr").textContent = "";
+    try {
+      await apiA("/contacts/scan", { method: "POST" });
+      scanWaiting = true;
+      await refresh();
+    } catch (e) { $("contactsErr").textContent = e.message; }
+  });
+  let importTrigger = null;
+  function importSelected() { return [...$("importList").querySelectorAll("input:checked:not(:disabled)")].map((c) => c.dataset.id); }
+  function renderImportList() {
+    const q = $("importSearch").value.trim().toLowerCase();
+    const ul = $("importList");
+    ul.replaceChildren();
+    const rows = importItems.filter((i) => !q || i.nick.toLowerCase().includes(q));
+    if (!rows.length) ul.append(el("li", { className: "muted", textContent: t(importItems.length ? "importNoMatch" : "importEmpty") }));
+    rows.forEach((i) => {
+      const cb = el("input", { type: "checkbox", disabled: i.exists, "aria-label": i.nick });
+      cb.dataset.id = i.id;
+      cb.checked = !i.exists && importChecked.has(i.id);
+      cb.addEventListener("change", () => { if (cb.checked) importChecked.add(i.id); else importChecked.delete(i.id); syncImport(); });
+      const li = el("li", { className: i.exists ? "dis" : "" }, [cb, el("div", { className: "grow" }, [el("div", { className: "title", textContent: i.nick }),
+        el("div", { className: "sub", textContent: i.time ? t("lastMsgAt", { time: i.time }) : "" })])]);
+      if (i.exists) li.append(el("span", { className: "badge neutral sm", textContent: t("alreadyAdded") }));
+      else li.addEventListener("click", (e) => { if (e.target !== cb) { cb.checked = !cb.checked; cb.dispatchEvent(new Event("change")); } });
+      ul.append(li);
+    });
+    syncImport();
+  }
+  let importChecked = new Set();
+  function syncImport() {
+    const sel = importSelected().length;
+    setText("importAdd", t("addSelected", { n: sel }));
+    $("importAdd").disabled = !sel;
+    const selectable = [...$("importList").querySelectorAll("input:not(:disabled)")];
+    $("importAll").checked = selectable.length > 0 && selectable.every((c) => c.checked);
+    setText("importFound", t("importFound", { n: importItems.length }));
+  }
+  function openImportSheet(items) {
+    importItems = items;
+    importChecked = new Set();
+    importTrigger = document.activeElement && document.activeElement !== document.body ? document.activeElement : $("btnImport");
+    $("importSearch").value = "";
+    $("importErr").textContent = "";
+    renderImportList();
+    $("importSheet").classList.remove("hidden");
+    document.body.style.overflow = "hidden";
+    $("importSearch").focus();
+  }
+  function closeImportSheet() {
+    if ($("importSheet").classList.contains("hidden")) return;
+    $("importSheet").classList.add("hidden");
+    document.body.style.overflow = "";
+    if (importTrigger) importTrigger.focus();
+  }
+  $("importSearch").addEventListener("input", renderImportList);
+  $("importAll").addEventListener("change", (e) => {
+    $("importList").querySelectorAll("input:not(:disabled)").forEach((c) => { c.checked = e.target.checked; if (c.checked) importChecked.add(c.dataset.id); else importChecked.delete(c.dataset.id); });
+    syncImport();
+  });
+  $("importCancel").addEventListener("click", closeImportSheet);
+  $("importSheet").addEventListener("mousedown", (e) => { if (e.target === $("importSheet")) closeImportSheet(); });
+  $("importForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const ids = [...importChecked];
+    if (!ids.length) return;
+    $("importAdd").disabled = true;
+    try {
+      const r = await apiA("/contacts/import", { method: "POST", body: { ids } });
+      closeImportSheet();
+      renderContacts(r.contacts);
+      await refresh();
+      toast(t("toastImported", { n: r.added.length }));
+    } catch (ex) { $("importErr").textContent = ex.message; syncImport(); }
+  });
+
   $("btnAddContacts").addEventListener("click", async () => {
     $("contactsErr").textContent = "";
     try {

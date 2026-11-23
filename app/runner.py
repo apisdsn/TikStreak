@@ -24,6 +24,7 @@ from .store import (
     list_accounts,
     new_run_id,
     rename_contact,
+    scan_prune,
     stores,
 )
 
@@ -31,8 +32,8 @@ log = logging.getLogger("bara")
 MAX_LOG_LINES = 500
 PROOFS_DIR = os.path.join(DATA_DIR, "proofs")
 CATCHUP_SECONDS = 3 * 3600
-ALERT_COOLDOWN = 6 * 3600  # jeda minimal antar alert cookie dari cek otomatis
 BREAKAGE_COOLDOWN = 6 * 3600  # jeda alert tampilan TikTok berubah
+ALERT_COOLDOWN = 6 * 3600  # jeda minimal antar alert cookie dari cek otomatis
 KEEPALIVE_GUARD = 600      # keepalive tidak mulai bila jadwal kirim jatuh tempo dalam 10 menit
 
 
@@ -49,6 +50,7 @@ def _tz(settings):
 
 class Runner:
     def __init__(self):
+        self.scan_executor = None     # tes dapat mengganti pemindai kontak: fn(job, cancel, get_provider) -> daftar item
         self.executor = None          # default: _execute_core; tes dapat menggantinya dengan fungsi palsu
         self._runs = {}               # id run -> (run, cancel_event, job) untuk job yang sedang berjalan
         self._lock = threading.RLock()
@@ -60,10 +62,10 @@ class Runner:
         self.workers = config.BROWSER_WORKERS
         self.jitter = (config.QUEUE_JITTER_MIN, config.QUEUE_JITTER_MAX)
         self.started = False
-
-    # ------------------------------------------------------------ siklus hidup
         self.scheduler_on = False
         self.last_tick = time.time()
+
+    # ------------------------------------------------------------ siklus hidup
     def start_workers(self, workers=None, scheduler=True):
         if self.started:
             return
@@ -80,10 +82,10 @@ class Runner:
             t.start()
             self._threads.append(t)
         if scheduler:
-            t = threading.Thread(target=self.scheduler_loop, daemon=True, name="bara-scheduler")
-            t.start()
             self.scheduler_on = True
             self.last_tick = time.time()
+            t = threading.Thread(target=self.scheduler_loop, daemon=True, name="bara-scheduler")
+            t.start()
             self._threads.append(t)
 
     def shutdown(self):
@@ -225,11 +227,46 @@ class Runner:
                 del run["logs"][: len(run["logs"]) - MAX_LOG_LINES]
         return log_line
 
+    def _run_scan(self, job, idx):
+        """Pindai daftar chat TikTok untuk impor kontak. Hasil hanya disimpan sementara (1 jam) dan tidak masuk riwayat atau notifikasi."""
+        from . import store
+        aid = job["account_id"]
+        cancel = threading.Event()
+        try:
+            fn = self.scan_executor or self._scan_core
+            items = fn(job, cancel, lambda: self._provider(idx))
+            store.scan_set(aid, items)
+            jobs.finish(job["id"], "done")
+        except Cancelled:
+            jobs.finish(job["id"], "cancelled")
+        except Exception as e:  # noqa: BLE001
+            if isinstance(e, CookieInvalid):
+                meta_store = stores(aid).meta
+                meta = meta_store.read()
+                meta["invalid"] = str(e)
+                meta_store.write(meta)
+            store.scan_set(aid, [], str(e))
+            jobs.finish(job["id"], "failed", reason=str(e))
+
+    def _scan_core(self, job, cancel, get_provider):
+        settings = get_settings()
+        st = stores(job["account_id"])
+        bot = StreakBot(settings, lambda *a, **k: None, cancel, st.cookies, check_only=True, account_id=job["account_id"], provider=get_provider())
+        items = bot.scan_contacts(config.SCAN_MAX)
+        if bot.logged_in:
+            meta = st.meta.read()
+            meta["last_ok"] = datetime.now().isoformat(timespec="seconds")
+            meta.pop("invalid", None)
+            st.meta.write(meta)
+        return items
+
     def _run_job(self, job, idx=0):
         acc = get_account(job["account_id"])
         if not acc:
             jobs.finish(job["id"], "cancelled", reason="Akun Dihapus")
             return
+        if job["kind"] == "scan_contacts":
+            return self._run_scan(job, idx)
         run = {
             "id": new_run_id(), "account": {"id": acc["id"], "name": acc["name"]}, "owner_id": acc.get("owner_id"),
             "mode": job["kind"], "trigger": job["trigger"], "by": job.get("by") if job["trigger"] == "manual" else "system",
@@ -254,6 +291,7 @@ class Runner:
             run["finished_at"] = datetime.now().isoformat(timespec="seconds")
             self._save_history(run)
             self._notify(get_settings(), run)
+            self._after_run(get_settings(), run)
         finally:
             with self._lock:
                 self._runs.pop(run["id"], None)
@@ -291,7 +329,6 @@ class Runner:
             log_line("Dihentikan Oleh Pengguna", "warning")
         except CookieInvalid as e:
             run["status"] = "failed"
-            self._after_run(get_settings(), run)
             run["error"] = str(e)
             run["cookie_invalid"] = True
             log_line(f"Gagal: {e}", "error")
@@ -442,6 +479,8 @@ class Runner:
                 pass
         if ds:
             return max(5.0, sum(ds) / len(ds))
+        if kind == "scan_contacts":
+            return 60.0
         return 30.0 if kind == "check" else n_contacts * 30.0 + 20.0
 
     def _n_contacts(self, job):
@@ -593,57 +632,18 @@ class Runner:
                     self.check_midnight()
                 if n % 180 == 0:
                     jobs.prune()
+                if n % 30 == 0:
+                    scan_prune()
+                if n % 30 == 5:
+                    self.check_stalled()
+                if n % 15 == 0:
+                    self.ping()
             except Exception:  # noqa: BLE001
                 log.exception("scheduler galat")
+            self.last_tick = time.time()
             n += 1
             self._stop.wait(20)
 
-    def _fire_if_due(self, acc, sched, s):
-        """Masukkan jadwal yang jatuh tempo ke antrean satu kali, lalu tandai sudah ditembakkan."""
-        now, due = self._slot(sched, s)
-        key = due.strftime("%Y-%m-%d %H:%M")
-        late = (now - due).total_seconds()
-        meta_store = stores(acc["id"]).meta
-        meta = meta_store.read()
-        fired = meta.get("fired", {})
-        blocked = meta.get("blocked", {})
-        if sched["id"] == "s1" and "s1" not in fired and meta.get("last_schedule"):
-            fired["s1"] = meta["last_schedule"]  # catatan dari format lama
-        if fired.get(sched["id"]) == key:
-            return
-        # Masuk antrean tepat waktu; bila terlewat (restart/antrean penuh) kejar hingga 3 jam
-        if 0 <= late < CATCHUP_SECONDS:
-            try:
-                jobs.enqueue(acc["id"], acc.get("owner_id"), "send", "schedule", label=sched["time"], message=sched.get("message") or None,
-                             contacts=sched.get("contacts"), due_at=due.timestamp())
-            except jobs.Duplicate:
-                blocked[sched["id"]] = key  # sudah ada job kirim akun ini; dicoba lagi 20 detik kemudian
-                meta["blocked"] = blocked
-                meta_store.write(meta)
-                return
-            fired[sched["id"]] = key
-            meta["fired"] = fired
-            blocked.pop(sched["id"], None)
-            meta["blocked"] = blocked
-            meta_store.write(meta)
-        elif late >= CATCHUP_SECONDS and blocked.get(sched["id"]) == key:
-            # pernah mencoba masuk antrean tetapi terhalang sampai jendela habis: catat sebagai terlewat
-            fired[sched["id"]] = key
-            blocked.pop(sched["id"], None)
-            meta["fired"], meta["blocked"] = fired, blocked
-            meta_store.write(meta)
-            self._record_missed({"account_id": acc["id"], "kind": "send", "trigger": "schedule", "label": sched["time"],
-                                 "message": sched.get("message")}, "Antrean Terlalu Padat, Jendela Jadwal Sudah Lewat")
-
-    def _keepalive(self, acc, accounts, s):
-        """Cek cookie berkala agar sesi tetap aktif: masukkan job 'check' berprioritas rendah ke antrean."""
-        st = stores(acc["id"])
-        if not s["keepalive_enabled"] or not st.cookies.read():
-            return False
-            self.last_tick = time.time()
-        meta = st.meta.read()
-        if time.time() - meta.get("last_check", 0) < s["keepalive_hours"] * 3600:
-            return False
     # ------------------------------------------------------- alert kegagalan Bara sendiri
     CONTACT_ERRORS = ("Kontak Tidak Ditemukan", "Chat yang Terbuka Milik")  # masalah satu kontak, bukan tanda tampilan TikTok berubah
 
@@ -753,6 +753,51 @@ class Runner:
             log.warning("ping healthcheck gagal: %s", e)
             return False
 
+    def _fire_if_due(self, acc, sched, s):
+        """Masukkan jadwal yang jatuh tempo ke antrean satu kali, lalu tandai sudah ditembakkan."""
+        now, due = self._slot(sched, s)
+        key = due.strftime("%Y-%m-%d %H:%M")
+        late = (now - due).total_seconds()
+        meta_store = stores(acc["id"]).meta
+        meta = meta_store.read()
+        fired = meta.get("fired", {})
+        blocked = meta.get("blocked", {})
+        if sched["id"] == "s1" and "s1" not in fired and meta.get("last_schedule"):
+            fired["s1"] = meta["last_schedule"]  # catatan dari format lama
+        if fired.get(sched["id"]) == key:
+            return
+        # Masuk antrean tepat waktu; bila terlewat (restart/antrean penuh) kejar hingga 3 jam
+        if 0 <= late < CATCHUP_SECONDS:
+            try:
+                jobs.enqueue(acc["id"], acc.get("owner_id"), "send", "schedule", label=sched["time"], message=sched.get("message") or None,
+                             contacts=sched.get("contacts"), due_at=due.timestamp())
+            except jobs.Duplicate:
+                blocked[sched["id"]] = key  # sudah ada job kirim akun ini; dicoba lagi 20 detik kemudian
+                meta["blocked"] = blocked
+                meta_store.write(meta)
+                return
+            fired[sched["id"]] = key
+            meta["fired"] = fired
+            blocked.pop(sched["id"], None)
+            meta["blocked"] = blocked
+            meta_store.write(meta)
+        elif late >= CATCHUP_SECONDS and blocked.get(sched["id"]) == key:
+            # pernah mencoba masuk antrean tetapi terhalang sampai jendela habis: catat sebagai terlewat
+            fired[sched["id"]] = key
+            blocked.pop(sched["id"], None)
+            meta["fired"], meta["blocked"] = fired, blocked
+            meta_store.write(meta)
+            self._record_missed({"account_id": acc["id"], "kind": "send", "trigger": "schedule", "label": sched["time"],
+                                 "message": sched.get("message")}, "Antrean Terlalu Padat, Jendela Jadwal Sudah Lewat")
+
+    def _keepalive(self, acc, accounts, s):
+        """Cek cookie berkala agar sesi tetap aktif: masukkan job 'check' berprioritas rendah ke antrean."""
+        st = stores(acc["id"])
+        if not s["keepalive_enabled"] or not st.cookies.read():
+            return False
+        meta = st.meta.read()
+        if time.time() - meta.get("last_check", 0) < s["keepalive_hours"] * 3600:
+            return False
         try:
             jobs.enqueue(acc["id"], acc.get("owner_id"), "check", "keepalive")
         except jobs.Duplicate:

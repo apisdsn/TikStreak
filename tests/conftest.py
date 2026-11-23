@@ -13,6 +13,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "tests", "support"))
 from server import Server, chromium_path  # noqa: E402
 
+import itertools
+_counter = itertools.count(1)
 SCRIPTS = os.path.join(ROOT, "tests", "scripts")
 
 
@@ -67,3 +69,37 @@ def sent(monkeypatch, app_mods):
     monkeypatch.setattr(app_mods.R, "notify", fake)
     return out
 
+
+@pytest.fixture(scope="module")
+def client(app_mods):
+    """TestClient in-process (worker dan scheduler berjalan). Gunakan user() untuk membuat pengguna masuk."""
+    from fastapi.testclient import TestClient
+    from app.main import app
+    from app.runner import runner
+    with TestClient(app, base_url="http://localhost") as c:
+        c.runner = runner
+        runner.jitter = (0, 0)  # tanpa jeda acak antar job agar tes cepat
+
+        def fake_exec(run, job, cancel, get_provider):  # jadwal akun lain dari tes sebelumnya tidak boleh membuka browser sungguhan
+            run.update(status="success", sent=0, total=0, results=[])
+        runner.executor = fake_exec
+        yield c
+
+
+@pytest.fixture
+def user(app_mods, client):
+    """Fabrik: user('nama') -> (TestClient terpisah yang sudah login, data user)."""
+    from fastapi.testclient import TestClient
+    from app.main import app
+    made = []
+
+    def make(name, role="user"):
+        name = f"{name}{next(_counter)}"  # nama unik: DB in-process dipakai bersama antar tes
+        u = app_mods.auth.make_user(name, "password1", role)
+        app_mods.store.user_save(u)
+        c = TestClient(app, base_url="http://localhost", headers={"X-Requested-With": "bara"})
+        r = c.post("/api/auth/login", json={"username": name, "password": "password1"})
+        assert r.status_code == 200, r.text
+        made.append(c)
+        return c, u
+    return make

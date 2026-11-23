@@ -1,0 +1,25 @@
+<!doctype html><meta charset=utf-8><title>messages</title>
+<style>
+body{margin:0;font:14px sans-serif}
+#list{height:600px;overflow-y:auto;position:relative;width:360px}
+#spacer{position:relative}
+.item{position:absolute;left:0;right:0;height:72px;box-sizing:border-box;padding:12px;border-bottom:1px solid #ddd}
+</style>
+<div id=list><div id=spacer></div></div>
+<script>
+// daftar percakapan virtual: hanya baris di sekitar area terlihat yang ada di DOM (seperti TikTok)
+const N = 120, H = 72, spacer = document.getElementById('spacer'), list = document.getElementById('list');
+spacer.style.height = (N * H) + 'px';
+function render() {
+  const first = Math.max(0, Math.floor(list.scrollTop / H) - 2), last = Math.min(N - 1, Math.ceil((list.scrollTop + list.clientHeight) / H) + 2);
+  spacer.replaceChildren();
+  for (let i = first; i <= last; i++) {
+    const d = document.createElement('div');
+    d.className = 'item'; d.style.top = (i * H) + 'px';
+    d.setAttribute('data-e2e', 'dm-new-conversation-item'); d.setAttribute('data-conv-id', 'conv' + i);
+    d.innerHTML = '<p data-e2e="dm-new-conversation-nickname">Teman ' + i + '</p><span class="SpanInfoTime-abc">' + String(7 + (i % 12)).padStart(2, '0') + ':' + String(i % 60).padStart(2, '0') + '</span>';
+    spacer.appendChild(d);
+  }
+}
+list.addEventListener('scroll', render); render();
+</script>

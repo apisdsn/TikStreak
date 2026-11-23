@@ -27,3 +27,8 @@ def test_login_browser_and_fingerprint(run_script):
 @needs_browser
 def test_browser_pool(run_script):
     run_script("pooltest.py")
+
+
+@needs_browser
+def test_scan_contacts_virtual_list(run_script):
+    run_script("scantest.py")

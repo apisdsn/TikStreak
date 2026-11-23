@@ -2,6 +2,7 @@
 import json
 import os
 import shutil
+import time
 import uuid
 from datetime import datetime, timedelta
 
@@ -131,6 +132,7 @@ def create_account(name, owner_id=None):
 
 def delete_account(aid):
     with db.tx():
+        db.x("DELETE FROM settings WHERE key=?", ("kv:scan:" + aid,))
         db.x("DELETE FROM accounts WHERE id=?", (aid,))  # kontak, jadwal, cookie, convs ikut terhapus (CASCADE)
     shutil.rmtree(os.path.join(DATA_DIR, "accounts", aid), ignore_errors=True)
 
@@ -381,6 +383,33 @@ def day_stats(account_id, since_day, mode="send"):
                   (account_id, mode, since_day)):
         out[r["d"]] = {"runs": r["n"], "sent": r["s"] or 0, "total": r["t"] or 0, "full": r["f"] or 0}
     return out
+
+
+SCAN_TTL = 3600  # hasil pindai kontak disimpan paling lama 1 jam
+
+
+def scan_set(account_id, items=None, error=None):
+    kv_set("scan:" + account_id, {"at": time.time(), "items": items or [], "error": error})
+
+
+def scan_get(account_id):
+    """Hasil pindai kontak terakhir bila belum kedaluwarsa (1 jam), selain itu None dan dihapus."""
+    v = kv_get("scan:" + account_id)
+    if not v:
+        return None
+    if time.time() - v.get("at", 0) > SCAN_TTL:
+        scan_clear(account_id)
+        return None
+    return v
+
+
+def scan_clear(account_id):
+    db.x("DELETE FROM settings WHERE key=?", ("kv:scan:" + account_id,))
+
+
+def scan_prune():
+    for r in db.q("SELECT key FROM settings WHERE key LIKE 'kv:scan:%'"):
+        scan_get(r["key"][8:])
 
 
 def last_success_at(account_id):

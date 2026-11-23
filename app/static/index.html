@@ -267,6 +267,8 @@
             <textarea id="contactsInput" rows="4" data-i18n-ph="contactsPh" data-i18n-aria="addContacts"></textarea>
             <button id="btnAddContacts" class="btn primary block" type="button" data-i18n="add"></button>
             <p id="contactsErr" class="error" role="alert"></p>
+            <button id="btnImport" class="btn tinted block" type="button" data-i18n="importTikTok"></button>
+            <div id="scanQueue" class="queue-box hidden" aria-live="polite"></div>
           </div>
           <div class="group">
             <div class="group-head"><div class="gh-left"><h2 data-i18n="contactList"></h2><span id="contactsCount" class="badge"></span></div></div>
@@ -443,6 +445,17 @@
       </div>
       <p id="settingsMsg" class="error" role="alert"></p>
       <div class="modal-actions"><button type="button" id="setCancel" class="btn" data-i18n="cancel"></button><button type="submit" class="btn primary" data-i18n="save"></button></div>
+    </form>
+  </div>
+  <div id="importSheet" class="overlay center bottom hidden">
+    <form id="importForm" class="sheet sheet-card modal import-sheet" role="dialog" aria-modal="true" aria-labelledby="importTitle" novalidate>
+      <h2 id="importTitle" data-i18n="importTitle"></h2>
+      <p class="muted small-text" id="importHint" data-i18n="importHint"></p>
+      <input id="importSearch" type="text" inputmode="search" data-i18n-ph="importSearchPh" data-i18n-aria="importSearchPh" autocomplete="off">
+      <label class="cell-row import-all"><span id="importFound"></span><span class="grow"></span><span data-i18n="selectAll"></span><input id="importAll" type="checkbox" class="switch" role="switch"></label>
+      <ul id="importList" class="inset-list import-list"></ul>
+      <p id="importErr" class="error" role="alert"></p>
+      <div class="modal-actions"><button type="button" id="importCancel" class="btn" data-i18n="cancel"></button><button type="submit" id="importAdd" class="btn primary"></button></div>
     </form>
   </div>
   <div id="pwModal" class="overlay center hidden">

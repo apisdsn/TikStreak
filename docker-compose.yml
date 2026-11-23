@@ -25,6 +25,7 @@ services:
       BROWSER_MAX_MB: ${BROWSER_MAX_MB:-700}
       BROWSER_KIND: ${BROWSER_KIND:-auto}
       # halaman depan untuk pengunjung belum login; LANDING_DOCS_URL opsional (tombol Panduan Pasang)
+      SCAN_MAX: ${SCAN_MAX:-200}
       HEALTHCHECK_PING_URL: ${HEALTHCHECK_PING_URL:-}
       LANDING_ENABLED: ${LANDING_ENABLED:-1}
       LANDING_DOCS_URL: ${LANDING_DOCS_URL:-}

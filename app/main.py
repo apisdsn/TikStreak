@@ -51,7 +51,10 @@ from .store import (
     day_stats,
     query_runs,
     runs_since,
+    SCAN_TTL,
     save_settings,
+    scan_clear,
+    scan_get,
     send_days,
     list_accounts,
     rename_contact,
@@ -375,6 +378,68 @@ def add_contacts(body: ContactsIn, acc=Depends(acct)):
     if not added:
         raise HTTPException(400, "Tidak Ada Kontak Baru (Kosong atau Sudah Ada)")
     contacts_store.write(current)
+    return {"contacts": current, "added": added}
+
+
+class ImportIn(BaseModel):
+    ids: list[str]
+
+
+def _scan_view(acc, user):
+    """Status pemindaian kontak untuk akun ini: antre/berjalan, atau hasil terakhir (kedaluwarsa 1 jam)."""
+    job = next((j for j in runner.view_for(user["id"])["mine"] if j["account_id"] == acc["id"] and j["kind"] == "scan_contacts"), None)
+    if job:
+        return {"state": job["state"], "position": job["position"], "eta": job["eta"], "job_id": job["id"], "items": [], "error": None}
+    res = scan_get(acc["id"])
+    if not res:
+        return {"state": "none", "items": [], "error": None}
+    existing = {c.lower() for c in stores(acc["id"]).contacts.read()}
+    items = [{**i, "exists": i["nick"].lower() in existing} for i in res["items"]]
+    return {"state": "failed" if res.get("error") else "done", "items": items, "error": res.get("error"), "expires_in": max(0, int(SCAN_TTL - (time.time() - res["at"])))}
+
+
+@app.get("/api/contacts/scan")
+def scan_status(acc=Depends(acct), user=Depends(current_user)):
+    return _scan_view(acc, user)
+
+
+@app.post("/api/contacts/scan")
+def scan_start(acc=Depends(acct), user=Depends(current_user)):
+    if login_mgr.account_active(acc["id"]):
+        raise HTTPException(409, "Tutup Sesi Login di Tab Cookie Dulu")
+    if not stores(acc["id"]).cookies.read():
+        raise HTTPException(400, "Cookie TikTok Belum Diatur")
+    try:
+        jobs.enqueue(acc["id"], user["id"], "scan_contacts", "manual", by=user["username"])
+    except jobs.Duplicate:
+        raise HTTPException(409, "Pemindaian Kontak Sudah Berjalan untuk Akun Ini")
+    scan_clear(acc["id"])
+    return _scan_view(acc, user)
+
+
+@app.post("/api/contacts/import")
+def scan_import(body: ImportIn, acc=Depends(acct), user=Depends(current_user)):
+    res = scan_get(acc["id"])
+    if not res or res.get("error"):
+        raise HTTPException(404, "Hasil Pemindaian Sudah Kedaluwarsa, Pindai Ulang")
+    by_id = {i["id"]: i for i in res["items"]}
+    st = stores(acc["id"])
+    current = st.contacts.read()
+    seen = {c.lower() for c in current}
+    convs = st.convs.read()
+    added = []
+    for cid in dict.fromkeys(body.ids):
+        item = by_id.get(cid)
+        if not item or item["nick"].lower() in seen:
+            continue
+        seen.add(item["nick"].lower())
+        current.append(item["nick"])
+        convs[item["nick"].lower()] = cid
+        added.append(item["nick"])
+    if not added:
+        raise HTTPException(400, "Tidak Ada Kontak Baru yang Dipilih")
+    st.contacts.write(current)
+    st.convs.write(convs)
     return {"contacts": current, "added": added}
 
 
