@@ -22,16 +22,16 @@ def _row(r):
     return d
 
 
-def enqueue(account_id, owner_id, kind, trigger, label=None, message=None, contacts=None, priority=None, due_at=None, by=None):
+def enqueue(account_id, owner_id, kind, trigger, label=None, message=None, contacts=None, priority=None, due_at=None, by=None, attempt=0):
     if priority is None:
         priority = 2 if trigger == "keepalive" else (0 if trigger == "manual" else 1)
     now = time.time()
     jid = uuid.uuid4().hex[:10]
     try:
-        db.x("INSERT INTO jobs(id, account_id, owner_id, kind, trigger, run_by, label, message, contacts_json, priority, due_at, enqueued_at, status) "
-             "VALUES(?,?,?,?,?,?,?,?,?,?,?,?, 'queued')",
+        db.x("INSERT INTO jobs(id, account_id, owner_id, kind, trigger, run_by, label, message, contacts_json, priority, due_at, enqueued_at, status, attempt) "
+             "VALUES(?,?,?,?,?,?,?,?,?,?,?,?, 'queued', ?)",
              (jid, account_id, owner_id, kind, trigger, by, label, message, None if contacts is None else json.dumps(contacts, ensure_ascii=False),
-              priority, due_at or now, now))
+              priority, due_at or now, now, attempt))
     except sqlite3.IntegrityError as e:
         raise Duplicate() from e
     return get(jid)

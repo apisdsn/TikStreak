@@ -44,6 +44,9 @@
       saved: "(Tersimpan)", ready: "Siap", busyAcct: "Berjalan: {name}", busy: "Berjalan",
       st_running: "Berjalan", st_success: "Berhasil", st_partial: "Sebagian", st_failed: "Gagal", st_cancelled: "Dihentikan",
       st_missed: "Terlewat", st_pending: "Menunggu",
+      gRetry: "Kirim Ulang", retryEnabled: "Kirim Ulang Otomatis", retryDelay: "Jeda (Menit)", retryMax: "Maksimal Percobaan", trRetry: "Ulang",
+      retryHint: "Hanya untuk Kegagalan Sementara (Timeout, Halaman Gagal Dimuat, Pesan Tidak Terverifikasi). Tidak untuk Kontak yang Tidak Ditemukan atau Cookie Tidak Valid. Percobaan Ulang Hanya Dijadwalkan Sebelum Jam 23:50.",
+      retrySummary: "{min} Menit · {n}×",
       streakChip: "{n} Hari", lastSentAgo: "Terakhir Terkirim {when}", neverSent: "Belum Pernah Terkirim", cs_sent: "Terkirim", cs_failed: "Gagal",
       cs_pending: "Menunggu", cs_unscheduled: "Tidak Dijadwalkan", needsCheck: "Perlu Dicek", retrySend: "Uji Kirim Ulang", toastRetryQueued: "Kirim Ulang Dimasukkan ke Antrean",
       needsCheckSub: "Kontak yang Gagal Hari Ini",
@@ -211,6 +214,9 @@
       saved: "(Saved)", ready: "Ready", busyAcct: "Running: {name}", busy: "Running",
       st_running: "Running", st_success: "Success", st_partial: "Partial", st_failed: "Failed", st_cancelled: "Stopped",
       st_missed: "Missed", st_pending: "Pending",
+      gRetry: "Retry", retryEnabled: "Retry Automatically", retryDelay: "Delay (Minutes)", retryMax: "Max Attempts", trRetry: "Retry",
+      retryHint: "Only for Transient Failures (Timeouts, Page Load Errors, Unverified Delivery). Not for Contacts Not Found or an Invalid Cookie. Retries Are Only Scheduled Before 23:50.",
+      retrySummary: "{min} Minutes · {n}×",
       streakChip: "{n} Days", lastSentAgo: "Last Sent {when}", neverSent: "Never Sent", cs_sent: "Sent", cs_failed: "Failed",
       cs_pending: "Pending", cs_unscheduled: "Not Scheduled", needsCheck: "Needs Attention", retrySend: "Test Resend", toastRetryQueued: "Resend Added to the Queue",
       needsCheckSub: "Contacts That Failed Today",
@@ -1630,7 +1636,7 @@
     }
     hist.items.forEach((r) => {
       const type = { test: t("typeTest"), check: t("typeCheck") }[r.mode] || t("typeSend");
-      const how = r.trigger === "schedule" ? r.label || "" : r.trigger === "keepalive" ? t("trAuto") : [t("trManual"), r.by].filter(Boolean).join(" · ");
+      const how = r.trigger === "retry" ? t("trRetry") : r.trigger === "schedule" ? r.label || "" : r.trigger === "keepalive" ? t("trAuto") : [t("trManual"), r.by].filter(Boolean).join(" · ");
       const tr = el("tr", { tabIndex: 0, title: t("clickForLog") }, [
         el("td", { className: "h-time", textContent: fmtDateTime(r.started_at) }),
         el("td", { className: "h-acct", textContent: (r.account && r.account.name) || "-" }),
@@ -2170,6 +2176,9 @@
     $("setPageWait").value = s0.page_load_wait;
     $("setElementWait").value = s0.element_wait;
     $("setSendDelay").value = s0.send_delay;
+    $("setRetryEnabled").checked = s0.retry_enabled;
+    $("setRetryDelay").value = s0.retry_delay_min;
+    $("setRetryMax").value = s0.retry_max;
     $("setTgEnabled").checked = s0.telegram_enabled;
     $("setTgChat").value = s0.telegram_chat_id;
     $("setTgToken").value = "";
@@ -2186,11 +2195,12 @@
     setText("nrChannels", globalChannelNames());
     setText("nrMessage", settings.timezone);
     setText("nrCookie", settings.keepalive_enabled ? tn("refreshEvery", settings.keepalive_hours) : t("refreshOff"));
+    setText("nrRetry", settings.retry_enabled && settings.retry_max > 0 ? t("retrySummary", { min: settings.retry_delay_min, n: settings.retry_max }) : t("refreshOff"));
     setText("nrWaits", `${settings.page_load_wait} · ${settings.element_wait} · ${t("secUnit", { s: settings.send_delay })}`);
   }
 
   // sheet pengaturan global (satu panel per kelompok)
-  const PANEL_TITLE = { channels: "gChannels", message: "gMessage", cookie: "cookieRefresh", waits: "gWaits" };
+  const PANEL_TITLE = { channels: "gChannels", message: "gMessage", cookie: "cookieRefresh", retry: "gRetry", waits: "gWaits" };
   let setTrigger = null;
   function openSetSheet(panel, trigger) {
     setTrigger = trigger;
@@ -2222,6 +2232,7 @@
     }),
     message: () => ({ message: $("setMessage").value, timezone: $("setTimezone").value.trim() === (settings && settings.timezone_default) ? "" : $("setTimezone").value.trim() }),
     cookie: () => ({ keepalive_enabled: $("setKeepalive").checked, keepalive_hours: +$("setKeepaliveHours").value }),
+    retry: () => ({ retry_enabled: $("setRetryEnabled").checked, retry_delay_min: +$("setRetryDelay").value, retry_max: +$("setRetryMax").value }),
     waits: () => ({ page_load_wait: +$("setPageWait").value, element_wait: +$("setElementWait").value, send_delay: +$("setSendDelay").value }),
   })[panel]();
   async function saveGlobal(body) { await api("/settings", { method: "PUT", body }); await loadSettings(); }

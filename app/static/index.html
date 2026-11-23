@@ -384,6 +384,7 @@
                 <button type="button" class="nav-row" data-panel="channels"><span class="nr-ico" style="background:#BF5AF2"><svg aria-hidden="true"><use href="#i-bell"/></svg></span><span class="nr-label" data-i18n="gChannels"></span><span class="nr-val" id="nrChannels"></span><svg class="nr-chev" aria-hidden="true"><use href="#i-chev"/></svg></button>
                 <button type="button" class="nav-row" data-panel="message"><span class="nr-ico" style="background:#0A84FF"><svg aria-hidden="true"><use href="#i-msg"/></svg></span><span class="nr-label" data-i18n="gMessage"></span><span class="nr-val" id="nrMessage"></span><svg class="nr-chev" aria-hidden="true"><use href="#i-chev"/></svg></button>
                 <button type="button" class="nav-row" data-panel="cookie"><span class="nr-ico" style="background:#40C8E0"><svg aria-hidden="true"><use href="#i-refresh"/></svg></span><span class="nr-label" data-i18n="cookieRefresh"></span><span class="nr-val" id="nrCookie"></span><svg class="nr-chev" aria-hidden="true"><use href="#i-chev"/></svg></button>
+                <button type="button" class="nav-row" data-panel="retry"><span class="nr-ico" style="background:#5E5CE6"><svg aria-hidden="true"><use href="#i-refresh"/></svg></span><span class="nr-label" data-i18n="gRetry"></span><span class="nr-val" id="nrRetry"></span><svg class="nr-chev" aria-hidden="true"><use href="#i-chev"/></svg></button>
                 <button type="button" class="nav-row" data-panel="waits"><span class="nr-ico" style="background:#FF9F0A"><svg aria-hidden="true"><use href="#i-clock"/></svg></span><span class="nr-label" data-i18n="gWaits"></span><span class="nr-val" id="nrWaits"></span><svg class="nr-chev" aria-hidden="true"><use href="#i-chev"/></svg></button>
               </div>
               <p class="list-foot" data-i18n="adminNotifFoot"></p>
@@ -442,6 +443,12 @@
       <div class="set-panel" data-panel="cookie">
         <label class="cell-row"><span data-i18n="keepalive"></span><input id="setKeepalive" type="checkbox" class="switch" role="switch"></label>
         <div class="field"><label for="setKeepaliveHours" data-i18n="keepaliveHours"></label><input id="setKeepaliveHours" type="number" min="1" max="72"></div>
+      </div>
+      <div class="set-panel" data-panel="retry">
+        <label class="cell-row"><span data-i18n="retryEnabled"></span><input id="setRetryEnabled" type="checkbox" class="switch" role="switch"></label>
+        <div class="field"><label for="setRetryDelay" data-i18n="retryDelay"></label><input id="setRetryDelay" type="number" min="1" max="240"></div>
+        <div class="field"><label for="setRetryMax" data-i18n="retryMax"></label><input id="setRetryMax" type="number" min="0" max="5"></div>
+        <p class="muted small-text" data-i18n="retryHint"></p>
       </div>
       <div class="set-panel" data-panel="waits">
         <div class="field"><label for="setPageWait" data-i18n="pageLoad"></label><input id="setPageWait" type="number" min="0" max="60"></div>

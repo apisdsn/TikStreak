@@ -34,6 +34,7 @@ MAX_LOG_LINES = 500
 PROOFS_DIR = os.path.join(DATA_DIR, "proofs")
 CATCHUP_SECONDS = 3 * 3600
 BREAKAGE_COOLDOWN = 6 * 3600  # jeda alert tampilan TikTok berubah
+RETRY_CUTOFF = "23:50"  # percobaan ulang hanya bila perkiraan mulainya sebelum jam ini (waktu lokal)
 ALERT_COOLDOWN = 6 * 3600  # jeda minimal antar alert cookie dari cek otomatis
 KEEPALIVE_GUARD = 600      # keepalive tidak mulai bila jadwal kirim jatuh tempo dalam 10 menit
 
@@ -273,7 +274,7 @@ class Runner:
             "mode": job["kind"], "trigger": job["trigger"], "by": job.get("by") if job["trigger"] == "manual" else "system",
             "label": job.get("label"), "status": "running", "started_at": datetime.now().isoformat(timespec="seconds"),
             "finished_at": None, "sent": 0, "total": 0, "message": job.get("message"), "only": job.get("contacts"),
-            "results": [], "logs": [],
+            "results": [], "logs": [], "attempt": job.get("attempt", 0),
         }
         cancel = threading.Event()
         with self._lock:
@@ -417,7 +418,10 @@ class Runner:
             return
         icon = {"success": "✅", "partial": "⚠️", "failed": "❌"}.get(run["status"], "ℹ️")
         lines = [f"{run['sent']}/{run['total']} terkirim · {self._span(run)}"]
-        if run.get("label"):
+        retry = run.get("trigger") == "retry"
+        if retry:
+            lines.insert(0, f"Percobaan Ulang ke-{run.get('attempt') or 1} dari {settings.get('retry_max') or 1}")
+        elif run.get("label"):
             lines.insert(0, f"Jadwal {run['label']}")
         if run["mode"] == "send":
             lines.append(f"Pesan: \"{run.get('message') or settings['message']}\"")
@@ -439,7 +443,7 @@ class Runner:
         for t in targets:  # lampiran mengikuti pengaturan saluran penerima
             files = proofs if t.get("notify_screenshot") else []
             tl = lines + (["Bukti: screenshot chat terlampir"] if files else [])
-            notify(t, f"{icon} {who}Streak {run['status']}", tl, files)
+            notify(t, f"{icon} {who}{'Percobaan Ulang · ' if retry else ''}Streak {run['status']}", tl, files)
 
     @staticmethod
     def _evidence(ev):
@@ -654,9 +658,55 @@ class Runner:
         except Exception:  # noqa: BLE001
             log.exception("pembaruan status kontak galat")
         try:
+            self._maybe_retry(settings, run)
+        except Exception:  # noqa: BLE001
+            log.exception("kirim ulang otomatis galat")
+        try:
             self._breakage_alert(settings, run)
         except Exception:  # noqa: BLE001
             log.exception("alert kegagalan galat")
+
+    # kegagalan sementara layak dicoba ulang; kontak tidak ditemukan, cookie, dan selector tidak
+    TRANSIENT = ("tidak terverifikasi", "timeout", "timed out", "waktu habis", "memuat", "load", "terputus", "disconnect", "crash",
+                 "target closed", "connection", "koneksi", "websocket", "url tidak terduga", "断开", "连接")
+    PERMANENT = ("kontak tidak ditemukan", "browser tidak ditemukan", "chat yang terbuka", "cookie", "kolom pesan tidak ditemukan",
+                 "teks tidak masuk", "daftar kontak kosong", "tidak ada kontak terpilih")
+
+    @classmethod
+    def is_transient(cls, error):
+        e = (error or "").lower()
+        return bool(e) and not any(p in e for p in cls.PERMANENT) and any(p in e for p in cls.TRANSIENT)
+
+    def _maybe_retry(self, settings, run):
+        """Setelah kirim terjadwal: antrekan percobaan ulang untuk kontak yang gagal sementara (jeda dan batas dari pengaturan)."""
+        if not settings.get("retry_enabled") or run["mode"] != "send" or run["trigger"] not in ("schedule", "retry"):
+            return
+        if run["status"] not in ("partial", "failed") or run.get("cookie_invalid"):
+            return
+        attempt = run.get("attempt", 0)
+        if attempt >= int(settings.get("retry_max") or 0):
+            return
+        res = run.get("results") or []
+        if res:
+            names = [r["contact"] for r in res if not r.get("ok") and self.is_transient(r.get("error"))]
+            if not names:
+                return
+        elif self.is_transient(run.get("error")):
+            names = run.get("only")  # run gagal total sebelum kontak diproses: ulangi semuanya (atau yang dipilih jadwal)
+        else:
+            return
+        tz = _tz(settings)
+        due = time.time() + int(settings.get("retry_delay_min") or 30) * 60
+        try:
+            job = jobs.enqueue(run["account"]["id"], run.get("owner_id"), "send", "retry", label="Ulang", message=run.get("message"),
+                               contacts=names, due_at=due, by="system", attempt=attempt + 1)
+        except jobs.Duplicate:
+            log.info("kirim ulang dilewati: akun %s sudah punya job kirim di antrean", run["account"]["id"])
+            return
+        info = self.snapshot().get(job["id"])
+        eta = datetime.fromtimestamp(max(due, info["eta"]) if info else due, tz)
+        if eta.date() != datetime.now(tz).date() or eta.strftime("%H:%M") >= RETRY_CUTOFF:
+            jobs.cancel_queued(job["id"], run.get("owner_id"))  # perkiraan selesai terlalu malam: jangan dicoba ulang
 
     def _breakage_alert(self, settings, run):
         """Semua kontak gagal pada cookie yang valid: kemungkinan tampilan TikTok berubah. Jeda 6 jam per akun dan untuk kanal sistem."""

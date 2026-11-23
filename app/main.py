@@ -130,6 +130,9 @@ class SettingsIn(BaseModel):
     page_load_wait: Optional[int] = None
     element_wait: Optional[int] = None
     send_delay: Optional[int] = None
+    retry_enabled: Optional[bool] = None
+    retry_delay_min: Optional[int] = None
+    retry_max: Optional[int] = None
 
 
 class AccountIn(BaseModel):
@@ -256,6 +259,10 @@ def write_settings(body: SettingsIn):
     for k in ("page_load_wait", "element_wait", "send_delay"):
         if k in data and not 0 <= data[k] <= 60:
             raise HTTPException(400, f"{k} Harus 0-60 Detik")
+    if "retry_delay_min" in data and not 1 <= data["retry_delay_min"] <= 240:
+        raise HTTPException(400, "Jeda Kirim Ulang Harus 1-240 Menit")
+    if "retry_max" in data and not 0 <= data["retry_max"] <= 5:
+        raise HTTPException(400, "Percobaan Ulang Harus 0-5 Kali")
     for k in ("telegram_token", "discord_webhook"):
         if data.get(k) == "":
             data.pop(k)

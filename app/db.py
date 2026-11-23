@@ -164,7 +164,11 @@ def _m4(c):
                       (aid, name, s["last_ok_at"], s["last_fail_at"], s["last_error"], s["streak_days"], s["streak_date"]))
 
 
-MIGRATIONS = [_m1, _m2, _m3, _m4]
+def _m5(c):
+    _script(c, "ALTER TABLE jobs ADD COLUMN attempt INTEGER NOT NULL DEFAULT 0")
+
+
+MIGRATIONS = [_m1, _m2, _m3, _m4, _m5]
 
 
 def init():

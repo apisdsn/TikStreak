@@ -23,6 +23,9 @@ DEFAULT_SETTINGS = {
     "page_load_wait": 5,
     "element_wait": 3,
     "send_delay": 2,
+    "retry_enabled": True,
+    "retry_delay_min": config.RETRY_DELAY_MIN,
+    "retry_max": config.RETRY_MAX,
 }
 SECRET_SETTINGS = ("telegram_token", "discord_webhook")
 LEGACY_SETTINGS = ("schedules", "schedule_enabled", "schedule_time", "notify_all_accounts")
