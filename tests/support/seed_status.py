@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from app import db, store  # noqa: E402
 
-adm = db.q1("SELECT id FROM users ORDER BY id LIMIT 1")["id"]
+adm = db.q1("SELECT id FROM users WHERE role='admin' ORDER BY created_at LIMIT 1")["id"]
 today = datetime.now()
 
 

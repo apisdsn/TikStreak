@@ -8,7 +8,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspa
 from app import db, store  # noqa: E402
 
 random.seed(3)
-adm = db.q1("SELECT id FROM users ORDER BY id LIMIT 1")["id"]
+adm = db.q1("SELECT id FROM users WHERE role='admin' ORDER BY created_at LIMIT 1")["id"]
 have = db.q1("SELECT COUNT(*) n FROM runs WHERE owner_id=?", (adm,))["n"]
 now = datetime(2026, 11, 16, 6, 0, 0)
 for i in range(134 - have):
